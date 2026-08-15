@@ -203,6 +203,31 @@
   border-color: rgba(55, 65, 81, 0.5);
 }
 
+/* İmlecin üzerinde olduğu saat kutusu.
+   Salt CSS ile yapılamıyor: saat satırları (.fc-timegrid-slots) ile gün
+   sütunları (.fc-timegrid-cols) ayrı katmanlar ve sütunlar üstte duruyor,
+   yani satırlar hover almıyor — kesişim CSS'te bilinemiyor. Konum
+   Calendar.jsx'teki effect tarafından veriliyor.
+   z-index 1: etkinlik kartları (.fc-timegrid-col-events, z-index 3) üstte kalsın. */
+.fc-slot-hover {
+  position: absolute;
+  z-index: 2;
+  border-radius: 8px;
+  /* Tıklama seçimiyle (.fc-highlight) aynı renk ve kesikli çerçeve dili:
+     hover, tıklandığında ne seçileceğinin önizlemesi. Daha ince ve soluk,
+     çünkü sürekli görünüyor — seçimdeki gibi nabız atmıyor. */
+  background: rgba(0, 113, 227, 0.10);
+  border: 2px dashed rgba(0, 113, 227, 0.45);
+  pointer-events: none;
+  transition: top 90ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              left 90ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.dark .fc-slot-hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
 /* Haftalık görünüm için padding */
 .fc-timeGridWeek-view.fc-view.fc-timegrid {
   padding: 0 15px;

@@ -6,7 +6,8 @@ import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
 import Toast from './ui/Toast'
 import { useLanguage } from '../context/LanguageContext'
-import { 
+import { useTeachers } from '../hooks/useTeachers'
+import {
   XMarkIcon,
   FaceSmileIcon,
   UsersIcon,

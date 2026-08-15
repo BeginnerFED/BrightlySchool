@@ -6,7 +6,8 @@ import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
 import Toast from './ui/Toast'
 import { useLanguage } from '../context/LanguageContext'
-import { 
+import { useTeachers } from '../hooks/useTeachers'
+import {
   XMarkIcon,
   FaceSmileIcon,
   UsersIcon,
@@ -901,29 +902,29 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Notlar - Şimdi full genişlikte */}
-              <div className="md:col-span-2 relative">
-                <div className={iconWrapperClasses}>
-                  <PencilSquareIcon className={iconClasses} />
+                {/* Not — sağ kolonun son alanı. Öğretmen seçimi sola eklenince
+                    sol 6, sağ 5 alan kalıyordu; not buraya taşınınca 6-6 oldu. */}
+                <div className="relative">
+                  <div className={iconWrapperClasses}>
+                    <PencilSquareIcon className={iconClasses} />
+                  </div>
+                  <input
+                    type="text"
+                    name="note"
+                    value={formData.note}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setFormData(prev => ({
+                        ...prev,
+                        note: value.charAt(0).toUpperCase() + value.slice(1)
+                      }))
+                    }}
+                    className={inputClasses}
+                    placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
+                    tabIndex={11}
+                    autoComplete="off"
+                  />
                 </div>
-                <input
-                  type="text"
-                  name="note"
-                  value={formData.note}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setFormData(prev => ({
-                      ...prev,
-                      note: value.charAt(0).toUpperCase() + value.slice(1)
-                    }))
-                  }}
-                  className={inputClasses}
-                  placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
-                  tabIndex={11}
-                  autoComplete="off"
-                />
               </div>
 
               {/* Buttons */}

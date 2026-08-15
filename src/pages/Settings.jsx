@@ -1,16 +1,21 @@
 import React from 'react';
-import { 
+import {
   GlobeAltIcon,
   SunIcon,
   MoonIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  AcademicCapIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import TeacherManager from '../components/TeacherManager';
+import SettingCard from '../components/ui/SettingCard';
 
 const Settings = () => {
   const { isDark, toggleTheme } = useTheme();
   const { language, toggleLanguage, t } = useLanguage();
+  const { isOwner } = useAuth();
 
   // Kategori kartları içeren bileşen
   const SettingCategory = ({ icon, title, children }) => (
@@ -27,17 +32,8 @@ const Settings = () => {
     </div>
   );
 
-  // Ayar kartı bileşeni 
-  const SettingCard = ({ title, children }) => (
-    <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-[#2a3241] hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-300">
-      <div className="mb-4">
-        <h4 className="font-medium text-[#1d1d1f] dark:text-white">{title}</h4>
-      </div>
-      <div className="space-y-3">
-        {children}
-      </div>
-    </div>
-  );
+  // SettingCard components/ui/SettingCard.jsx'e taşındı — öğretmen kartları
+  // da aynı görünümü kullanıyor.
 
   return (
     <div className="w-full">
@@ -116,6 +112,17 @@ const Settings = () => {
               </div>
             </SettingCard>
           </SettingCategory>
+
+          {/* Öğretmenler — yalnızca sahip. Hesap açma burada değil (service role
+              gerektirir); yalnızca görünen ad ve rol yönetilir. */}
+          {isOwner && (
+            <SettingCategory
+              icon={<AcademicCapIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+              title={language === 'uk' ? 'Викладачі' : 'Teachers'}
+            >
+              <TeacherManager />
+            </SettingCategory>
+          )}
 
           {/* Uygulama Bilgisi Kategorisi */}
           <SettingCategory 

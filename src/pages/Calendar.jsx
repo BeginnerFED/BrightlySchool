@@ -22,6 +22,16 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ActionNotification from '../components/ActionNotification';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useTeachers } from '../hooks/useTeachers';
+
+// Takvim ızgarası. Tek yerde duruyor çünkü hem FullCalendar'a veriliyor hem de
+// hover vurgusunun hesabında kullanılıyor — ayrışırlarsa vurgu, tıklamanın
+// seçeceği yerden farklı bir yeri gösterir.
+const SLOT_MINUTES = 30;   // bir saat kutusunun süresi
+const SNAP_MINUTES = 15;   // tıklamanın oturduğu ızgara
+const SNAPS_PER_SLOT = SLOT_MINUTES / SNAP_MINUTES;
+const toDuration = (minutes) =>
+  `00:${String(minutes).padStart(2, '0')}:00`;
 
 // Custom hook to monitor screen width
 const useWindowSize = () => {
@@ -52,6 +62,10 @@ const useWindowSize = () => {
 const Calendar = () => {
   const { language } = useLanguage();
   const { isOwner, user } = useAuth();
+  const { teachers } = useTeachers(isOwner);
+  // Sahip tüm dersleri görür; bu filtre kimin takvimine baktığını seçmesini sağlar.
+  // '' = herkes. Öğretmende hiç gösterilmez (zaten yalnızca kendi derslerini görür).
+  const [teacherFilter, setTeacherFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateSheetOpen, setIsUpdateSheetOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -70,6 +84,7 @@ const Calendar = () => {
   });
   const [currentWeekRange, setCurrentWeekRange] = useState(null);
   const calendarRef = useRef(null);
+  const calendarWrapRef = useRef(null);
 
   // States for Copy Week Modal
   const [isCopyWeekModalOpen, setIsCopyWeekModalOpen] = useState(false);
@@ -162,13 +177,22 @@ const Calendar = () => {
 
       setIsLoading(true);
 
-      const { data: eventsData, error: eventsError } = await supabase
+      let eventsQuery = supabase
         .from('events')
         .select('*, event_participants(registration_id)')
         .eq('is_active', true)
         .gte('event_date', start.toISOString())
         .lt('event_date', end.toISOString())
         .order('event_date', { ascending: true });
+
+      // Filtre sorguya konuluyor, render anına değil: ay görünümü gruplanmış
+      // ayrı bir kaynak kullandığı için render anında filtrelemek iki görünüm
+      // arasında tutarsızlık yaratırdı.
+      if (teacherFilter) {
+        eventsQuery = eventsQuery.eq('teacher_id', teacherFilter);
+      }
+
+      const { data: eventsData, error: eventsError } = await eventsQuery;
 
       if (eventsError) throw eventsError;
 
@@ -213,6 +237,7 @@ const Calendar = () => {
             eventType: event.event_type,
             currentCapacity: students.length,
             maxCapacity: event.max_capacity,
+            teacherId: event.teacher_id,
             typeDetails,
             students,
             originalEvent: event // Store original event data for copying
@@ -324,11 +349,109 @@ const Calendar = () => {
   };
 
   // Load events when component mounts and when new events are added
+  // Filtre değişince görünürdeki aralığı yeniden çek. datesSet ilk yüklemeyi
+  // zaten yapıyor, o yüzden ilk render atlanıyor.
+  const filterMountedRef = useRef(false);
+  useEffect(() => {
+    if (!filterMountedRef.current) { filterMountedRef.current = true; return; }
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    fetchEvents(api.view.currentStart, api.view.currentEnd);
+  }, [teacherFilter]);
+
+  // İmlecin üzerinde olduğu saat kutusunu vurgula.
+  // Salt CSS ile yapılamıyor: saat satırları (.fc-timegrid-slots) ile gün
+  // sütunları (.fc-timegrid-cols) ayrı katmanlar, sütunlar üstte olduğu için
+  // satırlar hover almıyor — kesişimi CSS bilemiyor, burada hesaplanıyor.
+  useEffect(() => {
+    const root = calendarWrapRef.current;
+    if (!root) return;
+
+    // Vurgu doğrudan sarmalayıcıya konuluyor (sarmalayıcı zaten position:relative).
+    // Sütunun kendi katmanlarına yerleştirmek onların konumlanmasına ve
+    // z-index sırasına bağımlı hale getiriyordu; koordinatları burada hesaplamak
+    // o varsayımların hepsini ortadan kaldırıyor.
+    const highlight = document.createElement('div');
+    highlight.className = 'fc-slot-hover';
+    highlight.style.display = 'none';
+    root.appendChild(highlight);
+
+    const hide = () => { highlight.style.display = 'none'; };
+
+    // closest() ve sabit yükseklik aritmetiği yerine gerçek elemanların
+    // koordinatları ölçülüp imlecin hangisinin içinde olduğu bulunuyor:
+    // FullCalendar'ın katman yapısı ve sınıf adları hakkında varsayım kalmasın.
+    const onMove = (event) => {
+      const x = event.clientX;
+      const y = event.clientY;
+
+      const cols = root.querySelectorAll('.fc-timegrid-col:not(.fc-timegrid-axis)');
+      const lanes = root.querySelectorAll('.fc-timegrid-slot-lane');
+      if (!cols.length || !lanes.length) return hide();
+
+      let colRect = null;
+      for (const col of cols) {
+        const r = col.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom) { colRect = r; break; }
+      }
+      if (!colRect) return hide();
+
+      let laneRect = null;
+      for (const lane of lanes) {
+        const r = lane.getBoundingClientRect();
+        if (y >= r.top && y < r.bottom) { laneRect = r; break; }
+      }
+      if (!laneRect) return hide();
+
+      // Etkinlik kartının üzerindeyken vurgu gösterme — kartın arkasında
+      // yanıp sönen bir kutu kirli duruyor
+      const over = document.elementFromPoint(x, y);
+      if (over && over.closest && over.closest('.fc-event')) return hide();
+
+      // Saat kutusu 30 dk ama tıklama 15 dk ızgarasına oturuyor. Kutunun
+      // tamamını vurgulamak, tıklandığında seçilecek yerden farklı bir yeri
+      // göstermek olurdu — bu yüzden kutu snap bantlarına bölünüyor.
+      const bandHeight = laneRect.height / SNAPS_PER_SLOT;
+      const band = Math.min(
+        SNAPS_PER_SLOT - 1,
+        Math.max(0, Math.floor((y - laneRect.top) / bandHeight))
+      );
+
+      const rootRect = root.getBoundingClientRect();
+      highlight.style.display = 'block';
+      highlight.style.left = `${colRect.left - rootRect.left}px`;
+      highlight.style.width = `${colRect.width}px`;
+      highlight.style.top = `${laneRect.top - rootRect.top + band * bandHeight}px`;
+      highlight.style.height = `${bandHeight}px`;
+    };
+
+    // Dinleyici document üzerinde: sarmalayıcıya ulaşmayan bir olay kalmasın
+    document.addEventListener('mousemove', onMove);
+    window.addEventListener('scroll', hide, true);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      window.removeEventListener('scroll', hide, true);
+      if (highlight.parentNode) highlight.parentNode.removeChild(highlight);
+    };
+  }, [currentViewType]);
+
   // useEffect removed because datesSet in FullCalendar will handle initial fetch
 
   // Render event content
+  // Öğretmen adı: sahip başkasının dersine bakarken kimin dersi olduğu görünsün.
+  // Kendi derslerinde etiket çıkmaz — her karta ad basmak gereksiz kalabalık olurdu.
+  const teacherNameById = Object.fromEntries(
+    teachers.map(teacher => [
+      teacher.id,
+      teacher.full_name || (language === 'uk' ? 'Викладач' : 'Teacher')
+    ])
+  );
+
   const renderEventContent = (eventInfo) => {
-    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, isGrouped, count } = eventInfo.event.extendedProps;
+    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, isGrouped, count, teacherId } = eventInfo.event.extendedProps;
+    const otherTeacherName = isOwner && teacherId && teacherId !== user?.id
+      ? teacherNameById[teacherId]
+      : null;
 
     // Ay görünümünde ve gruplandırılmış etkinlik ise
     if (eventInfo.view.type === 'dayGridMonth' && isGrouped) {
@@ -351,6 +474,14 @@ const Calendar = () => {
         <div className="event-content">
           {/* Bilgiler */}
           <div className="flex flex-col gap-1.5 text-xs">
+            {/* Başka bir öğretmenin dersi olduğunu belirten etiket */}
+            {otherTeacherName && (
+              <div className="flex items-center gap-1 bg-white/25 px-2.5 py-1 rounded-md w-fit">
+                <AcademicCapIcon className="w-3 h-3 text-white/80" />
+                <span className="font-medium truncate">{otherTeacherName}</span>
+              </div>
+            )}
+
             {/* Saat */}
             <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
               <ClockIcon className="w-3 h-3 text-white/70" />
@@ -1273,6 +1404,24 @@ const Calendar = () => {
           <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
             {language === 'uk' ? 'Календар' : 'Calendar'}
           </h1>
+
+          {/* Kimin takvimine bakıldığı. Yalnızca sahip görür ve yalnızca
+              gerçekten öğretmen varsa — tek kişilik okulda gereksiz kalabalık. */}
+          {isOwner && teachers.length > 0 && (
+            <select
+              value={teacherFilter}
+              onChange={(e) => setTeacherFilter(e.target.value)}
+              className="h-8 pl-3 pr-8 bg-white dark:bg-[#1a1f2e] text-[#1d1d1f] dark:text-white text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#6e6e73] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all duration-200 cursor-pointer"
+            >
+              <option value="">{language === 'uk' ? 'Усі викладачі' : 'All teachers'}</option>
+              <option value={user?.id || ''}>{language === 'uk' ? 'Мої заняття' : 'My lessons'}</option>
+              {teachers.map(teacher => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.full_name || (language === 'uk' ? 'Викладач' : 'Teacher')}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
           <a
@@ -1313,7 +1462,7 @@ const Calendar = () => {
         </div>
       </div>
 
-      <div className="relative bg-white dark:bg-[#1a1f2e] rounded-xl overflow-hidden">
+      <div ref={calendarWrapRef} className="relative bg-white dark:bg-[#1a1f2e] rounded-xl overflow-hidden">
         {/* Haftanın Konusu (hafta ve gün görünümleri) */}
         {showThemeBanner && (
           <div className="flex items-center justify-between gap-4 px-6 py-2.5 border-b border-[#d2d2d7] dark:border-[#2a3241]">
@@ -1384,7 +1533,7 @@ const Calendar = () => {
           editable={true} // Required for drag-and-drop
           eventDrop={handleEventDrop} // Drag-and-drop handler
           dragScroll={true} // Auto-scroll during dragging
-          snapDuration="00:15:00" // Place at 15-minute intervals
+          snapDuration={toDuration(SNAP_MINUTES)} // tıklamanın oturduğu ızgara
           eventDragStart={(info) => info.el.classList.add('event-dragging')} // Add class when dragging starts
           eventDragStop={(info) => info.el.classList.remove('event-dragging')} // Remove class when dragging ends
           droppable={true} // For external dragging (can be used in the future)
@@ -1404,7 +1553,7 @@ const Calendar = () => {
             hour12: false
           }}
           allDaySlot={false}
-          slotDuration="00:30:00"
+          slotDuration={toDuration(SLOT_MINUTES)}
           slotLabelInterval="01:00"
           datesSet={(dateInfo) => {
             fetchEvents(dateInfo.start, dateInfo.end);
