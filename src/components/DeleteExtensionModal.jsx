@@ -107,7 +107,7 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
                 <span>{language === 'uk' ? 'Сума:' : 'Amount:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">
-                  {extension?.payment_amount ?? 0} ₺
+                  {extension?.payment_amount ?? 0} ₴
                 </span>
               </div>
             </div>

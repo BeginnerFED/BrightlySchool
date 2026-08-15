@@ -52,7 +52,7 @@ function App() {
             <div className="flex min-h-screen bg-[#f6f7f9] dark:bg-[#121621] transition-colors duration-300">
               <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/takvim" element={<PublicCalendar />} />
+                <Route path="/rozklad" element={<PublicCalendar />} />
                 <Route
                   path="/*"
                   element={

@@ -572,7 +572,7 @@ export default function Registration() {
                               language === 'uk' ? 'Безкоштовно' : 'Free'
                             ) : (
                               <>
-                                {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₺
+                                {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₴
                                 {registration.payment_status === 'odendi' && registration.payment_date && (
                                   <> - {formatDate(registration.payment_date)}</>
                                 )}
@@ -1042,7 +1042,7 @@ export default function Registration() {
                       <div className="flex items-center gap-2 text-sm">
                         <CreditCardIcon className="w-4 h-4 text-[#86868b]" />
                         <span className="text-[#424245] dark:text-[#86868b]">
-                          {formatPaymentMethod(selectedHistoryRegistration.initial_payment_method)} - {selectedHistoryRegistration.initial_payment_amount} ₺
+                          {formatPaymentMethod(selectedHistoryRegistration.initial_payment_method)} - {selectedHistoryRegistration.initial_payment_amount} ₴
                           {selectedHistoryRegistration.payment_date && (
                             <> - {formatDate(selectedHistoryRegistration.payment_date)}</>
                           )}
@@ -1123,7 +1123,7 @@ export default function Registration() {
                             <div className="flex items-center gap-2 text-sm">
                               <CreditCardIcon className="w-4 h-4 text-[#86868b]" />
                               <span className="text-[#424245] dark:text-[#86868b]">
-                                {formatPaymentMethod(history.payment_method)} - {history.payment_amount} ₺
+                                {formatPaymentMethod(history.payment_method)} - {history.payment_amount} ₴
                                 {history.payment_date && (
                                   <> - {formatDate(history.payment_date)}</>
                                 )}

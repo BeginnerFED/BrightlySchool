@@ -1,7 +1,6 @@
 -- =====================================================================
--- HelloKido — Tam veritabanı şeması
+-- Yulia School — Tam veritabanı şeması
 -- =====================================================================
--- Bu dosya canlı Supabase projesinden (jdiqfxvndliopckbyhfj) çıkarılmıştır.
 -- Boş bir Supabase projesinde SQL Editor'de baştan sona çalıştırıldığında
 -- uygulamanın ihtiyaç duyduğu her şeyi kurar:
 --   tablolar, kısıtlar, indeksler, fonksiyonlar, trigger'lar, RLS politikaları.

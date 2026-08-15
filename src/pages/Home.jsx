@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiClock, FiUsers, FiCalendar, FiInfo, FiPhone, FiDollarSign, FiPackage } from 'react-icons/fi';
-import { FaWhatsapp, FaLiraSign, FaCheck } from 'react-icons/fa';
+import { FaWhatsapp, FaHryvnia, FaCheck } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
@@ -953,7 +953,7 @@ ${STUDIO_NAME}`)}`}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#0071e3]/10 border border-[#0071e3]/20 flex items-center justify-center">
-                  <FaLiraSign className="h-4 w-4 text-[#0071e3]" />
+                  <FaHryvnia className="h-4 w-4 text-[#0071e3]" />
                 </div>
                 <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
                   {language === 'en' ? 'Pending Payments' : 'Очікувані платежі'}
@@ -1003,7 +1003,7 @@ ${STUDIO_NAME}`)}`}
             ) : pendingPayments.length === 0 ? (
               // Boş State
               <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
-                <FaLiraSign className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
+                <FaHryvnia className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
                 <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
                   {language === 'en' ? 'No pending payments' : 'Немає очікуваних платежів'}
                 </h3>

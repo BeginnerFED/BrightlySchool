@@ -609,9 +609,9 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
                 <TrashIcon className="h-7 w-7 text-red-600 dark:text-red-500" />
               </div>
-              <h3 className="text-lg font-semibold text-[#1d1d1f] dark:text-white mb-2">Etkinliği Sil</h3>
+              <h3 className="text-lg font-semibold text-[#1d1d1f] dark:text-white mb-2">Видалити заняття</h3>
               <p className="text-[#6e6e73] dark:text-[#86868b]">
-                Bu etkinliği silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve bu etkinliğe kayıtlı tüm öğrenciler bu etkinlikten silinecektir.
+                Видалити це заняття? Цю дію не можна скасувати — усіх записаних на нього дітей також буде відʼєднано.
               </p>
             </div>
             <div className="flex gap-3">
@@ -809,9 +809,9 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                       onChange={handleInputChange}
                       className="w-full h-[45px] sm:h-[50px] pl-12 pr-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base appearance-none cursor-pointer"
                     >
-                      <option value="ingilizce">İngilizce</option>
-                      <option value="duyusal">Duyusal</option>
-                      <option value="ozel">Özel</option>
+                      <option value="ingilizce">Англійська</option>
+                      <option value="duyusal">Сенсорика</option>
+                      <option value="ozel">Індивідуальне</option>
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -449,7 +449,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                       value={formData.amount}
                       onChange={handleInputChange}
                       className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                      placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
+                      placeholder={language === 'uk' ? "0.00 ₴" : "0.00 ₴"}
                       tabIndex={4}
                       autoComplete="off"
                       onKeyPress={(e) => {

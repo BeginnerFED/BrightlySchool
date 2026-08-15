@@ -81,7 +81,7 @@ const Sidebar = ({ onClose }) => {
               <FaChild className={`w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-colors duration-300`} />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className={`text-xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors duration-300 truncate`}>Hello Kido</span>
+              <span className={`text-xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors duration-300 truncate`}>Yulia School</span>
               <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 truncate">{t('managementPanel')}</span>
             </div>
           </div>

@@ -41,7 +41,7 @@ export default function ActionNotification({ isVisible, message, actionText, onA
       <div className="py-3 px-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-            Kopyalama Tamamlandı
+            Копіювання завершено
           </h3>
           <button 
             onClick={handleClose}

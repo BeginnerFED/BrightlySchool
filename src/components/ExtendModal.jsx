@@ -691,7 +691,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       value={formData.amount}
                       onChange={handleInputChange}
                       className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.paymentStatus !== 'odendi' && 'opacity-50 cursor-not-allowed'}`}
-                      placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
+                      placeholder={language === 'uk' ? "0.00 ₴" : "0.00 ₴"}
                       tabIndex={5}
                       autoComplete="off"
                       disabled={formData.paymentStatus !== 'odendi'}

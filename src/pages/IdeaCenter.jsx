@@ -141,7 +141,7 @@ const IdeaCenter = () => {
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Hello Kido - Fikir Merkezi',
+          'X-Title': 'Yulia School - Центр ідей',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

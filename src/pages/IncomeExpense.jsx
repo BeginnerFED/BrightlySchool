@@ -996,7 +996,7 @@ export default function IncomeExpense() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
-      currency: 'TRY',
+      currency: 'UAH',
       minimumFractionDigits: 2, // Değiştirildi: 0 -> 2
       maximumFractionDigits: 2  // Değiştirildi: 0 -> 2
     }).format(amount)
@@ -1843,7 +1843,7 @@ export default function IncomeExpense() {
                             {item.status === 'odendi' ? (
                               <>
                                 <CheckCircleIcon className="w-4 h-4" />
-                                <span>Ödendi</span>
+                                <span>Оплачено</span>
                               </>
                             ) : (
                               <>

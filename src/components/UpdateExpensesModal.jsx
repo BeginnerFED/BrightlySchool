@@ -335,7 +335,7 @@ export default function UpdateExpensesModal({ isOpen, onClose, expense, onUpdate
                       value={formData.amount}
                       onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                       className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                      placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
+                      placeholder={language === 'uk' ? "0.00 ₴" : "0.00 ₴"}
                       required
                       onKeyPress={(e) => {
                         if (!/[\d.]/.test(e.key)) {

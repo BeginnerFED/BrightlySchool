@@ -396,12 +396,10 @@ const PublicCalendar = () => {
 
       {/* Logo (iframe'de gizli, site zaten markayı gösteriyor) */}
       {!isEmbedded && (
-        <div className="flex justify-center pt-5 pb-3" role="banner">
-          <img
-            src="https://hellokido.com/assets/img/logo/svgBG.svg"
-            alt="HelloKido Logo"
-            className="h-12"
-          />
+        <div className="flex justify-center pt-6 pb-3" role="banner">
+          <span className="text-[22px] font-semibold tracking-tight text-zinc-900">
+            Yulia School
+          </span>
         </div>
       )}
 
@@ -542,8 +540,8 @@ const PublicCalendar = () => {
       <main className="max-w-lg mx-auto px-4 sm:px-0 pt-6 pb-10" role="main">
         {error ? (
           <div className={`bg-white rounded-[20px] ${CARD_SHADOW} p-8 text-center`}>
-            <p className="text-sm font-semibold">Bir şeyler ters gitti</p>
-            <p className="text-[13px] text-zinc-500 mt-1">Lütfen sayfayı yenileyip tekrar deneyin.</p>
+            <p className="text-sm font-semibold">Щось пішло не так</p>
+            <p className="text-[13px] text-zinc-500 mt-1">Оновіть сторінку та спробуйте ще раз.</p>
           </div>
         ) : (
           <>
@@ -553,7 +551,7 @@ const PublicCalendar = () => {
                 {format(selectedDate, 'EEEE, d MMMM', { locale: uk })}
               </h3>
               {isSelectedToday && (
-                <span className="text-[13px] font-semibold text-sky-700">Bugün</span>
+                <span className="text-[13px] font-semibold text-sky-700">Сьогодні</span>
               )}
             </div>
 
@@ -580,8 +578,8 @@ const PublicCalendar = () => {
                 <div className="w-14 h-14 rounded-2xl bg-[#f5f7fa] flex items-center justify-center mx-auto">
                   <MoonIcon className="w-6 h-6 text-zinc-300" />
                 </div>
-                <p className="text-[15px] font-semibold text-zinc-800 mt-4">Atölyemiz bugün kapalı</p>
-                <p className="text-[13px] text-zinc-500 mt-1">Diğer günlere göz atabilirsiniz</p>
+                <p className="text-[15px] font-semibold text-zinc-800 mt-4">Сьогодні студія не працює</p>
+                <p className="text-[13px] text-zinc-500 mt-1">Перегляньте інші дні</p>
               </div>
             ) : (
               // Etkinlik kartları (gün değişince yumuşak giriş)
@@ -606,7 +604,7 @@ const PublicCalendar = () => {
                         <span className="text-[15px] font-bold leading-none tabular-nums tracking-tight">
                           {format(new Date(event.event_date), 'HH:mm')}
                         </span>
-                        <span className="text-[10px] font-medium opacity-70 mt-1">60 dk</span>
+                        <span className="text-[10px] font-medium opacity-70 mt-1">60 хв</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[16px] font-semibold tracking-tight leading-tight truncate">
@@ -689,7 +687,7 @@ const PublicCalendar = () => {
 
             {/* Yaş Grubu */}
             <div className="mb-6">
-              <div className="text-[13px] font-semibold text-zinc-900 mb-2.5">Yaş Grubu</div>
+              <div className="text-[13px] font-semibold text-zinc-900 mb-2.5">Вікова група</div>
               <div className="flex flex-wrap gap-2">
                 {['', ...AGE_GROUPS].map(group => (
                   <button

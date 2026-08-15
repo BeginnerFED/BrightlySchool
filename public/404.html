@@ -1,20 +1,20 @@
 <!doctype html>
-<html lang="tr">
+<html lang="uk">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>Yönlendiriliyor… | Hello Kido</title>
+    <title>Перенаправлення… | Yulia School</title>
     <script>
       // GitHub Pages + HashRouter yönlendirmesi.
       //
       // Instagram gibi platformlar bio bağlantısındaki '#' karakterini '%23'
-      // olarak kodlayabiliyor. Bu durumda tarayıcı '#/takvim' yerine gerçek bir
-      // dosya yolu olan '/%23/takvim' adresini ister; GitHub Pages böyle bir
+      // olarak kodlayabiliyor. Bu durumda tarayıcı '#/rozklad' yerine gerçek bir
+      // dosya yolu olan '/%23/rozklad' adresini ister; GitHub Pages böyle bir
       // dosya bulamaz ve bu 404.html dosyasını çalıştırır.
       //
       // Burada '%23' işaretini yakalayıp doğru hash adresine geri yönlendiriyoruz:
-      //   /YuliaSchool/%23/takvim  ->  /YuliaSchool/#/takvim
+      //   /YuliaSchool/%23/rozklad  ->  /YuliaSchool/#/rozklad
       (function () {
         var loc = window.location;
         var base = '/YuliaSchool/';
@@ -23,7 +23,7 @@
         var idx = loc.href.indexOf('%23');
 
         if (idx !== -1) {
-          var route = loc.href.substring(idx + 3); // '%23' (3 karakter) sonrası, ör. "/takvim"
+          var route = loc.href.substring(idx + 3); // '%23' (3 karakter) sonrası, ör. "/rozklad"
           if (route.charAt(0) !== '/') route = '/' + route;
           loc.replace(loc.origin + base + '#' + route);
           return;
@@ -36,8 +36,8 @@
   </head>
   <body>
     <p>
-      Yönlendiriliyorsunuz… Otomatik yönlenmezseniz
-      <a href="/YuliaSchool/#/takvim">buraya tıklayın</a>.
+      Перенаправлення… Якщо це не сталося автоматично,
+      <a href="/YuliaSchool/#/rozklad">натисніть тут</a>.
     </p>
   </body>
 </html>
