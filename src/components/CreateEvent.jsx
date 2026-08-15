@@ -12,12 +12,12 @@ import {
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import Select from 'react-select'
 
 // Türkçe lokalizasyonu kaydet
-registerLocale('tr', tr)
+registerLocale('uk', uk)
 
 export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, selectedTime }) {
   const { language } = useLanguage()
@@ -40,8 +40,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
   const dropdownRef = useRef(null)
 
   // Yaş grupları - Aylık gruplar üstte, yaş grupları altta
-  const monthlyGroups = ['12-18 Aylık', '18-24 Aylık', '24-36 Aylık']
-  const yearlyGroups = ['3+ Yaş', '4+ Yaş', '5+ Yaş']
+  const monthlyGroups = ['12-18 міс.', '18-24 міс.', '24-36 міс.']
+  const yearlyGroups = ['3+ р.', '4+ р.', '5+ р.']
 
   // Saat ve dakika seçenekleri
   const hours = ['09', '10', '11', '12', '13', '14', '15', '16', '17', '18']
@@ -127,8 +127,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
       >
         <span className="truncate">
           {selectedStudents.length > 0 
-            ? `${selectedStudents.length} öğrenci seçildi` 
-            : language === 'tr' ? 'Öğrenci seç...' : 'Select students...'}
+            ? `Обрано дітей: ${selectedStudents.length}` 
+            : language === 'uk' ? 'Оберіть дитину...' : 'Select students...'}
         </span>
         <svg className="shrink-0 size-3.5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m7 15 5 5 5-5"/>
@@ -153,7 +153,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                 onKeyDown={(e) => e.stopPropagation()}
                 onFocus={(e) => e.stopPropagation()}
                 autoFocus
-                placeholder={language === 'tr' ? 'Ara...' : 'Search...'}
+                placeholder={language === 'uk' ? 'Пошук...' : 'Search...'}
                 className="w-full h-9 pl-9 pr-4 rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3] dark:focus:border-[#0071e3] transition-colors text-sm"
               />
             </div>
@@ -266,8 +266,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
       }
     } catch (error) {
       console.error('Form gönderilirken hata:', error);
-      alert(language === 'tr' 
-        ? 'Etkinlik oluşturulurken bir hata oluştu: ' + error.message 
+      alert(language === 'uk' 
+        ? 'Помилка створення заняття: ' + error.message 
         : 'An error occurred while creating the event: ' + error.message);
     } finally {
       setIsLoading(false);
@@ -331,10 +331,10 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? 'Yeni Etkinlik' : 'New Event'}
+                    {language === 'uk' ? 'Нове заняття' : 'New Event'}
                   </h2>
                   <p className="text-xs sm:text-sm text-[#6e6e73] dark:text-[#86868b]">
-                    {language === 'tr' ? 'Yeni bir etkinlik oluştur' : 'Create a new event'}
+                    {language === 'uk' ? 'Створити нове заняття' : 'Create a new event'}
                   </p>
                 </div>
               </div>
@@ -348,15 +348,16 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   {/* Tarih */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'tr' ? 'Tarih' : 'Date'}
+                      {language === 'uk' ? 'Дата' : 'Date'}
                     </label>
                     <div className="relative create-event-datepicker">
                       <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10" />
                         <DatePicker
+                          portalId="root"
                           selected={formData.date}
                           onChange={(date) => setFormData(prev => ({ ...prev, date }))}
                           dateFormat="dd.MM.yyyy"
-                          locale={language === 'tr' ? 'tr' : 'en'}
+                          locale={language === 'uk' ? 'uk' : 'en'}
                           highlightDates={[new Date()]}
                           className="w-full h-[45px] sm:h-[50px] pl-12 pr-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base cursor-pointer"
                         />
@@ -380,7 +381,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   {/* Saat */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'tr' ? 'Saat' : 'Time'}
+                      {language === 'uk' ? 'Час' : 'Time'}
                     </label>
                     <div className="flex gap-4">
                       {/* Saat Seçimi */}
@@ -388,7 +389,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                         <div className="flex items-center gap-2">
                           <ClockIcon className="w-5 h-5 text-[#6e6e73] dark:text-[#86868b]" />
                           <span className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Saat' : 'Hour'}
+                            {language === 'uk' ? 'Час' : 'Hour'}
                           </span>
                         </div>
                         <div className="grid grid-cols-5 gap-1">
@@ -418,7 +419,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Dakika' : 'Minute'}
+                            {language === 'uk' ? 'Хвилин' : 'Minute'}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-1">
@@ -450,7 +451,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                 {/* Öğrenciler */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? 'Öğrenciler' : 'Students'}
+                    {language === 'uk' ? 'Діти' : 'Students'}
                   </label>
                   <div className="relative">
                     <UsersIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10" />
@@ -461,7 +462,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   {/* Yaş Grubu */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'tr' ? 'Yaş Grubu' : 'Age Group'}
+                      {language === 'uk' ? 'Вікова група' : 'Age Group'}
                     </label>
                     <div className="space-y-2">
                       {/* Aylık gruplar */}
@@ -508,7 +509,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   {/* Etkinlik Türü */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'tr' ? 'Etkinlik Türü' : 'Event Type'}
+                      {language === 'uk' ? 'Тип заняття' : 'Event Type'}
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
@@ -522,7 +523,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                           }
                         `}
                       >
-                        {language === 'tr' ? 'İngilizce' : 'English'}
+                        {language === 'uk' ? 'Англійська' : 'English'}
                       </button>
                       <button
                         type="button"
@@ -535,7 +536,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                           }
                         `}
                       >
-                        {language === 'tr' ? 'Duyusal' : 'Sensory'}
+                        {language === 'uk' ? 'Сенсорика' : 'Sensory'}
                       </button>
                       <button
                         type="button"
@@ -548,7 +549,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                           }
                         `}
                       >
-                        {language === 'tr' ? 'Özel' : 'Special'}
+                        {language === 'uk' ? 'Індивідуальне' : 'Special'}
                       </button>
                     </div>
                   </div>
@@ -557,13 +558,13 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   {formData.eventType === 'ozel' && (
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                        {language === 'tr' ? 'Etkinlik Açıklaması' : 'Event Description'}
+                        {language === 'uk' ? 'Опис заняття' : 'Event Description'}
                       </label>
                       <textarea
                         value={formData.customDescription}
                         onChange={(e) => setFormData(prev => ({ ...prev, customDescription: e.target.value }))}
                         className="w-full h-11 px-4 py-2 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all resize-none text-sm sm:text-base"
-                        placeholder={language === 'tr' ? 'Etkinlik açıklaması...' : 'Event description...'}
+                        placeholder={language === 'uk' ? 'Опис заняття...' : 'Event description...'}
                       />
                     </div>
                   )}
@@ -579,7 +580,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   className="h-11 sm:h-10 w-full bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 text-sm sm:text-base"
                   disabled={isLoading}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -592,12 +593,12 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{language === 'tr' ? 'Oluşturuluyor' : 'Creating'}</span>
+                      <span>{language === 'uk' ? 'Створення' : 'Creating'}</span>
                     </>
                   ) : (
                     <>
                       <CalendarDaysIcon className="w-4 h-4" />
-                      <span>{language === 'tr' ? 'Oluştur' : 'Create'}</span>
+                      <span>{language === 'uk' ? 'Створити' : 'Create'}</span>
                     </>
                   )}
                 </button>

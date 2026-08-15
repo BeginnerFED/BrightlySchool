@@ -428,6 +428,96 @@
   display: none;
 }
 
+/* Tarih seçici portalId="root" ile modalın dışına taşınıyor (modal kapsayıcıları
+   overflow-hidden olduğu için popup kesiliyor, ay başlığı ve oklar kayboluyordu).
+   Modal katmanı z-40 olduğundan popper'ın varsayılan z-index: 1 değeri onu
+   modalın arkasında bırakır; bu yüzden yükseltiliyor. */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+/* Ay başlığı. date-fns Ukraynaca ay adlarını küçük harfle verir. */
+.react-datepicker__current-month {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+  line-height: 32px;
+  text-transform: capitalize;
+}
+
+.dark .react-datepicker__current-month {
+  color: #fff;
+}
+
+/* Oklar .react-datepicker'a göre mutlak konumlanır; kapsayıcının 24px iç
+   boşluğu yüzünden varsayılan top:2px onları başlığın üstüne itiyordu.
+   32px yükseklikli düğmeyi 32px satır yüksekliğindeki başlıkla ortalıyoruz. */
+.react-datepicker__navigation {
+  top: 24px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.react-datepicker__navigation--previous {
+  left: 20px;
+}
+
+.react-datepicker__navigation--next {
+  right: 20px;
+}
+
+.react-datepicker__navigation:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .react-datepicker__navigation:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Varsayılan stil oku position:absolute + left/right:-7px ile çiziyor; bu 32px'lik
+   düğmenin içinde kaçık duruyordu. Mutlak konumdan çıkarıp flex ile ortalıyoruz. */
+.react-datepicker__navigation-icon {
+  position: static;
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  line-height: 0;
+}
+
+.react-datepicker__navigation-icon::before {
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+  margin: 0;
+  width: 7px;
+  height: 7px;
+  border-color: #6e6e73;
+  border-width: 2px 2px 0 0;
+}
+
+.dark .react-datepicker__navigation-icon::before {
+  border-color: #86868b;
+}
+
+.react-datepicker__navigation:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.react-datepicker__navigation:disabled:hover {
+  background-color: transparent;
+}
+
 /* TimePicker Stilleri */
 .react-datepicker__time-container {
   width: 120px;

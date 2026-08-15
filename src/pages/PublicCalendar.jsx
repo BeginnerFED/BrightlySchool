@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays, eachDayOfInterval } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { uk } from 'date-fns/locale';
 import { ChevronLeftIcon, ChevronRightIcon, AdjustmentsHorizontalIcon, MoonIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 // Kart gölgesi (tek yerden yönetilsin)
 const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(23,19,31,0.04),0_8px_24px_-8px_rgba(23,19,31,0.1)]';
 
 // Filtrede gösterilen yaş grupları (5+ Yaş bilinçli olarak filtre dışı)
-const AGE_GROUPS = ['12-18 Aylık', '18-24 Aylık', '24-36 Aylık', '3+ Yaş', '4+ Yaş'];
+const AGE_GROUPS = ['12-18 міс.', '18-24 міс.', '24-36 міс.', '3+ р.', '4+ р.'];
 const EVENT_TYPES = [
-  { value: 'ingilizce', label: 'İngilizce', color: '#8b5cf6' },
-  { value: 'duyusal', label: 'Duyusal', color: '#f97316' },
-  { value: 'ozel', label: 'Özel', color: '#059669' }
+  { value: 'ingilizce', label: 'Англійська', color: '#8b5cf6' },
+  { value: 'duyusal', label: 'Сенсорика', color: '#f97316' },
+  { value: 'ozel', label: 'Індивідуальне', color: '#059669' }
 ];
 
 const PublicCalendar = () => {
@@ -270,8 +270,8 @@ const PublicCalendar = () => {
   // Hafta iki aya yayılıyorsa "Ağu – Eylül 2026" gibi göster
   const monthLabel =
     weekDays[0].getMonth() === weekDays[6].getMonth()
-      ? format(weekDays[0], 'MMMM yyyy', { locale: tr })
-      : `${format(weekDays[0], 'MMM', { locale: tr })} – ${format(weekDays[6], 'MMMM yyyy', { locale: tr })}`;
+      ? format(weekDays[0], 'MMMM yyyy', { locale: uk })
+      : `${format(weekDays[0], 'MMM', { locale: uk })} – ${format(weekDays[6], 'MMMM yyyy', { locale: uk })}`;
 
   // Carousel panelleri: yan haftaların günleri fetch beklemeden gerçek içerik olarak çizilir
   const prevWeekDays = weekDays.map(day => addWeeks(day, -1));
@@ -289,7 +289,7 @@ const PublicCalendar = () => {
         key={dayKey}
         onClick={() => interactive && setSelectedDay(dayKey)}
         tabIndex={interactive ? 0 : -1}
-        aria-label={format(day, 'd MMMM EEEE', { locale: tr })}
+        aria-label={format(day, 'd MMMM EEEE', { locale: uk })}
         aria-pressed={isSelected}
         className={`flex flex-col items-center rounded-[18px] py-3 transition-all duration-200 active:scale-95 ${
           isSelected
@@ -302,7 +302,7 @@ const PublicCalendar = () => {
         <span className={`text-[12px] font-semibold capitalize ${
           isSelected ? 'text-white/90' : 'text-zinc-500'
         }`}>
-          {format(day, 'EEEEEE', { locale: tr })}
+          {format(day, 'EEEEEE', { locale: uk })}
         </span>
         <span className={`text-[17px] font-semibold mt-0.5 ${
           isSelected ? 'text-white' : isToday ? 'text-sky-700' : 'text-zinc-900'
@@ -416,14 +416,14 @@ const PublicCalendar = () => {
             <div className="flex items-center shrink-0">
               <button
                 onClick={() => changeWeek(-1)}
-                aria-label="Önceki hafta"
+                aria-label="Попередній тиждень"
                 className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 active:scale-95 transition-all"
               >
                 <ChevronLeftIcon className="w-5 h-5" />
               </button>
               <button
                 onClick={() => changeWeek(1)}
-                aria-label="Sonraki hafta"
+                aria-label="Наступний тиждень"
                 className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 active:scale-95 transition-all"
               >
                 <ChevronRightIcon className="w-5 h-5" />
@@ -431,7 +431,7 @@ const PublicCalendar = () => {
               <div className="relative ml-0.5">
                 <button
                   onClick={() => setIsFiltersVisible(true)}
-                  aria-label="Filtreleri aç"
+                  aria-label="Відкрити фільтри"
                   className={`w-9 h-9 flex items-center justify-center rounded-full active:scale-95 transition-all ${
                     hasActiveFilters
                       ? 'bg-zinc-100 text-zinc-900'
@@ -550,7 +550,7 @@ const PublicCalendar = () => {
             {/* Gün başlığı */}
             <div className="flex items-center justify-between px-1 mb-3.5">
               <h3 className="text-[17px] font-semibold tracking-tight capitalize">
-                {format(selectedDate, 'EEEE, d MMMM', { locale: tr })}
+                {format(selectedDate, 'EEEE, d MMMM', { locale: uk })}
               </h3>
               {isSelectedToday && (
                 <span className="text-[13px] font-semibold text-sky-700">Bugün</span>
@@ -623,7 +623,7 @@ const PublicCalendar = () => {
                             : 'bg-zinc-100 text-zinc-400'
                         }`}
                       >
-                        {hasSpots ? `${availableSpots} boş yer` : 'Dolu'}
+                        {hasSpots ? `${availableSpots} вільних місць` : 'Немає місць'}
                       </span>
                     </div>
                   );
@@ -648,7 +648,7 @@ const PublicCalendar = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Filtreler"
+          aria-label="Фільтри"
           className="absolute inset-x-0 bottom-0 sm:max-w-lg sm:mx-auto bg-white rounded-t-[28px] shadow-[0_-8px_40px_rgba(23,19,31,0.15)] touch-none"
           style={{
             transform: isFiltersVisible ? `translateY(${sheetDragY}px)` : 'translateY(100%)',
@@ -701,7 +701,7 @@ const PublicCalendar = () => {
                         : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                     }`}
                   >
-                    {group || 'Tümü'}
+                    {group || 'Усі'}
                   </button>
                 ))}
               </div>
@@ -746,7 +746,7 @@ const PublicCalendar = () => {
               onClick={() => setIsFiltersVisible(false)}
               className="w-full h-[52px] rounded-2xl bg-sky-600 text-white text-[15px] font-semibold hover:bg-sky-700 active:scale-[0.98] transition-all shadow-[0_8px_20px_-6px_rgba(2,132,199,0.5)]"
             >
-              {loading ? 'Yükleniyor…' : `${events.length} etkinlik göster`}
+              {loading ? 'Завантаження…' : `Показати заняття (${events.length})`}
             </button>
           </div>
         </div>

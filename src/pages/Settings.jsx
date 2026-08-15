@@ -44,7 +44,7 @@ const Settings = () => {
       {/* Header */}
       <div className="py-4 px-6 border-b border-gray-200 dark:border-[#2a3241]">
         <h2 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-          {language === 'tr' ? 'Ayarlar' : 'Settings'}
+          {language === 'uk' ? 'Налаштування' : 'Settings'}
         </h2>
       </div>
 
@@ -54,7 +54,7 @@ const Settings = () => {
           {/* Görünüm Ayarları Kategorisi */}
           <SettingCategory 
             icon={<SunIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />} 
-            title={language === 'tr' ? 'Görünüm Ayarları' : 'Appearance Settings'}
+            title={language === 'uk' ? 'Налаштування вигляду' : 'Appearance Settings'}
           >
             {/* Dil Seçimi Kartı */}
             <SettingCard 
@@ -62,10 +62,10 @@ const Settings = () => {
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'tr' ? 'Şu anda kullanılan dil' : 'Current language'}
+                  {language === 'uk' ? 'Поточна мова' : 'Current language'}
                 </p>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {language === 'tr' ? 'Türkçe' : 'English'}
+                  {language === 'uk' ? 'Українська' : 'English'}
                 </span>
               </div>
               
@@ -74,7 +74,7 @@ const Settings = () => {
                   onClick={toggleLanguage}
                   className="w-full py-2.5 px-4 rounded-lg text-sm font-medium bg-gray-50 dark:bg-[#242b3d] text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-[#2d364a] border border-gray-200 dark:border-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  {language === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}
+                  {language === 'uk' ? 'Switch to English' : 'Перейти на українську'}
                 </button>
               </div>
             </SettingCard>
@@ -85,12 +85,12 @@ const Settings = () => {
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'tr' ? 'Aktif tema' : 'Active theme'}
+                  {language === 'uk' ? 'Активна тема' : 'Active theme'}
                 </p>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {isDark 
-                    ? (language === 'tr' ? 'Koyu Tema' : 'Dark Theme') 
-                    : (language === 'tr' ? 'Açık Tema' : 'Light Theme')}
+                    ? (language === 'uk' ? 'Темна тема' : 'Dark Theme') 
+                    : (language === 'uk' ? 'Світла тема' : 'Light Theme')}
                 </span>
               </div>
               
@@ -101,7 +101,7 @@ const Settings = () => {
                 >
                   <SunIcon className={`w-5 h-5 mb-1 ${!isDark ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`} />
                   <span className={`text-xs font-medium ${!isDark ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                    {language === 'tr' ? 'Açık' : 'Light'}
+                    {language === 'uk' ? 'Світла' : 'Light'}
                   </span>
                 </div>
                 <div 
@@ -110,7 +110,7 @@ const Settings = () => {
                 >
                   <MoonIcon className={`w-5 h-5 mb-1 ${isDark ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`} />
                   <span className={`text-xs font-medium ${isDark ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                    {language === 'tr' ? 'Koyu' : 'Dark'}
+                    {language === 'uk' ? 'Темна' : 'Dark'}
                   </span>
                 </div>
               </div>
@@ -120,21 +120,21 @@ const Settings = () => {
           {/* Uygulama Bilgisi Kategorisi */}
           <SettingCategory 
             icon={<InformationCircleIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />} 
-            title={language === 'tr' ? 'Uygulama Bilgisi' : 'Application Information'}
+            title={language === 'uk' ? 'Про застосунок' : 'Application Information'}
           >
             {/* Versiyon Bilgisi Kartı */}
             <SettingCard 
-              title={language === 'tr' ? 'Versiyon Bilgisi' : 'Version Information'}
+              title={language === 'uk' ? 'Версія' : 'Version Information'}
             >
               <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'tr' ? 'Uygulama Versiyonu' : 'Application Version'}
+                  {language === 'uk' ? 'Версія застосунку' : 'Application Version'}
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white font-medium px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded">1.0.12</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'tr' ? 'Son Güncelleme' : 'Last Update'}
+                  {language === 'uk' ? 'Останнє оновлення' : 'Last Update'}
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white">05.07.2025</span>
               </div>

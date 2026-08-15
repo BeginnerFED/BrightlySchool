@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { DateRange } from 'react-date-range'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
@@ -97,7 +97,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
 
   // Tarihi formatlama fonksiyonu
   const formatDate = (date) => {
-    return date.toLocaleDateString('tr-TR', {
+    return date.toLocaleDateString('uk-UA', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -260,8 +260,8 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
 
       if (error) {
         if (error.code === '23505' && error.details?.includes('parent_phone')) {
-          throw new Error(language === 'tr' 
-            ? 'Bu telefon numarası ile daha önce kayıt yapılmış!'
+          throw new Error(language === 'uk' 
+            ? 'Цей номер телефону вже зареєстровано!'
             : 'This phone number has already been registered!'
           )
         }
@@ -287,7 +287,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
 
       setToast({
         visible: true,
-        message: language === 'tr' ? 'Kayıt başarıyla oluşturuldu.' : 'Record has been successfully created.',
+        message: language === 'uk' ? 'Запис успішно створено.' : 'Record has been successfully created.',
         type: 'success'
       })
       resetForm()
@@ -297,9 +297,9 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
       console.error('Kayıt oluşturulurken hata:', error.message)
       setToast({
         visible: true,
-        message: error.message === 'Bu telefon numarası ile daha önce kayıt yapılmış!' || error.message === 'This phone number has already been registered!'
+        message: error.message === 'Цей номер телефону вже зареєстровано!' || error.message === 'This phone number has already been registered!'
           ? error.message
-          : language === 'tr' ? 'Kayıt oluşturma sırasında hata oluştu' : 'An error occurred while creating the record',
+          : language === 'uk' ? 'Помилка при створенні запису' : 'An error occurred while creating the record',
         type: 'error'
       })
     } finally {
@@ -395,10 +395,10 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
             {/* Header */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Yeni Kayıt' : 'New Registration'}
+                {language === 'uk' ? 'Нова реєстрація' : 'New Registration'}
               </h2>
               <p className="mt-1 text-[#6e6e73] dark:text-[#86868b]">
-                {language === 'tr' ? 'Lütfen gerekli bilgileri doldurun' : 'Please fill in the required information'}
+                {language === 'uk' ? 'Заповніть обовʼязкові поля' : 'Please fill in the required information'}
               </p>
             </div>
 
@@ -429,7 +429,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Öğrenci İsmi" : "Student Name"}
+                    placeholder={language === 'uk' ? "Імʼя дитини" : "Student Name"}
                     tabIndex={1}
                     autoComplete="off"
                   />
@@ -455,7 +455,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Ebeveyn İsmi" : "Parent Name"}
+                    placeholder={language === 'uk' ? "Імʼя батьків" : "Parent Name"}
                     tabIndex={2}
                     autoComplete="off"
                   />
@@ -478,7 +478,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Telefon Numarası" : "Phone Number"}
+                    placeholder={language === 'uk' ? "Номер телефону" : "Phone Number"}
                     tabIndex={3}
                     autoComplete="off"
                   />
@@ -504,7 +504,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Yaş/Aylık - Örn:24 Aylık / 2 Yaş" : "Age/Months - Ex:24 Months / 2 Years"}
+                    placeholder={language === 'uk' ? "Вік — напр.: 24 міс. / 2 роки" : "Age/Months - Ex:24 Months / 2 Years"}
                     tabIndex={4}
                     autoComplete="off"
                   />
@@ -524,25 +524,25 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     autoComplete="off"
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Paket Türü Seçin" : "Select Package Type"}
+                      {language === 'uk' ? "Оберіть тип абонемента" : "Select Package Type"}
                     </option>
                     <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Tek Seferlik Katılım" : "One Time Participation"}
+                      {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
                     </option>
                     <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Haftada 1 Gün" : "1 Day Per Week"}
+                      {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
                     </option>
                     <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Haftada 2 Gün" : "2 Days Per Week"}
+                      {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
                     </option>
                     <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Haftada 3 Gün" : "3 Days Per Week"}
+                      {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
                     </option>
                     <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Haftada 4 Gün" : "4 Days Per Week"}
+                      {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
                     </option>
                     <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Ücretsiz Katılım" : "Free Participation"}
+                      {language === 'uk' ? "Безкоштовне відвідування" : "Free Participation"}
                     </option>
                   </select>
                 </div>
@@ -558,9 +558,9 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   <input
                     type="text"
                     className={`${inputClasses} ${isFree ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer peer'}`}
-                    placeholder={language === 'tr' ? "Kayıt Tarihi Seçin" : "Select Registration Date"}
+                    placeholder={language === 'uk' ? "Оберіть дату реєстрації" : "Select Registration Date"}
                     value={isFree
-                      ? (language === 'tr' ? "Süresiz" : "Unlimited")
+                      ? (language === 'uk' ? "Безстроково" : "Unlimited")
                       : `${formatDate(dateRange[0].startDate)} - ${formatDate(dateRange[0].endDate)}`}
                     onClick={() => { if (!isFree) setIsCalendarOpen(!isCalendarOpen) }}
                     readOnly
@@ -569,7 +569,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     autoComplete="off"
                   />
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                    {language === 'tr' ? "Kayıt Başlangıç ve Bitiş Tarihi" : "Registration Start and End Date"}
+                    {language === 'uk' ? "Дата початку та закінчення" : "Registration Start and End Date"}
                   </div>
                   {isCalendarOpen && (
                     <div className="absolute z-50 mt-2">
@@ -642,10 +642,10 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                               background-color: #4a4a4a;
                             }
                             .rdrDateDisplayItem:first-child::after {
-                              content: "Başlangıç Tarihi";
+                              content: "Дата початку";
                             }
                             .rdrDateDisplayItem:last-child::after {
-                              content: "Bitiş Tarihi";
+                              content: "Дата закінчення";
                             }
                           `}
                         </style>
@@ -661,7 +661,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                           months={1}
                           ranges={dateRange}
                           direction="horizontal"
-                          locale={tr}
+                          locale={uk}
                           rangeColors={['#007AFF']}
                         />
                       </div>
@@ -684,19 +684,19 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     disabled={isFree}
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Ödeme Durumu Seçin" : "Select Payment Status"}
+                      {language === 'uk' ? "Оберіть статус оплати" : "Select Payment Status"}
                     </option>
                     {/* Yalnızca ücretsiz katılımda görünür (select pasif olduğu için seçilemez) */}
                     {isFree && (
                       <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Ücretsiz" : "Free"}
+                        {language === 'uk' ? "Безкоштовно" : "Free"}
                       </option>
                     )}
                     <option value="odendi" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Ödendi" : "Paid"}
+                      {language === 'uk' ? "Оплачено" : "Paid"}
                     </option>
                     <option value="beklemede" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Beklemede" : "Pending"}
+                      {language === 'uk' ? "Очікує" : "Pending"}
                     </option>
                   </select>
                 </div>
@@ -716,22 +716,22 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     disabled={formData.paymentStatus !== 'odendi'}
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Ödeme Yeri Seçin" : "Select Payment Method"}
+                      {language === 'uk' ? "Оберіть спосіб оплати" : "Select Payment Method"}
                     </option>
                     <option value="banka" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Banka" : "Bank"}
+                      {language === 'uk' ? "Банк" : "Bank"}
                     </option>
                     <option value="nakit" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Nakit" : "Cash"}
+                      {language === 'uk' ? "Готівка" : "Cash"}
                     </option>
                     <option value="kart" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'tr' ? "Kredi Kartı" : "Credit Card"}
+                      {language === 'uk' ? "Картка" : "Credit Card"}
                     </option>
                   </select>
                   {formData.paymentStatus !== 'odendi' && (
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                      {language === 'tr' 
-                        ? 'Ödeme durumu "Ödendi" seçildiğinde aktif olacaktır'
+                      {language === 'uk' 
+                        ? 'Стане активним, коли статус оплати «Оплачено»'
                         : 'Will be active when payment status is set to "Paid"'
                       }
                     </div>
@@ -749,7 +749,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     value={formData.amount}
                     onChange={handleInputChange}
                     className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.paymentStatus !== 'odendi' && 'opacity-50 cursor-not-allowed'}`}
-                    placeholder={language === 'tr' ? "0.00 ₺" : "0.00 ₺"}
+                    placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
                     tabIndex={9}
                     autoComplete="off"
                     disabled={formData.paymentStatus !== 'odendi'}
@@ -765,8 +765,8 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   />
                   {formData.paymentStatus !== 'odendi' && (
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                      {language === 'tr' 
-                        ? 'Ödeme durumu "Ödendi" seçildiğinde aktif olacaktır'
+                      {language === 'uk' 
+                        ? 'Стане активним, коли статус оплати «Оплачено»'
                         : 'Will be active when payment status is set to "Paid"'
                       }
                     </div>
@@ -781,14 +781,14 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   <input
                     type="text"
                     className={`${inputClasses} cursor-pointer peer ${formData.paymentStatus !== 'odendi' && 'opacity-50 cursor-not-allowed'}`}
-                    placeholder={language === 'tr' ? "Ödeme Yapılan Gün" : "Payment Date"}
+                    placeholder={language === 'uk' ? "День оплати" : "Payment Date"}
                     value={formData.paymentDate
                       ? formatDate(formData.paymentDate)
                       : isFree
-                        ? (language === 'tr' ? "Ödeme Alınmıyor" : "No Payment")
+                        ? (language === 'uk' ? "Оплата не стягується" : "No Payment")
                         : formData.paymentStatus === 'beklemede'
-                          ? (language === 'tr' ? "Ödeme Beklemede" : "Payment Pending")
-                          : (language === 'tr' ? "Ödeme Tarihi Seçin" : "Select Payment Date")}
+                          ? (language === 'uk' ? "Очікує оплати" : "Payment Pending")
+                          : (language === 'uk' ? "Оберіть дату оплати" : "Select Payment Date")}
                     onClick={() => formData.paymentStatus === 'odendi' && setIsPaymentDatePickerOpen(!isPaymentDatePickerOpen)}
                     readOnly
                     tabIndex={10}
@@ -797,8 +797,8 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   />
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
                     {formData.paymentStatus === 'odendi' 
-                      ? (language === 'tr' ? "Ödeme Tarihi" : "Payment Date")
-                      : (language === 'tr' ? "Ödeme durumu 'Ödendi' olduğunda aktif olacaktır" : "Will be active when payment status is 'Paid'")
+                      ? (language === 'uk' ? "Дата оплати" : "Payment Date")
+                      : (language === 'uk' ? "Стане активним, коли статус оплати «Оплачено»" : "Will be active when payment status is 'Paid'")
                     }
                   </div>
                   {isPaymentDatePickerOpen && (
@@ -862,7 +862,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                             key: 'selection'
                           }]}
                           direction="horizontal"
-                          locale={tr}
+                          locale={uk}
                           rangeColors={['#007AFF']}
                           showDateDisplay={false}
                           staticRanges={[]}
@@ -891,7 +891,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     }))
                   }}
                   className={inputClasses}
-                  placeholder={language === 'tr' ? "Not ekle..." : "Add note..."}
+                  placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
                   tabIndex={11}
                   autoComplete="off"
                 />
@@ -906,7 +906,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   tabIndex={12}
                   disabled={isLoading}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -920,10 +920,10 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{language === 'tr' ? 'Kayıt Oluşturuluyor' : 'Creating Record'}</span>
+                      <span>{language === 'uk' ? 'Створення запису' : 'Creating Record'}</span>
                     </>
                   ) : (
-                    language === 'tr' ? 'Kayıt Oluştur' : 'Create Record'
+                    language === 'uk' ? 'Створити запис' : 'Create Record'
                   )}
                 </button>
               </div>

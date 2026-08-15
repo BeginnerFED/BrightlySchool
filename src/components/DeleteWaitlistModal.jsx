@@ -23,16 +23,16 @@ export default function DeleteWaitlistModal({ isOpen, onClose, onSuccess, entry 
 
       if (error) throw error
 
-      const successMessage = language === 'tr' 
-        ? 'Kayıt başarıyla silindi.' 
+      const successMessage = language === 'uk' 
+        ? 'Запис успішно видалено.' 
         : 'Record deleted successfully.'
 
       onSuccess?.(successMessage, 'success')
       onClose()
     } catch (error) {
       console.error('Kayıt silinirken hata:', error.message)
-      const errorMessage = language === 'tr'
-        ? 'Kayıt silinirken bir hata oluştu.'
+      const errorMessage = language === 'uk'
+        ? 'Помилка при видаленні запису.'
         : 'An error occurred while deleting the record.'
       onSuccess?.(errorMessage, 'error')
     } finally {
@@ -69,27 +69,27 @@ export default function DeleteWaitlistModal({ isOpen, onClose, onSuccess, entry 
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-500" />
               </div>
               <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Kaydı Sil' : 'Delete Record'}
+                {language === 'uk' ? 'Видалити запис' : 'Delete Record'}
               </h2>
             </div>
 
             <p className="text-[#6e6e73] dark:text-[#86868b] mb-4">
-              {language === 'tr' 
-                ? 'Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.'
+              {language === 'uk' 
+                ? 'Видалити цей запис? Цю дію не можна скасувати.'
                 : 'Are you sure you want to delete this record? This action cannot be undone.'}
             </p>
 
             <div className="border-t border-[#d2d2d7] dark:border-[#2a3241] pt-4">
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Veli İsmi:' : 'Parent Name:'}</span>
+                <span>{language === 'uk' ? 'Імʼя батьків:' : 'Parent Name:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">{entry?.parent_name}</span>
               </div>
               <div className="flex items-center justify-between mt-2 text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Öğrenci İsmi:' : 'Student Name:'}</span>
+                <span>{language === 'uk' ? 'Імʼя дитини:' : 'Student Name:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">{entry?.student_name}</span>
               </div>
               <div className="flex items-center justify-between mt-2 text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Yaş/Aylık:' : 'Age/Months:'}</span>
+                <span>{language === 'uk' ? 'Вік:' : 'Age/Months:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">{entry?.student_age}</span>
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function DeleteWaitlistModal({ isOpen, onClose, onSuccess, entry 
                 className="flex-1 h-11 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#161616] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 dark:focus:ring-[#2a2a2a] transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
                 disabled={isLoading}
               >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
+                {language === 'uk' ? 'Скасувати' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -116,10 +116,10 @@ export default function DeleteWaitlistModal({ isOpen, onClose, onSuccess, entry 
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{language === 'tr' ? 'Siliniyor' : 'Deleting'}</span>
+                    <span>{language === 'uk' ? 'Видалення' : 'Deleting'}</span>
                   </>
                 ) : (
-                  language === 'tr' ? 'Sil' : 'Delete'
+                  language === 'uk' ? 'Видалити' : 'Delete'
                 )}
               </button>
             </div>

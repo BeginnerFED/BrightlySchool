@@ -37,11 +37,11 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                  {language === 'tr' ? 'Kaydı Arşivle' : 'Archive Record'}
+                  {language === 'uk' ? 'Архівувати запис' : 'Archive Record'}
                 </h2>
                 <p className="text-[#6e6e73] dark:text-[#86868b] text-sm">
-                  {language === 'tr' 
-                    ? 'Bu kayıt arşive taşınacak'
+                  {language === 'uk' 
+                    ? 'Запис буде перенесено до архіву'
                     : 'This record will be moved to archive'}
                 </p>
               </div>
@@ -52,7 +52,7 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                 {/* Öğrenci Bilgileri */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[#6e6e73] dark:text-[#86868b]">
-                    {language === 'tr' ? 'Öğrenci:' : 'Student:'}
+                    {language === 'uk' ? 'Дитина:' : 'Student:'}
                   </span>
                   <span className="font-medium text-[#1d1d1f] dark:text-white">
                     {entry?.student_name}
@@ -62,7 +62,7 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                 {/* Yaş Bilgisi */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[#6e6e73] dark:text-[#86868b]">
-                    {language === 'tr' ? 'Yaş:' : 'Age:'}
+                    {language === 'uk' ? 'Вік:' : 'Age:'}
                   </span>
                   <span className="font-medium text-[#1d1d1f] dark:text-white">
                     {entry?.student_age}
@@ -72,7 +72,7 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                 {/* Veli Bilgisi */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[#6e6e73] dark:text-[#86868b]">
-                    {language === 'tr' ? 'Veli:' : 'Parent:'}
+                    {language === 'uk' ? 'Батьки:' : 'Parent:'}
                   </span>
                   <span className="font-medium text-[#1d1d1f] dark:text-white">
                     {entry?.parent_name}
@@ -83,8 +83,8 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
               {/* Uyarı Mesajı */}
               <div className="rounded-xl bg-yellow-50 dark:bg-yellow-900/20 p-4 border border-yellow-200 dark:border-yellow-900/30">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  {language === 'tr' 
-                    ? 'Kayıt arşive taşındıktan sonra aktif kayıtlar listesinde görünmeyecektir. Gerektiğinde arşiv görünümünden tekrar aktifleştirilebilir.'
+                  {language === 'uk' 
+                    ? 'Після архівування запис не відображатиметься у списку активних. За потреби його можна знову активувати з архіву.'
                     : 'After archiving, the record will not appear in the active records list. You can reactivate it from the archive view when needed.'}
                 </p>
               </div>
@@ -98,7 +98,7 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                 className="flex-1 h-11 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#161616] focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
                 disabled={isLoading}
               >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
+                {language === 'uk' ? 'Скасувати' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -112,12 +112,12 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{language === 'tr' ? 'Arşivleniyor' : 'Archiving'}</span>
+                    <span>{language === 'uk' ? 'Архівування' : 'Archiving'}</span>
                   </>
                 ) : (
                   <>
                     <ArchiveBoxXMarkIcon className="w-5 h-5" />
-                    <span>{language === 'tr' ? 'Arşivle' : 'Archive'}</span>
+                    <span>{language === 'uk' ? 'В архів' : 'Archive'}</span>
                   </>
                 )}
               </button>

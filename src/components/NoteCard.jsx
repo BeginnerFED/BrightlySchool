@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 import { format } from 'date-fns'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 
 export default function NoteCard({ note, onFavorite, onEdit, onDelete }) {
   const { language } = useLanguage()
@@ -15,7 +15,7 @@ export default function NoteCard({ note, onFavorite, onEdit, onDelete }) {
   // Tarihi formatla
   const formatDate = (date) => {
     return format(new Date(date), 'dd MMM yyyy', {
-      locale: language === 'tr' ? tr : undefined
+      locale: language === 'uk' ? uk : undefined
     })
   }
 
@@ -90,7 +90,7 @@ export default function NoteCard({ note, onFavorite, onEdit, onDelete }) {
             className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] hover:bg-[#0071e3]/5 dark:hover:bg-[#0071e3]/10"
           >
             <PencilSquareIcon className="w-4 h-4" />
-            <span>{language === 'tr' ? 'Düzenle' : 'Edit'}</span>
+            <span>{language === 'uk' ? 'Редагувати' : 'Edit'}</span>
           </button>
 
           <button
@@ -102,7 +102,7 @@ export default function NoteCard({ note, onFavorite, onEdit, onDelete }) {
             ) : (
               <StarIconOutline className="w-4 h-4" />
             )}
-            <span>{language === 'tr' ? 'Favori' : 'Favorite'}</span>
+            <span>{language === 'uk' ? 'Обране' : 'Favorite'}</span>
           </button>
 
           <button
@@ -110,7 +110,7 @@ export default function NoteCard({ note, onFavorite, onEdit, onDelete }) {
             className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#ef4444] dark:hover:text-[#ef4444] hover:bg-[#ef4444]/5 dark:hover:bg-[#ef4444]/10"
           >
             <TrashIcon className="w-4 h-4" />
-            <span>{language === 'tr' ? 'Sil' : 'Delete'}</span>
+            <span>{language === 'uk' ? 'Видалити' : 'Delete'}</span>
           </button>
         </div>
       </div>

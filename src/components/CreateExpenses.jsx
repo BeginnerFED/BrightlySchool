@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
 import Toast from './ui/Toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
   XMarkIcon,
@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 // Türkçe lokalizasyonu kaydet
-registerLocale('tr', tr)
+registerLocale('uk', uk)
 
 // DatePicker özel stilleri
 const datePickerStyles = `
@@ -197,7 +197,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
       // Toast mesajını göster
       setToast({
         visible: true,
-        message: language === 'tr' ? 'Gider kaydı başarıyla oluşturuldu.' : 'Expense record has been successfully created.',
+        message: language === 'uk' ? 'Витрату успішно додано.' : 'Expense record has been successfully created.',
         type: 'success'
       })
 
@@ -210,7 +210,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
       console.error('Gider kaydı oluşturulurken hata:', error.message)
       setToast({
         visible: true,
-        message: language === 'tr' ? 'Gider kaydı oluşturulurken bir hata oluştu.' : 'An error occurred while creating the expense record.',
+        message: language === 'uk' ? 'Помилка при додаванні витрати.' : 'An error occurred while creating the expense record.',
         type: 'error'
       })
     } finally {
@@ -235,7 +235,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
         value={value}
         readOnly
         className={`${inputClasses} cursor-pointer`}
-        placeholder={language === 'tr' ? "Tarih Seçin" : "Select Date"}
+        placeholder={language === 'uk' ? "Оберіть дату" : "Select Date"}
       />
     </div>
   ))
@@ -341,10 +341,10 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
             {/* Header */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Yeni Gider Kaydı' : 'New Expense Record'}
+                {language === 'uk' ? 'Нова витрата' : 'New Expense Record'}
               </h2>
               <p className="mt-1 text-[#6e6e73] dark:text-[#86868b]">
-                {language === 'tr' ? 'Lütfen gerekli bilgileri doldurun' : 'Please fill in the required information'}
+                {language === 'uk' ? 'Заповніть обовʼязкові поля' : 'Please fill in the required information'}
               </p>
             </div>
 
@@ -370,7 +370,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                         }))
                       }}
                       className={inputClasses}
-                      placeholder={language === 'tr' ? "Gider Başlığı" : "Expense Title"}
+                      placeholder={language === 'uk' ? "Назва витрати" : "Expense Title"}
                       tabIndex={1}
                       autoComplete="off"
                     />
@@ -378,10 +378,11 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
 
                   {/* Tarih */}
                   <DatePicker
+                    portalId="root"
                     selected={formData.date}
                     onChange={(date) => setFormData(prev => ({ ...prev, date }))}
                     dateFormat="dd.MM.yyyy"
-                    locale={language === 'tr' ? 'tr' : 'en'}
+                    locale={language === 'uk' ? 'uk' : 'en'}
                     customInput={<CustomInput />}
                   />
 
@@ -399,37 +400,37 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                       autoComplete="off"
                     >
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Kategori Seçin" : "Select Category"}
+                        {language === 'uk' ? "Оберіть категорію" : "Select Category"}
                       </option>
                       <option value="kira" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Kira" : "Rent"}
+                        {language === 'uk' ? "Оренда" : "Rent"}
                       </option>
                       <option value="elektrik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Elektrik" : "Electricity"}
+                        {language === 'uk' ? "Електрика" : "Electricity"}
                       </option>
                       <option value="su" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Su" : "Water"}
+                        {language === 'uk' ? "Вода" : "Water"}
                       </option>
                       <option value="internet" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "İnternet" : "Internet"}
+                        {language === 'uk' ? "Інтернет" : "Internet"}
                       </option>
                       <option value="maas" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Maaş" : "Salary"}
+                        {language === 'uk' ? "Зарплата" : "Salary"}
                       </option>
                       <option value="malzeme" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Malzeme" : "Materials"}
+                        {language === 'uk' ? "Матеріали" : "Materials"}
                       </option>
                       <option value="mutfak" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Mutfak" : "Kitchen"}
+                        {language === 'uk' ? "Кухня" : "Kitchen"}
                       </option>
                       <option value="reklam" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Reklam" : "Advertising"}
+                        {language === 'uk' ? "Реклама" : "Advertising"}
                       </option>
                       <option value="filament" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Filament" : "Filament"}
+                        {language === 'uk' ? "Філамент" : "Філамент"}
                       </option>
                       <option value="diger" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Diğer" : "Other"}
+                        {language === 'uk' ? "Інше" : "Other"}
                       </option>
                     </select>
                   </div>
@@ -448,7 +449,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                       value={formData.amount}
                       onChange={handleInputChange}
                       className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                      placeholder={language === 'tr' ? "0.00 ₺" : "0.00 ₺"}
+                      placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
                       tabIndex={4}
                       autoComplete="off"
                       onKeyPress={(e) => {
@@ -477,16 +478,16 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                       autoComplete="off"
                     >
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Ödeme Yöntemi Seçin" : "Select Payment Method"}
+                        {language === 'uk' ? "Оберіть спосіб оплати" : "Select Payment Method"}
                       </option>
                       <option value="banka" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Banka" : "Bank"}
+                        {language === 'uk' ? "Банк" : "Bank"}
                       </option>
                       <option value="nakit" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Nakit" : "Cash"}
+                        {language === 'uk' ? "Готівка" : "Cash"}
                       </option>
                       <option value="kart" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Kredi Kartı" : "Credit Card"}
+                        {language === 'uk' ? "Картка" : "Credit Card"}
                       </option>
                     </select>
                   </div>
@@ -508,7 +509,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                         }))
                       }}
                       className={inputClasses}
-                      placeholder={language === 'tr' ? "Not ekle..." : "Add note..."}
+                      placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
                       tabIndex={6}
                       autoComplete="off"
                     />
@@ -528,7 +529,7 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                   tabIndex={7}
                   disabled={isLoading}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -542,10 +543,10 @@ export default function CreateExpenses({ isOpen, onClose, onSuccess }) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{language === 'tr' ? 'Kaydediliyor' : 'Saving'}</span>
+                      <span>{language === 'uk' ? 'Збереження' : 'Saving'}</span>
                     </>
                   ) : (
-                    language === 'tr' ? 'Kaydet' : 'Save'
+                    language === 'uk' ? 'Зберегти' : 'Save'
                   )}
                 </button>
               </div>

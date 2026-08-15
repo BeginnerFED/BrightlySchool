@@ -96,12 +96,12 @@ export default function Registration() {
   // Paket türünü formatla
   const formatPackageType = (type) => {
     const types = {
-      'tek-seferlik': language === 'tr' ? 'Tek Seferlik Katılım' : 'One Time Participation',
-      'hafta-1': language === 'tr' ? 'Haftada 1 Gün' : '1 Day Per Week',
-      'hafta-2': language === 'tr' ? 'Haftada 2 Gün' : '2 Days Per Week',
-      'hafta-3': language === 'tr' ? 'Haftada 3 Gün' : '3 Days Per Week',
-      'hafta-4': language === 'tr' ? 'Haftada 4 Gün' : '4 Days Per Week',
-      'ucretsiz': language === 'tr' ? 'Ücretsiz Katılım' : 'Free Participation'
+      'tek-seferlik': language === 'uk' ? 'Разове відвідування' : 'One Time Participation',
+      'hafta-1': language === 'uk' ? '1 день на тиждень' : '1 Day Per Week',
+      'hafta-2': language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week',
+      'hafta-3': language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week',
+      'hafta-4': language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week',
+      'ucretsiz': language === 'uk' ? 'Безкоштовне відвідування' : 'Free Participation'
     }
     return types[type] || type
   }
@@ -109,9 +109,9 @@ export default function Registration() {
   // Ödeme durumunu formatla
   const formatPaymentStatus = (status) => {
     const statuses = {
-      'odendi': language === 'tr' ? 'Ödendi' : 'Paid',
-      'beklemede': language === 'tr' ? 'Beklemede' : 'Pending',
-      'ucretsiz': language === 'tr' ? 'Ücretsiz' : 'Free'
+      'odendi': language === 'uk' ? 'Оплачено' : 'Paid',
+      'beklemede': language === 'uk' ? 'Очікує' : 'Pending',
+      'ucretsiz': language === 'uk' ? 'Безкоштовно' : 'Free'
     }
     return statuses[status] || status
   }
@@ -119,17 +119,17 @@ export default function Registration() {
   // Ödeme yöntemini formatla
   const formatPaymentMethod = (method) => {
     const methods = {
-      'banka': language === 'tr' ? 'Banka' : 'Bank',
-      'nakit': language === 'tr' ? 'Nakit' : 'Cash',
-      'kart': language === 'tr' ? 'Kredi Kartı' : 'Credit Card',
-      'belirlenmedi': <span className="capitalize">{language === 'tr' ? 'belirlenmedi' : 'not specified'}</span>
+      'banka': language === 'uk' ? 'Банк' : 'Bank',
+      'nakit': language === 'uk' ? 'Готівка' : 'Cash',
+      'kart': language === 'uk' ? 'Картка' : 'Credit Card',
+      'belirlenmedi': <span className="capitalize">{language === 'uk' ? 'belirlenmedi' : 'not specified'}</span>
     }
     return methods[method] || method
   }
 
   // Tarihi formatla
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('tr-TR', {
+    return new Date(date).toLocaleDateString('uk-UA', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -161,8 +161,8 @@ export default function Registration() {
   const handleExtendClick = (registration) => {
     if (registration.package_type === 'ucretsiz') {
       showToast(
-        language === 'tr'
-          ? 'Ücretsiz katılımlarda paket uzatma yapılmaz'
+        language === 'uk'
+          ? 'Безкоштовні відвідування не продовжуються'
           : 'Package extension is not available for free participation',
         'error'
       );
@@ -170,8 +170,8 @@ export default function Registration() {
     }
     if (registration.payment_status === 'beklemede') {
       showToast(
-        language === 'tr' 
-          ? "Uzatma işlemi için ödeme durumu 'Beklemede' olamaz"
+        language === 'uk' 
+          ? "Для продовження статус оплати не може бути «Очікує»"
           : "Payment status cannot be 'Pending' for extension",
         'error'
       );
@@ -224,15 +224,15 @@ export default function Registration() {
 
       // Başarılı mesajı göster
       showToast(
-        language === 'tr' 
-          ? `${registrationToDelete.student_name} isimli kayıt başarıyla arşivlendi.`
+        language === 'uk' 
+          ? `Запис ${registrationToDelete.student_name} успішно архівовано.`
           : `Record for ${registrationToDelete.student_name} has been successfully archived.`
       )
     } catch (error) {
       console.error('Kayıt arşivlenirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Kayıt arşivlenirken bir hata oluştu.'
+        language === 'uk'
+          ? 'Помилка при архівуванні запису.'
           : 'An error occurred while archiving the record.',
         'error'
       )
@@ -277,8 +277,8 @@ export default function Registration() {
     } catch (error) {
       console.error('Geçmiş kayıtlar getirilirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Geçmiş kayıtlar getirilirken bir hata oluştu.'
+        language === 'uk'
+          ? 'Помилка завантаження архівних записів.'
           : 'An error occurred while fetching history records.',
         'error'
       )
@@ -311,15 +311,15 @@ export default function Registration() {
 
       // Başarılı mesajı göster
       showToast(
-        language === 'tr' 
-          ? `${registrationToActivate.student_name} isimli kayıt başarıyla aktifleştirildi.`
+        language === 'uk' 
+          ? `Запис ${registrationToActivate.student_name} успішно активовано.`
           : `Record for ${registrationToActivate.student_name} has been successfully activated.`
       )
     } catch (error) {
       console.error('Kayıt aktifleştirilirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Kayıt aktifleştirilirken bir hata oluştu.'
+        language === 'uk'
+          ? 'Помилка при активації запису.'
           : 'An error occurred while activating the record.',
         'error'
       )
@@ -335,14 +335,14 @@ export default function Registration() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 sm:py-0 gap-4 sm:gap-0">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Kayıtlar' : 'Registrations'}
+              {language === 'uk' ? 'Записи' : 'Registrations'}
               <span className="ml-2 text-sm font-normal text-[#6e6e73] dark:text-[#86868b]">
                 ({filteredRegistrations.length})
               </span>
             </h1>
             {filters.showArchived && (
               <span className="px-2 py-1 text-xs font-medium bg-[#ef4444]/10 text-[#ef4444] dark:bg-[#ef4444]/20 rounded-md">
-                {language === 'tr' ? 'Arşiv' : 'Archive'}
+                {language === 'uk' ? 'Архів' : 'Archive'}
               </span>
             )}
           </div>
@@ -352,7 +352,7 @@ export default function Registration() {
               <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
               <input
                 type="text"
-                placeholder={language === 'tr' ? 'İsim veya telefon ile ara...' : 'Search by name or phone...'}
+                placeholder={language === 'uk' ? 'Пошук за імʼям або телефоном...' : 'Search by name or phone...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-10 sm:h-8 pl-9 pr-4 rounded-lg text-sm border border-[#d2d2d7] dark:border-[#2a3241] bg-white/80 dark:bg-[#121621] text-[#1d1d1f] dark:text-white placeholder-[#86868b] focus:ring-0 focus:border-[#0071e3] dark:focus:border-[#0071e3] transition-colors"
@@ -376,7 +376,7 @@ export default function Registration() {
               className="h-10 sm:h-8 px-4 bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium rounded-lg hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
             >
               <UserPlusIcon className="w-4 h-4" />
-              <span>{language === 'tr' ? 'Yeni Kayıt' : 'New Registration'}</span>
+              <span>{language === 'uk' ? 'Нова реєстрація' : 'New Registration'}</span>
             </button>
           </div>
         </div>
@@ -470,12 +470,12 @@ export default function Registration() {
             <div className="text-center py-12">
               <UserIcon className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
               <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-                {language === 'tr' ? 'Kayıt Bulunamadı' : 'No Records Found'}
+                {language === 'uk' ? 'Записів не знайдено' : 'No Records Found'}
               </h3>
               <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
                 {searchTerm 
-                  ? (language === 'tr' ? 'Arama kriterlerinize uygun kayıt bulunamadı.' : 'No records match your search criteria.')
-                  : (language === 'tr' ? 'Henüz kayıt eklenmemiş.' : 'No records have been added yet.')}
+                  ? (language === 'uk' ? 'За вашим запитом нічого не знайдено.' : 'No records match your search criteria.')
+                  : (language === 'uk' ? 'Записів ще немає.' : 'No records have been added yet.')}
               </p>
             </div>
           ) : (
@@ -560,7 +560,7 @@ export default function Registration() {
                           <CalendarDaysIcon className="w-[18px] h-[18px] shrink-0" />
                           <span className="text-[12px]">
                             {registration.package_type === 'ucretsiz'
-                              ? (language === 'tr' ? 'Süresiz' : 'Unlimited')
+                              ? (language === 'uk' ? 'Безстроково' : 'Unlimited')
                               : `${formatDate(registration.package_start_date)} - ${formatDate(registration.package_end_date)}`}
                           </span>
                         </div>
@@ -569,7 +569,7 @@ export default function Registration() {
                           <CreditCardIcon className="w-[18px] h-[18px] shrink-0" />
                           <span>
                             {registration.package_type === 'ucretsiz' ? (
-                              language === 'tr' ? 'Ücretsiz' : 'Free'
+                              language === 'uk' ? 'Безкоштовно' : 'Free'
                             ) : (
                               <>
                                 {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₺
@@ -599,7 +599,7 @@ export default function Registration() {
                           className="w-full h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] hover:bg-[#0071e3]/5 dark:hover:bg-[#0071e3]/10"
                         >
                           <ArrowUturnUpIcon className="w-4 h-4" />
-                          <span>{language === 'tr' ? 'Aktifleştir' : 'Activate'}</span>
+                          <span>{language === 'uk' ? 'Активувати' : 'Activate'}</span>
                         </button>
                       </div>
                     ) : (
@@ -609,7 +609,7 @@ export default function Registration() {
                           className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] hover:bg-[#0071e3]/5 dark:hover:bg-[#0071e3]/10"
                         >
                           <PencilSquareIcon className="w-4 h-4" />
-                          <span>{language === 'tr' ? 'Güncelle' : 'Update'}</span>
+                          <span>{language === 'uk' ? 'Оновити' : 'Update'}</span>
                         </button>
 
                         {registration.package_type !== 'ucretsiz' && (
@@ -618,7 +618,7 @@ export default function Registration() {
                             className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#34c759] dark:hover:text-[#32d74b] hover:bg-[#34c759]/5 dark:hover:bg-[#32d74b]/10"
                           >
                             <ArrowPathIcon className="w-4 h-4" />
-                            <span>{language === 'tr' ? 'Uzat' : 'Extend'}</span>
+                            <span>{language === 'uk' ? 'Продовжити' : 'Extend'}</span>
                           </button>
                         )}
 
@@ -627,7 +627,7 @@ export default function Registration() {
                           className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#ef4444] dark:hover:text-[#ef4444] hover:bg-[#ef4444]/5 dark:hover:bg-[#ef4444]/10"
                         >
                           <TrashIcon className="w-4 h-4" />
-                          <span>{language === 'tr' ? 'Arşivle' : 'Archive'}</span>
+                          <span>{language === 'uk' ? 'В архів' : 'Archive'}</span>
                         </button>
                       </div>
                     )}
@@ -648,7 +648,7 @@ export default function Registration() {
           {/* Sheet Header */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
             <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Filtreler' : 'Filters'}
+              {language === 'uk' ? 'Фільтри' : 'Filters'}
             </h2>
             <button
               onClick={() => setIsFilterSheetOpen(false)}
@@ -663,14 +663,14 @@ export default function Registration() {
             {/* Geçmiş Öğrenciler Toggle */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Geçmiş Öğrenciler' : 'Past Students'}
+                {language === 'uk' ? 'Колишні діти' : 'Past Students'}
               </h3>
               <button
                 onClick={() => setFilters(prev => ({ ...prev, showArchived: !prev.showArchived }))}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors"
               >
                 <span className="text-sm">
-                  {language === 'tr' ? 'Arşivlenmiş kayıtları göster' : 'Show archived records'}
+                  {language === 'uk' ? 'Показати архівні записи' : 'Show archived records'}
                 </span>
                 <div className={`
                   w-10 h-6 rounded-full transition-colors relative
@@ -687,7 +687,7 @@ export default function Registration() {
             {/* Ödeme Durumu Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Ödeme Durumu' : 'Payment Status'}
+                {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -700,7 +700,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Ödendi' : 'Paid'}
+                  {language === 'uk' ? 'Оплачено' : 'Paid'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, paymentStatus: 'beklemede' }))}
@@ -712,7 +712,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Beklemede' : 'Pending'}
+                  {language === 'uk' ? 'Очікує' : 'Pending'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, paymentStatus: 'ucretsiz' }))}
@@ -724,7 +724,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Ücretsiz' : 'Free'}
+                  {language === 'uk' ? 'Безкоштовно' : 'Free'}
                 </button>
               </div>
             </div>
@@ -732,7 +732,7 @@ export default function Registration() {
             {/* Paket Türü Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Paket Türü' : 'Package Type'}
+                {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
               </h3>
               <div className="grid grid-cols-1 gap-2">
                 <button
@@ -745,7 +745,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Tek Seferlik Katılım' : 'One Time Participation'}
+                  {language === 'uk' ? 'Разове відвідування' : 'One Time Participation'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-1' }))}
@@ -757,7 +757,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Haftada 1 Gün' : '1 Day Per Week'}
+                  {language === 'uk' ? '1 день на тиждень' : '1 Day Per Week'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-2' }))}
@@ -769,7 +769,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Haftada 2 Gün' : '2 Days Per Week'}
+                  {language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-3' }))}
@@ -781,7 +781,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Haftada 3 Gün' : '3 Days Per Week'}
+                  {language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-4' }))}
@@ -793,7 +793,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Haftada 4 Gün' : '4 Days Per Week'}
+                  {language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, packageType: 'ucretsiz' }))}
@@ -805,7 +805,7 @@ export default function Registration() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Ücretsiz Katılım' : 'Free Participation'}
+                  {language === 'uk' ? 'Безкоштовне відвідування' : 'Free Participation'}
                 </button>
               </div>
             </div>
@@ -821,13 +821,13 @@ export default function Registration() {
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+                {language === 'uk' ? 'Очистити фільтри' : 'Clear Filters'}
               </button>
               <button
                 onClick={() => setIsFilterSheetOpen(false)}
                 className="flex-1 h-10 bg-[#1d1d1f] dark:bg-[#0071e3] text-white font-medium rounded-xl hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Uygula' : 'Apply'}
+                {language === 'uk' ? 'Застосувати' : 'Apply'}
               </button>
             </div>
           </div>
@@ -941,8 +941,8 @@ export default function Registration() {
           <div className="flex items-center justify-between px-6 h-16 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
             <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-white">
               {selectedHistoryRegistration && (
-                language === 'tr' 
-                  ? `${selectedHistoryRegistration.student_name} İçin Geçmiş Kayıtlar`
+                language === 'uk' 
+                  ? `Історія записів: ${selectedHistoryRegistration.student_name}`
                   : `History Records for ${selectedHistoryRegistration.student_name}`
               )}
             </h2>
@@ -1020,7 +1020,7 @@ export default function Registration() {
                         <UserPlusIcon className="w-3.5 h-3.5 text-white" />
                       </div>
                       <span className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                        {language === 'tr' ? 'İlk Kayıt' : 'Initial Registration'}
+                        {language === 'uk' ? 'Перша реєстрація' : 'Initial Registration'}
                       </span>
                       <span className="text-xs text-[#86868b]">
                         {formatDate(selectedHistoryRegistration.created_at)}
@@ -1071,7 +1071,7 @@ export default function Registration() {
                               <ArrowPathIcon className="w-3.5 h-3.5 text-white" />
                             </div>
                             <span className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                              {language === 'tr' ? `${index + 1}. Uzatma` : `Extension #${index + 1}`}
+                              {language === 'uk' ? `${index + 1}. Uzatma` : `Extension #${index + 1}`}
                             </span>
                             <span className="text-xs text-[#86868b]">
                               {formatDate(history.created_at)}
@@ -1088,7 +1088,7 @@ export default function Registration() {
                                     setIsEditExtensionModalOpen(true)
                                   }}
                                   className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-[#2a3241] border border-[#d2d2d7] dark:border-[#424245] text-[#424245] dark:text-[#86868b] hover:text-[#0071e3] hover:border-[#0071e3] dark:hover:text-[#0071e3] dark:hover:border-[#0071e3] shadow-sm transition-all"
-                                  title={language === 'tr' ? 'Düzenle' : 'Edit'}
+                                  title={language === 'uk' ? 'Редагувати' : 'Edit'}
                                 >
                                   <PencilSquareIcon className="w-3.5 h-3.5" />
                                 </button>
@@ -1100,7 +1100,7 @@ export default function Registration() {
                                     setIsDeleteExtensionModalOpen(true)
                                   }}
                                   className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-[#2a3241] border border-[#d2d2d7] dark:border-[#424245] text-[#424245] dark:text-[#86868b] hover:text-red-600 hover:border-red-600 dark:hover:text-red-500 dark:hover:border-red-500 shadow-sm transition-all"
-                                  title={language === 'tr' ? 'Sil' : 'Delete'}
+                                  title={language === 'uk' ? 'Видалити' : 'Delete'}
                                 >
                                   <TrashIcon className="w-3.5 h-3.5" />
                                 </button>
@@ -1191,11 +1191,11 @@ export default function Registration() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? 'Kaydı Aktifleştir' : 'Activate Record'}
+                    {language === 'uk' ? 'Активувати запис' : 'Activate Record'}
                   </h2>
                   <p className="text-[#6e6e73] dark:text-[#86868b] text-sm">
-                    {language === 'tr' 
-                      ? 'Bu kayıt aktif listeye taşınacak'
+                    {language === 'uk' 
+                      ? 'Запис буде перенесено до активних'
                       : 'This record will be moved to active list'}
                   </p>
                 </div>
@@ -1206,7 +1206,7 @@ export default function Registration() {
                   {/* Öğrenci Bilgileri */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'tr' ? 'Öğrenci:' : 'Student:'}
+                      {language === 'uk' ? 'Дитина:' : 'Student:'}
                     </span>
                     <span className="font-medium text-[#1d1d1f] dark:text-white">
                       {registrationToActivate?.student_name}
@@ -1216,7 +1216,7 @@ export default function Registration() {
                   {/* Yaş Bilgisi */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'tr' ? 'Yaş:' : 'Age:'}
+                      {language === 'uk' ? 'Вік:' : 'Age:'}
                     </span>
                     <span className="font-medium text-[#1d1d1f] dark:text-white">
                       {registrationToActivate?.student_age}
@@ -1226,7 +1226,7 @@ export default function Registration() {
                   {/* Veli Bilgisi */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'tr' ? 'Veli:' : 'Parent:'}
+                      {language === 'uk' ? 'Батьки:' : 'Parent:'}
                     </span>
                     <span className="font-medium text-[#1d1d1f] dark:text-white">
                       {registrationToActivate?.parent_name}
@@ -1237,8 +1237,8 @@ export default function Registration() {
                 {/* Bilgi Mesajı */}
                 <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-900/30">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {language === 'tr' 
-                      ? 'Bu işlem kaydı arşivden çıkarıp aktif kayıtlar listesine taşıyacaktır.'
+                    {language === 'uk' 
+                      ? 'Запис буде вилучено з архіву та перенесено до активних.'
                       : 'This action will move the record from archive to the active records list.'}
                   </p>
                 </div>
@@ -1255,7 +1255,7 @@ export default function Registration() {
                   className="flex-1 h-11 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#161616] focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
                   disabled={isActivating}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="button"
@@ -1269,12 +1269,12 @@ export default function Registration() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{language === 'tr' ? 'Aktifleştiriliyor' : 'Activating'}</span>
+                      <span>{language === 'uk' ? 'Активація' : 'Activating'}</span>
                     </>
                   ) : (
                     <>
                       <ArrowUturnUpIcon className="w-5 h-5" />
-                      <span>{language === 'tr' ? 'Aktifleştir' : 'Activate'}</span>
+                      <span>{language === 'uk' ? 'Активувати' : 'Activate'}</span>
                     </>
                   )}
                 </button>

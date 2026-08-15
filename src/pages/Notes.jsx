@@ -75,8 +75,8 @@ export default function Notes() {
     } catch (error) {
       console.error('Notlar getirilirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Notlar getirilirken bir hata oluştu.'
+        language === 'uk'
+          ? 'Помилка завантаження нотаток.'
           : 'An error occurred while fetching notes.',
         'error'
       )
@@ -132,15 +132,15 @@ export default function Notes() {
       ))
 
       showToast(
-        language === 'tr'
-          ? `Not ${!note.is_favorite ? 'favorilere eklendi' : 'favorilerden çıkarıldı'}`
+        language === 'uk'
+          ? `Нотатку ${!note.is_favorite ? 'додано в обрані' : 'прибрано з обраних'}`
           : `Note ${!note.is_favorite ? 'added to' : 'removed from'} favorites`
       )
     } catch (error) {
       console.error('Not favorilerken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Not favorilerken bir hata oluştu'
+        language === 'uk'
+          ? 'Помилка при додаванні в обране'
           : 'An error occurred while updating favorite status',
         'error'
       )
@@ -167,15 +167,15 @@ export default function Notes() {
       setNotes(notes.filter(n => n.id !== note.id))
 
       showToast(
-        language === 'tr'
-          ? 'Not başarıyla silindi'
+        language === 'uk'
+          ? 'Нотатку успішно видалено'
           : 'Note deleted successfully'
       )
     } catch (error) {
       console.error('Not silinirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Not silinirken bir hata oluştu'
+        language === 'uk'
+          ? 'Помилка при видаленні нотатки'
           : 'An error occurred while deleting the note',
         'error'
       )
@@ -209,15 +209,15 @@ export default function Notes() {
       ))
 
       showToast(
-        language === 'tr'
-          ? 'Not başarıyla güncellendi'
+        language === 'uk'
+          ? 'Нотатку успішно оновлено'
           : 'Note updated successfully'
       )
     } catch (error) {
       console.error('Not güncellenirken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Not güncellenirken bir hata oluştu'
+        language === 'uk'
+          ? 'Помилка при оновленні нотатки'
           : 'An error occurred while updating the note',
         'error'
       )
@@ -244,15 +244,15 @@ export default function Notes() {
       setNotes([data[0], ...notes])
 
       showToast(
-        language === 'tr'
-          ? 'Not başarıyla oluşturuldu'
+        language === 'uk'
+          ? 'Нотатку успішно створено'
           : 'Note created successfully'
       )
     } catch (error) {
       console.error('Not oluşturulurken hata:', error.message)
       showToast(
-        language === 'tr'
-          ? 'Not oluşturulurken bir hata oluştu'
+        language === 'uk'
+          ? 'Помилка при створенні нотатки'
           : 'An error occurred while creating the note',
         'error'
       )
@@ -266,7 +266,7 @@ export default function Notes() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 sm:py-0 gap-4 sm:gap-0">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-            {language === 'tr' ? 'Notlar' : 'Notes'}
+            {language === 'uk' ? 'Нотатки' : 'Notes'}
             <span className="ml-2 text-sm font-normal text-[#6e6e73] dark:text-[#86868b]">
               ({filteredNotes.length})
             </span>
@@ -278,7 +278,7 @@ export default function Notes() {
             <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
             <input
               type="text"
-              placeholder={language === 'tr' ? 'Notlarda ara...' : 'Search notes...'}
+              placeholder={language === 'uk' ? 'Пошук у нотатках...' : 'Search notes...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-10 sm:h-8 pl-9 pr-4 rounded-lg text-sm border border-[#d2d2d7] dark:border-[#2a3241] bg-white/80 dark:bg-[#121621] text-[#1d1d1f] dark:text-white placeholder-[#86868b] focus:ring-0 focus:border-[#0071e3] dark:focus:border-[#0071e3] transition-colors"
@@ -302,7 +302,7 @@ export default function Notes() {
             className="h-10 sm:h-8 px-4 bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium rounded-lg hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <PlusIcon className="w-4 h-4" />
-            <span>{language === 'tr' ? 'Yeni Not' : 'New Note'}</span>
+            <span>{language === 'uk' ? 'Нова нотатка' : 'New Note'}</span>
           </button>
         </div>
       </div>
@@ -360,12 +360,12 @@ export default function Notes() {
           <div className="text-center py-12">
             <DocumentTextIcon className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
             <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-              {language === 'tr' ? 'Not Bulunamadı' : 'No Notes Found'}
+              {language === 'uk' ? 'Нотаток не знайдено' : 'No Notes Found'}
             </h3>
             <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
               {searchTerm 
-                ? (language === 'tr' ? 'Arama kriterlerinize uygun not bulunamadı.' : 'No notes match your search criteria.')
-                : (language === 'tr' ? 'Henüz not eklenmemiş.' : 'No notes have been added yet.')}
+                ? (language === 'uk' ? 'За вашим запитом нотаток не знайдено.' : 'No notes match your search criteria.')
+                : (language === 'uk' ? 'Нотаток ще немає.' : 'No notes have been added yet.')}
             </p>
           </div>
         ) : (
@@ -402,7 +402,7 @@ export default function Notes() {
           {/* Sheet Header */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
             <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Filtreler' : 'Filters'}
+              {language === 'uk' ? 'Фільтри' : 'Filters'}
             </h2>
             <button
               onClick={() => setIsFilterSheetOpen(false)}
@@ -417,14 +417,14 @@ export default function Notes() {
             {/* Favoriler Toggle */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Favoriler' : 'Favorites'}
+                {language === 'uk' ? 'Обрані' : 'Favorites'}
               </h3>
               <button
                 onClick={() => setFilters(prev => ({ ...prev, showFavorites: !prev.showFavorites }))}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors"
               >
                 <span className="text-sm">
-                  {language === 'tr' ? 'Sadece favorileri göster' : 'Show only favorites'}
+                  {language === 'uk' ? 'Показати лише обрані' : 'Show only favorites'}
                 </span>
                 <div className={`
                   w-10 h-6 rounded-full transition-colors relative
@@ -441,7 +441,7 @@ export default function Notes() {
             {/* Sıralama */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Sıralama' : 'Sort By'}
+                {language === 'uk' ? 'Сортування' : 'Sort By'}
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -454,7 +454,7 @@ export default function Notes() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'En Yeni' : 'Newest'}
+                  {language === 'uk' ? 'Найновіші' : 'Newest'}
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, sortBy: 'oldest' }))}
@@ -466,7 +466,7 @@ export default function Notes() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'En Eski' : 'Oldest'}
+                  {language === 'uk' ? 'Найстаріші' : 'Oldest'}
                 </button>
               </div>
             </div>
@@ -474,16 +474,16 @@ export default function Notes() {
             {/* Renk Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Renk' : 'Color'}
+                {language === 'uk' ? 'Колір' : 'Color'}
               </h3>
               <div className="grid grid-cols-6 gap-2">
                 {[
-                  { value: '#ffffff', label: language === 'tr' ? 'Beyaz' : 'White', class: 'bg-white dark:bg-[#1d1d1f]' },
-                  { value: '#f87171', label: language === 'tr' ? 'Kırmızı' : 'Red', class: 'bg-[#f87171]' },
-                  { value: '#fbbf24', label: language === 'tr' ? 'Sarı' : 'Yellow', class: 'bg-[#fbbf24]' },
-                  { value: '#34d399', label: language === 'tr' ? 'Yeşil' : 'Green', class: 'bg-[#34d399]' },
-                  { value: '#60a5fa', label: language === 'tr' ? 'Mavi' : 'Blue', class: 'bg-[#60a5fa]' },
-                  { value: '#a78bfa', label: language === 'tr' ? 'Mor' : 'Purple', class: 'bg-[#a78bfa]' }
+                  { value: '#ffffff', label: language === 'uk' ? 'Білий' : 'White', class: 'bg-white dark:bg-[#1d1d1f]' },
+                  { value: '#f87171', label: language === 'uk' ? 'Червоний' : 'Red', class: 'bg-[#f87171]' },
+                  { value: '#fbbf24', label: language === 'uk' ? 'Жовтий' : 'Yellow', class: 'bg-[#fbbf24]' },
+                  { value: '#34d399', label: language === 'uk' ? 'Зелений' : 'Green', class: 'bg-[#34d399]' },
+                  { value: '#60a5fa', label: language === 'uk' ? 'Синій' : 'Blue', class: 'bg-[#60a5fa]' },
+                  { value: '#a78bfa', label: language === 'uk' ? 'Фіолетовий' : 'Purple', class: 'bg-[#a78bfa]' }
                 ].map((color) => (
                   <button
                     key={color.value}
@@ -516,13 +516,13 @@ export default function Notes() {
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+                {language === 'uk' ? 'Очистити фільтри' : 'Clear Filters'}
               </button>
               <button
                 onClick={() => setIsFilterSheetOpen(false)}
                 className="flex-1 h-10 bg-[#1d1d1f] dark:bg-[#0071e3] text-white font-medium rounded-xl hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Uygula' : 'Apply'}
+                {language === 'uk' ? 'Застосувати' : 'Apply'}
               </button>
             </div>
           </div>

@@ -5,12 +5,20 @@ import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
 import { format } from 'date-fns';
-import { tr, enUS } from 'date-fns/locale';
+import { uk, enUS } from 'date-fns/locale';
 import Masonry from 'react-masonry-css';
 import {
   ArrowPathIcon,
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
+
+// Velilere giden WhatsApp mesajlarında kullanılan stüdyo bilgileri.
+// TEK YER: mesaj metinlerinin içine gömmek yerine buradan besleniyor.
+// Müşteriden gerçek değerler alınınca burası doldurulacak.
+const STUDIO_NAME = 'Yulia School';
+const STUDIO_ADDRESS = '[адреса студії]';
+const STUDIO_MAP_URL = '[посилання на карту]';
+const LESSON_DURATION = '45-60 хв';
 
 const Home = () => {
   const { t, language } = useLanguage();
@@ -344,7 +352,7 @@ const Home = () => {
     if (usage.isFree) {
       return (
         <span className="inline-flex items-center w-fit mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium ring-1 ring-inset bg-gray-400/10 text-gray-700 ring-gray-500/20 dark:bg-gray-400/10 dark:text-gray-300 dark:ring-gray-400/20">
-          {language === 'en' ? 'Free' : 'Ücretsiz'}
+          {language === 'en' ? 'Free' : 'Безкоштовно'}
         </span>
       );
     }
@@ -359,7 +367,7 @@ const Home = () => {
       <span className={`inline-flex items-center w-fit mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium ring-1 ring-inset ${colorClass}`}>
         {language === 'en'
           ? `${usage.remaining} lessons left`
-          : `${usage.remaining} ders kaldı`}
+          : `Залишилось занять: ${usage.remaining}`}
       </span>
     );
   };
@@ -422,7 +430,7 @@ const Home = () => {
 
   // Format date based on selected language
   const formatDate = (date, formatStr) => {
-    return format(date, formatStr, { locale: language === 'tr' ? tr : enUS });
+    return format(date, formatStr, { locale: language === 'uk' ? uk : enUS });
   };
 
   // Etkinlik türüne göre renkler
@@ -434,9 +442,9 @@ const Home = () => {
 
   // Event type labels with translations
   const eventTypeLabels = {
-    'ingilizce': language === 'en' ? 'English' : 'İngilizce',
-    'duyusal': language === 'en' ? 'Sensory' : 'Duyusal',
-    'ozel': language === 'en' ? 'Special Event' : 'Özel Etkinlik'
+    'ingilizce': language === 'en' ? 'English' : 'Англійська',
+    'duyusal': language === 'en' ? 'Sensory' : 'Сенсорика',
+    'ozel': language === 'en' ? 'Special Event' : 'Індивідуальне заняття'
   };
 
   // Etkinlik türüne göre ikonlar
@@ -475,12 +483,12 @@ const Home = () => {
   };
 
   const statusLabels = {
-    'scheduled': { tr: 'Planlandı', en: 'Scheduled' },
-    'attended': { tr: 'Katıldı', en: 'Joined' },
-    'no_show': { tr: 'Gelmedi', en: 'Absent' },
-    'canceled': { tr: 'İptal', en: 'Canceled' },
-    'makeup': { tr: 'Telafi', en: 'Makeup' },
-    'postponed': { tr: 'Ertelendi', en: 'Delayed' }
+    'scheduled': { uk: 'Заплановано', en: 'Scheduled' },
+    'attended': { uk: 'Відвідав', en: 'Joined' },
+    'no_show': { uk: 'Не зʼявився', en: 'Absent' },
+    'canceled': { uk: 'Скасовано', en: 'Canceled' },
+    'makeup': { uk: 'Відпрацювання', en: 'Makeup' },
+    'postponed': { uk: 'Перенесено', en: 'Delayed' }
   };
 
   return (
@@ -489,12 +497,12 @@ const Home = () => {
       <div className="flex items-center justify-between h-auto sm:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 sm:py-0 gap-4 sm:gap-0">
         <div>
           <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-            {language === 'en' ? 'Home' : 'Anasayfa'}
+            {language === 'en' ? 'Home' : 'Головна'}
           </h1>
         </div>
         <div className="flex items-center">
           <div className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-            {language === 'en' ? 'Today: ' : 'Bugün: '}
+            {language === 'en' ? 'Today: ' : 'Сьогодні: '}
             <span className="font-semibold text-[#1d1d1f] dark:text-white">
               {formatDate(new Date(), 'd MMMM yyyy')}
             </span>
@@ -512,7 +520,7 @@ const Home = () => {
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center">
               <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'en' ? 'Tomorrow\'s Lessons' : 'Yarınki Dersler'}
+                {language === 'en' ? 'Tomorrow\'s Lessons' : 'Завтрашні заняття'}
               </h2>
               <span className="text-sm text-[#6e6e73] dark:text-[#86868b] capitalize sm:ml-2">
                 ({tomorrowDateString})
@@ -524,7 +532,7 @@ const Home = () => {
             className="flex items-center gap-1.5 text-[#0071e3] hover:text-[#0077ED] text-sm font-medium"
           >
             <ArrowPathIcon className="h-4 w-4" />
-            <span>{language === 'en' ? 'Refresh' : 'Yenile'}</span>
+            <span>{language === 'en' ? 'Refresh' : 'Оновити'}</span>
           </button>
         </div>
 
@@ -576,12 +584,12 @@ const Home = () => {
           <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
             <CalendarDaysIcon className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
             <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-              {language === 'en' ? 'No lessons for tomorrow' : 'Yarın için ders bulunmuyor'}
+              {language === 'en' ? 'No lessons for tomorrow' : 'На завтра занять немає'}
             </h3>
             <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
               {language === 'en'
                 ? 'There are no lessons scheduled for tomorrow. You can add new lessons from the Calendar page.'
-                : 'Yarın için planlanmış herhangi bir ders bulunmuyor. Takvim sayfasından yeni ders ekleyebilirsiniz.'}
+                : 'На завтра не заплановано жодного заняття. Нове заняття можна додати в календарі.'}
             </p>
           </div>
         ) : (
@@ -606,7 +614,7 @@ const Home = () => {
                         {event.age_group}
                       </h3>
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] mt-0.5">
-                        {language === 'en' ? 'Capacity: ' : 'Kapasite: '}
+                        {language === 'en' ? 'Capacity: ' : 'Місць: '}
                         {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/6
                       </p>
                     </div>
@@ -629,12 +637,12 @@ const Home = () => {
                   <div className="mt-4">
                     <h4 className="text-[13px] font-medium text-[#1d1d1f] dark:text-white flex items-center gap-1.5 mb-3">
                       <FiUsers className="w-4 h-4 text-[#0071e3]" />
-                      {language === 'en' ? 'Participants' : 'Katılımcılar'}
+                      {language === 'en' ? 'Participants' : 'Учасники'}
                     </h4>
 
                     {event.participants.length === 0 ? (
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] italic">
-                        {language === 'en' ? 'No participants yet' : 'Henüz katılımcı yok'}
+                        {language === 'en' ? 'No participants yet' : 'Учасників ще немає'}
                       </p>
                     ) : (
                       <div className="space-y-3">
@@ -659,7 +667,7 @@ const Home = () => {
                                       </p>
                                     </div>
                                     <p className="text-[11px] text-[#6e6e73] dark:text-[#86868b]">
-                                      {language === 'en' ? 'Parent: ' : 'Veli: '}{participant.registrations.parent_name}
+                                      {language === 'en' ? 'Parent: ' : 'Батьки: '}{participant.registrations.parent_name}
                                     </p>
                                     {renderRemainingBadge(participant)}
                                   </div>
@@ -674,25 +682,25 @@ const Home = () => {
                                 {/* WhatsApp butonu - sadece scheduled durumdaki öğrenciler için gösterilsin */}
                                 {participant.status === 'scheduled' && (
                                   <a
-                                    href={`https://wa.me/90${participant.registrations.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Merhaba ${participant.registrations.parent_name} Hanım
-Çocuğunuzun etkinliğimizde bize katılacak olmasından büyük mutluluk duyuyoruz! İşte rezervasyonunuzla ilgili detaylar:
-* Etkinlik Tarihi: ${format(new Date(event.event_date), 'd MMMM yyyy', { locale: tr })} (Yarın)
-* Saat: ${format(new Date(event.event_date), 'HH:mm', { locale: tr })} 
-* Etkinlik: ${eventTypeLabels[event.event_type]} 
-* Yer: Ritim İstanbul B blok Kat:1 Ofis 237
-* Adres: https://maps.app.goo.gl/rb2m4migY24gA8GMA
-* Süre: 45-60 dk
-Etkinlik sırasında çocuklarınızı güvende tutmak için gerekli tüm önlemleri aldık. Lütfen çocuğunuzun rahat kıyafetlerle gelmesini sağlayın ve yanlarına bir su şişesi ve küçük bir atıştırmalık getirmeyi unutmayın. Yedek kıyafet yada aktivite önlüğü getirmenizi tavsiye ederiz.
-Rezervasyonunuzun iptali için lütfen bir gün önceden bizi bilgilendiriniz. Rezervasyonunuza saatinde gelmenizi rica ederiz. 
-Eğer herhangi bir sorunuz varsa, lütfen bize ulaşmaktan çekinmeyin.
-Sizleri ve çocuğunuzu atölyemizde görmek için sabırsızlanıyoruz!
-Sevgilerle,
-HelloKido Oyun Atölyesi`)}`}
+                                    href={`https://wa.me/380${participant.registrations.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${participant.registrations.parent_name}!
+Ми дуже раді, що ваша дитина приєднається до нашого заняття. Ось деталі запису:
+* Дата заняття: ${format(new Date(event.event_date), 'd MMMM yyyy', { locale: uk })} (завтра)
+* Час: ${format(new Date(event.event_date), 'HH:mm', { locale: uk })}
+* Заняття: ${eventTypeLabels[event.event_type]}
+* Місце: ${STUDIO_ADDRESS}
+* Карта: ${STUDIO_MAP_URL}
+* Тривалість: ${LESSON_DURATION}
+Ми подбали про безпеку дітей під час заняття. Будь ласка, вдягніть дитину у зручний одяг і візьміть із собою пляшечку води та невеликий перекус. Радимо також взяти змінний одяг або фартух для творчості.
+Якщо потрібно скасувати запис, повідомте нас, будь ласка, за день до заняття. Просимо приходити вчасно.
+Якщо у вас виникнуть запитання, звертайтеся до нас.
+З нетерпінням чекаємо на вас із дитиною!
+З любовʼю,
+${STUDIO_NAME}`)}`}
                                     onClick={(e) => toggleMessageSent(participant.id, e)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] hover:bg-[#e5e5e5] dark:hover:bg-[#3a4251] flex items-center justify-center text-[#34c759] border border-[#d2d2d7] dark:border-[#2a3241] transition-colors relative"
-                                    title={language === 'en' ? 'Send Reminder via WhatsApp' : 'WhatsApp\'tan Hatırlatma Mesajı Gönder'}
+                                    title={language === 'en' ? 'Send Reminder via WhatsApp' : 'Надіслати нагадування у WhatsApp'}
                                   >
                                     <FaWhatsapp className="w-4 h-4" />
                                     {isMessageSent(participant.id) && (
@@ -723,7 +731,7 @@ HelloKido Oyun Atölyesi`)}`}
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center">
               <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'en' ? 'Today\'s Lessons' : 'Bugünkü Dersler'}
+                {language === 'en' ? 'Today\'s Lessons' : 'Сьогоднішні заняття'}
               </h2>
               <span className="text-sm text-[#6e6e73] dark:text-[#86868b] capitalize sm:ml-2">
                 ({todayDateString})
@@ -735,7 +743,7 @@ HelloKido Oyun Atölyesi`)}`}
             className="flex items-center gap-1.5 text-[#ff9500] hover:text-[#ffA520] text-sm font-medium"
           >
             <ArrowPathIcon className="h-4 w-4" />
-            <span>{language === 'en' ? 'Refresh' : 'Yenile'}</span>
+            <span>{language === 'en' ? 'Refresh' : 'Оновити'}</span>
           </button>
         </div>
 
@@ -787,12 +795,12 @@ HelloKido Oyun Atölyesi`)}`}
           <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
             <FiClock className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
             <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-              {language === 'en' ? 'No lessons for today' : 'Bugün için ders bulunmuyor'}
+              {language === 'en' ? 'No lessons for today' : 'На сьогодні занять немає'}
             </h3>
             <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
               {language === 'en'
                 ? 'There are no lessons scheduled for today. You can add new lessons from the Calendar page.'
-                : 'Bugün için planlanmış herhangi bir ders bulunmuyor. Takvim sayfasından yeni ders ekleyebilirsiniz.'}
+                : 'На сьогодні не заплановано жодного заняття. Нове заняття можна додати в календарі.'}
             </p>
           </div>
         ) : (
@@ -817,7 +825,7 @@ HelloKido Oyun Atölyesi`)}`}
                         {event.age_group}
                       </h3>
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] mt-0.5">
-                        {language === 'en' ? 'Capacity: ' : 'Kapasite: '}
+                        {language === 'en' ? 'Capacity: ' : 'Місць: '}
                         {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/6
                       </p>
                     </div>
@@ -840,12 +848,12 @@ HelloKido Oyun Atölyesi`)}`}
                   <div className="mt-4">
                     <h4 className="text-[13px] font-medium text-[#1d1d1f] dark:text-white flex items-center gap-1.5 mb-3">
                       <FiUsers className="w-4 h-4 text-[#ff9500]" />
-                      {language === 'en' ? 'Participants' : 'Katılımcılar'}
+                      {language === 'en' ? 'Participants' : 'Учасники'}
                     </h4>
 
                     {event.participants.length === 0 ? (
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] italic">
-                        {language === 'en' ? 'No participants yet' : 'Henüz katılımcı yok'}
+                        {language === 'en' ? 'No participants yet' : 'Учасників ще немає'}
                       </p>
                     ) : (
                       <div className="space-y-3">
@@ -871,7 +879,7 @@ HelloKido Oyun Atölyesi`)}`}
                                         </p>
                                       </div>
                                       <p className="text-[11px] text-[#6e6e73] dark:text-[#86868b]">
-                                        {language === 'en' ? 'Parent: ' : 'Veli: '}{participant.registrations.parent_name}
+                                        {language === 'en' ? 'Parent: ' : 'Батьки: '}{participant.registrations.parent_name}
                                       </p>
                                       {renderRemainingBadge(participant)}
                                     </div>
@@ -893,7 +901,7 @@ HelloKido Oyun Atölyesi`)}`}
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:bg-[#1c1c1e]/40 dark:text-gray-300 dark:border-gray-700'
                                     }`}
                                 >
-                                  {language === 'en' ? 'Joined' : 'Katıldı'}
+                                  {language === 'en' ? 'Joined' : 'Відвідав'}
                                 </button>
                                 <button
                                   onClick={() => updateLessonStatus(participant, 'no_show')}
@@ -903,7 +911,7 @@ HelloKido Oyun Atölyesi`)}`}
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:bg-[#1c1c1e]/40 dark:text-gray-300 dark:border-gray-700'
                                     }`}
                                 >
-                                  {language === 'en' ? 'Absent' : 'Gelmedi'}
+                                  {language === 'en' ? 'Absent' : 'Не зʼявився'}
                                 </button>
                                 <button
                                   onClick={() => updateLessonStatus(participant, 'postponed')}
@@ -913,7 +921,7 @@ HelloKido Oyun Atölyesi`)}`}
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-[#1c1c1e]/40 dark:text-gray-300 dark:border-gray-700'
                                     }`}
                                 >
-                                  {language === 'en' ? 'Delayed' : 'Ertelendi'}
+                                  {language === 'en' ? 'Delayed' : 'Перенесено'}
                                 </button>
                                 <button
                                   onClick={() => updateLessonStatus(participant, 'makeup')}
@@ -923,7 +931,7 @@ HelloKido Oyun Atölyesi`)}`}
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 dark:bg-[#1c1c1e]/40 dark:text-gray-300 dark:border-gray-700'
                                     }`}
                                 >
-                                  {language === 'en' ? 'Makeup' : 'Telafi'}
+                                  {language === 'en' ? 'Makeup' : 'Відпрацювання'}
                                 </button>
                               </div>
                             </div>
@@ -948,7 +956,7 @@ HelloKido Oyun Atölyesi`)}`}
                   <FaLiraSign className="h-4 w-4 text-[#0071e3]" />
                 </div>
                 <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                  {language === 'en' ? 'Pending Payments' : 'Bekleyen Ödemeler'}
+                  {language === 'en' ? 'Pending Payments' : 'Очікувані платежі'}
                 </h2>
               </div>
               <button
@@ -956,7 +964,7 @@ HelloKido Oyun Atölyesi`)}`}
                 className="flex items-center gap-1.5 text-[#0071e3] hover:text-[#0077ED] text-sm font-medium"
               >
                 <ArrowPathIcon className="h-4 w-4" />
-                <span>{language === 'en' ? 'Refresh' : 'Yenile'}</span>
+                <span>{language === 'en' ? 'Refresh' : 'Оновити'}</span>
               </button>
             </div>
 
@@ -997,10 +1005,10 @@ HelloKido Oyun Atölyesi`)}`}
               <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
                 <FaLiraSign className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
                 <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-                  {language === 'en' ? 'No pending payments' : 'Bekleyen ödeme bulunmuyor'}
+                  {language === 'en' ? 'No pending payments' : 'Немає очікуваних платежів'}
                 </h3>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
-                  {language === 'en' ? 'All registration payments seem to be completed.' : 'Tüm kayıtların ödemeleri tamamlanmış görünüyor.'}
+                  {language === 'en' ? 'All registration payments seem to be completed.' : 'Усі платежі сплачено.'}
                 </p>
               </div>
             ) : (
@@ -1008,7 +1016,7 @@ HelloKido Oyun Atölyesi`)}`}
               <div className="bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] overflow-hidden">
                 <div className="p-4 sm:px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] bg-[#f5f5f7] dark:bg-[#1c1c1e]/40">
                   <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                    {language === 'en' ? `Total ${pendingPayments.length} pending payments` : `Toplam ${pendingPayments.length} bekleyen ödeme`}
+                    {language === 'en' ? `Total ${pendingPayments.length} pending payments` : `Всього очікуваних платежів: ${pendingPayments.length}`}
                   </h3>
                 </div>
 
@@ -1030,17 +1038,17 @@ HelloKido Oyun Atölyesi`)}`}
                             </span>
                           </p>
                           <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'en' ? 'Parent: ' : 'Veli: '}{registration.parent_name}
+                            {language === 'en' ? 'Parent: ' : 'Батьки: '}{registration.parent_name}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <a
-                          href={`https://wa.me/90${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Merhabalar ${registration.parent_name}. ${registration.student_name} için ödeme beklemekteyiz. Bilginize sunarız.`)}`}
+                          href={`https://wa.me/380${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${registration.parent_name}! Нагадуємо, що очікуємо оплату за ${registration.student_name}. Дякуємо!`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] hover:bg-[#e5e5e5] dark:hover:bg-[#3a4251] flex items-center justify-center text-[#34c759] border border-[#d2d2d7] dark:border-[#2a3241] transition-colors"
-                          title={language === 'en' ? 'Send Payment Reminder via WhatsApp' : 'WhatsApp\'tan Ödeme Hatırlatma Mesajı Gönder'}
+                          title={language === 'en' ? 'Send Payment Reminder via WhatsApp' : 'Надіслати нагадування про оплату у WhatsApp'}
                         >
                           <FaWhatsapp className="w-4 h-4" />
                         </a>
@@ -1060,7 +1068,7 @@ HelloKido Oyun Atölyesi`)}`}
                   <FiPackage className="h-4 w-4 text-[#ac39ff]" />
                 </div>
                 <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                  {language === 'en' ? 'Packages Expiring Soon' : 'Paket Süresi Bitmeye Yaklaşanlar'}
+                  {language === 'en' ? 'Packages Expiring Soon' : 'Абонементи, що завершуються'}
                 </h2>
               </div>
               <button
@@ -1068,7 +1076,7 @@ HelloKido Oyun Atölyesi`)}`}
                 className="flex items-center gap-1.5 text-[#ac39ff] hover:text-[#b54aff] text-sm font-medium"
               >
                 <ArrowPathIcon className="h-4 w-4" />
-                <span>{language === 'en' ? 'Refresh' : 'Yenile'}</span>
+                <span>{language === 'en' ? 'Refresh' : 'Оновити'}</span>
               </button>
             </div>
 
@@ -1109,10 +1117,10 @@ HelloKido Oyun Atölyesi`)}`}
               <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
                 <FiPackage className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
                 <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-                  {language === 'en' ? 'No packages expiring in the next 7 days' : 'Önümüzdeki 7 gün içinde bitecek paket bulunmuyor'}
+                  {language === 'en' ? 'No packages expiring in the next 7 days' : 'Немає абонементів, що завершуються протягом 7 днів'}
                 </h3>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
-                  {language === 'en' ? 'There are no packages expiring in the next 7 days.' : 'Önümüzdeki 7 gün içinde bitecek paket bulunmuyor.'}
+                  {language === 'en' ? 'There are no packages expiring in the next 7 days.' : 'Немає абонементів, що завершуються протягом 7 днів.'}
                 </p>
               </div>
             ) : (
@@ -1122,7 +1130,7 @@ HelloKido Oyun Atölyesi`)}`}
                   <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
                     {language === 'en'
                       ? `Total ${expiringSoonPackages.length} upcoming package expiration${expiringSoonPackages.length !== 1 ? 's' : ''}`
-                      : `Toplam ${expiringSoonPackages.length} yaklaşan paket bitişi`}
+                      : `Всього абонементів, що завершуються: ${expiringSoonPackages.length}`}
                   </h3>
                 </div>
 
@@ -1160,7 +1168,7 @@ HelloKido Oyun Atölyesi`)}`}
                             </p>
                             <div className="flex items-center gap-2">
                               <p className={`text-[13px] ${urgencyColor} font-medium`}>
-                                {language === 'en' ? `${diffDays} day${diffDays !== 1 ? 's' : ''} left` : `${diffDays} gün kaldı`}
+                                {language === 'en' ? `${diffDays} day${diffDays !== 1 ? 's' : ''} left` : `Залишилось днів: ${diffDays}`}
                               </p>
                               <span className="text-[11px] text-[#6e6e73] dark:text-[#86868b]">
                                 ({formatDate(endDate, 'd MMMM yyyy')})
@@ -1170,11 +1178,11 @@ HelloKido Oyun Atölyesi`)}`}
                         </div>
                         <div className="flex items-center gap-2">
                           <a
-                            href={`https://wa.me/90${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Merhabalar ${registration.parent_name}. ${registration.student_name} adlı öğrencinizin paket süresi ${format(endDate, 'd MMMM yyyy', { locale: tr })} tarihinde sona erecektir. Bilginize sunarız.`)}`}
+                            href={`https://wa.me/380${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${registration.parent_name}! Нагадуємо, що абонемент для ${registration.student_name} завершується ${format(endDate, 'd MMMM yyyy', { locale: uk })}. Дякуємо!`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] hover:bg-[#e5e5e5] dark:hover:bg-[#3a4251] flex items-center justify-center text-[#34c759] border border-[#d2d2d7] dark:border-[#2a3241] transition-colors"
-                            title={language === 'en' ? 'Send Package Expiration Info via WhatsApp' : 'WhatsApp\'tan Paket Bitiş Bilgisi Gönder'}
+                            title={language === 'en' ? 'Send Package Expiration Info via WhatsApp' : 'Надіслати інформацію про завершення абонемента у WhatsApp'}
                           >
                             <FaWhatsapp className="w-4 h-4" />
                           </a>

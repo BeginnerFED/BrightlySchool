@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
   XMarkIcon,
@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 // Türkçe lokalizasyonu kaydet
-registerLocale('tr', tr)
+registerLocale('uk', uk)
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -74,8 +74,8 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
 
       if (error) throw error
 
-      const successMessage = language === 'tr' 
-        ? 'Bekleme listesine başarıyla eklendi.' 
+      const successMessage = language === 'uk' 
+        ? 'Успішно додано до списку очікування.' 
         : 'Successfully added to waitlist.'
 
       onSuccess?.(successMessage, 'success')
@@ -92,8 +92,8 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
       })
     } catch (error) {
       console.error('Kayıt eklenirken hata:', error.message)
-      const errorMessage = language === 'tr'
-        ? 'Kayıt eklenirken bir hata oluştu.'
+      const errorMessage = language === 'uk'
+        ? 'Помилка при додаванні запису.'
         : 'An error occurred while adding the entry.'
       onSuccess?.(errorMessage, 'error')
     } finally {
@@ -118,7 +118,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
         value={value}
         readOnly
         className={`${inputClasses} cursor-pointer`}
-        placeholder={language === 'tr' ? "Tarih Seçin" : "Select Date"}
+        placeholder={language === 'uk' ? "Оберіть дату" : "Select Date"}
       />
     </div>
   ))
@@ -320,10 +320,10 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
             {/* Header */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Yeni Kayıt' : 'New Entry'}
+                {language === 'uk' ? 'Нова реєстрація' : 'New Entry'}
               </h2>
               <p className="mt-1 text-[#6e6e73] dark:text-[#86868b]">
-                {language === 'tr' ? 'Lütfen gerekli bilgileri doldurun' : 'Please fill in the required information'}
+                {language === 'uk' ? 'Заповніть обовʼязкові поля' : 'Please fill in the required information'}
               </p>
             </div>
 
@@ -354,7 +354,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Veli İsmi" : "Parent Name"}
+                    placeholder={language === 'uk' ? "Імʼя батьків" : "Parent Name"}
                     tabIndex={1}
                     autoComplete="off"
                   />
@@ -377,7 +377,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Telefon Numarası" : "Phone Number"}
+                    placeholder={language === 'uk' ? "Номер телефону" : "Phone Number"}
                     tabIndex={2}
                     autoComplete="off"
                   />
@@ -403,7 +403,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Öğrenci İsmi" : "Student Name"}
+                    placeholder={language === 'uk' ? "Імʼя дитини" : "Student Name"}
                     tabIndex={3}
                     autoComplete="off"
                   />
@@ -429,7 +429,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Yaş/Aylık - Örn:24 Aylık / 2 Yaş" : "Age/Months - Ex:24 Months / 2 Years"}
+                    placeholder={language === 'uk' ? "Вік — напр.: 24 міс. / 2 роки" : "Age/Months - Ex:24 Months / 2 Years"}
                     tabIndex={4}
                     autoComplete="off"
                   />
@@ -452,35 +452,36 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                     autoComplete="off"
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "İlgilenilen Paket Türü" : "Interested Package Type"}
+                      {language === 'uk' ? "Бажаний абонемент" : "Interested Package Type"}
                     </option>
                     <option value="belirsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Belirsiz" : "Uncertain"}
+                      {language === 'uk' ? "Не визначено" : "Uncertain"}
                     </option>
                     <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Tek Seferlik Katılım" : "One Time Participation"}
+                      {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
                     </option>
                     <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Haftada 1 Gün" : "1 Day Per Week"}
+                      {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
                     </option>
                     <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Haftada 2 Gün" : "2 Days Per Week"}
+                      {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
                     </option>
                     <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Haftada 3 Gün" : "3 Days Per Week"}
+                      {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
                     </option>
                     <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Haftada 4 Gün" : "4 Days Per Week"}
+                      {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
                     </option>
                   </select>
                 </div>
 
                 {/* Aranılan Tarih */}
                 <DatePicker
+                  portalId="root"
                   selected={formData.contact_date}
                   onChange={(date) => setFormData(prev => ({ ...prev, contact_date: date }))}
                   dateFormat="dd.MM.yyyy"
-                  locale={language === 'tr' ? 'tr' : 'en'}
+                  locale={language === 'uk' ? 'uk' : 'en'}
                   customInput={<CustomInput />}
                   minDate={new Date('2024-01-01')}
                   maxDate={new Date('2025-12-31')}
@@ -502,13 +503,13 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                     autoComplete="off"
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Durum" : "Status"}
+                      {language === 'uk' ? "Статус" : "Status"}
                     </option>
                     <option value="beklemede" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "Beklemede" : "Waiting"}
+                      {language === 'uk' ? "Очікує" : "Waiting"}
                     </option>
                     <option value="iletisime-gecildi" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'tr' ? "İletişime Geçildi" : "Contacted"}
+                      {language === 'uk' ? "Звʼязалися" : "Contacted"}
                     </option>
                   </select>
                 </div>
@@ -529,7 +530,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                       }))
                     }}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Not ekle..." : "Add note..."}
+                    placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
                     tabIndex={8}
                     autoComplete="off"
                   />
@@ -545,7 +546,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                   tabIndex={9}
                   disabled={isLoading}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -559,10 +560,10 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{language === 'tr' ? 'Kayıt Oluşturuluyor' : 'Creating Record'}</span>
+                      <span>{language === 'uk' ? 'Створення запису' : 'Creating Record'}</span>
                     </>
                   ) : (
-                    language === 'tr' ? 'Kayıt Oluştur' : 'Create Record'
+                    language === 'uk' ? 'Створити запис' : 'Create Record'
                   )}
                 </button>
               </div>

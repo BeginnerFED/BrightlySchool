@@ -2,25 +2,25 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Dil çevirileri
 const translations = {
-  tr: {
-    home: 'Anasayfa',
-    dashboard: 'Panel',
-    team: 'Ekip',
-    projects: 'Projeler',
-    calendar: 'Takvim',
-    documents: 'Dökümanlar',
-    reports: 'Raporlar',
-    settings: 'Ayarlar',
-    theme: 'Tema',
-    logout: 'Çıkış Yap',
-    managementPanel: 'Yönetim Paneli',
-    language: 'Dil',
-    registration: 'Kayıt',
-    remainingUsage: 'Kalan Kullanım',
-    incomeExpense: 'Gelir/Gider',
-    waitlist: 'Bekleme Listesi',
-    notes: 'Notlar',
-    ideaCenter: 'Fikir Merkezi'
+  uk: {
+    home: 'Головна',
+    dashboard: 'Панель',
+    team: 'Команда',
+    projects: 'Проєкти',
+    calendar: 'Календар',
+    documents: 'Документи',
+    reports: 'Звіти',
+    settings: 'Налаштування',
+    theme: 'Тема',
+    logout: 'Вийти',
+    managementPanel: 'Панель управління',
+    language: 'Мова',
+    registration: 'Реєстрація',
+    remainingUsage: 'Залишок занять',
+    incomeExpense: 'Доходи/Витрати',
+    waitlist: 'Список очікування',
+    notes: 'Нотатки',
+    ideaCenter: 'Центр ідей'
   },
   en: {
     home: 'Home',
@@ -49,10 +49,12 @@ const LanguageContext = createContext();
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider = ({ children }) => {
-  // localStorage'dan kayıtlı dili al, yoksa varsayılan olarak 'tr'
+  // localStorage'dan kayıtlı dili al, yoksa varsayılan olarak 'uk'
   const [language, setLanguage] = useState(() => {
     const savedLanguage = localStorage.getItem('language');
-    return savedLanguage || 'tr';
+    // Eski sürümden kalan 'tr' tercihi artık desteklenmiyor, Ukraynacaya taşı
+    if (!savedLanguage || savedLanguage === 'tr') return 'uk';
+    return savedLanguage;
   });
 
   // Dil değiştiğinde localStorage'a kaydet
@@ -61,11 +63,11 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'tr' ? 'en' : 'tr');
+    setLanguage(prev => prev === 'uk' ? 'en' : 'uk');
   };
 
   const t = (key) => {
-    return translations[language][key] || key;
+    return translations[language]?.[key] || key;
   };
 
   return (

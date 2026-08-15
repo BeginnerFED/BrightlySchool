@@ -14,7 +14,7 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
 
   const formatDate = (date) => {
     if (!date) return '-'
-    return new Date(date).toLocaleDateString('tr-TR', {
+    return new Date(date).toLocaleDateString('uk-UA', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -32,16 +32,16 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
 
       if (error) throw error
 
-      const successMessage = language === 'tr'
-        ? 'Uzatma başarıyla silindi.'
+      const successMessage = language === 'uk'
+        ? 'Продовження успішно видалено.'
         : 'Extension successfully deleted.'
 
       onSuccess?.(successMessage, 'success')
       onClose()
     } catch (error) {
       console.error('Uzatma silinirken hata:', error.message)
-      const errorMessage = language === 'tr'
-        ? 'Uzatma silinirken bir hata oluştu.'
+      const errorMessage = language === 'uk'
+        ? 'Помилка при видаленні продовження.'
         : 'An error occurred while deleting the extension.'
       onSuccess?.(errorMessage, 'error')
     } finally {
@@ -75,37 +75,37 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-500" />
               </div>
               <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Uzatmayı Sil' : 'Delete Extension'}
+                {language === 'uk' ? 'Видалити продовження' : 'Delete Extension'}
               </h2>
             </div>
 
             <p className="text-[#6e6e73] dark:text-[#86868b] mb-4">
-              {language === 'tr'
-                ? 'Bu uzatmayı silmek istediğinizden emin misiniz? Kayıt uzatma öncesi durumuna geri dönecek ve finansal kayıt silinecektir. Bu işlem geri alınamaz.'
+              {language === 'uk'
+                ? 'Видалити це продовження? Запис повернеться до стану до продовження, а фінансовий запис буде видалено. Цю дію не можна скасувати.'
                 : 'Are you sure you want to delete this extension? The registration will revert to its pre-extension state and the financial record will be removed. This action cannot be undone.'}
             </p>
 
             <div className="border-t border-[#d2d2d7] dark:border-[#2a3241] pt-4 space-y-2">
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Öğrenci:' : 'Student:'}</span>
+                <span>{language === 'uk' ? 'Дитина:' : 'Student:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">{registration?.student_name}</span>
               </div>
               {typeof extensionIndex === 'number' && (
                 <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                  <span>{language === 'tr' ? 'Uzatma:' : 'Extension:'}</span>
+                  <span>{language === 'uk' ? 'Продовження:' : 'Extension:'}</span>
                   <span className="font-medium text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? `${extensionIndex + 1}. Uzatma` : `Extension #${extensionIndex + 1}`}
+                    {language === 'uk' ? `${extensionIndex + 1}. Uzatma` : `Extension #${extensionIndex + 1}`}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Tarih Aralığı:' : 'Date Range:'}</span>
+                <span>{language === 'uk' ? 'Період:' : 'Date Range:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">
                   {formatDate(extension?.new_start_date || extension?.previous_end_date)} - {formatDate(extension?.new_end_date)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'tr' ? 'Tutar:' : 'Amount:'}</span>
+                <span>{language === 'uk' ? 'Сума:' : 'Amount:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">
                   {extension?.payment_amount ?? 0} ₺
                 </span>
@@ -120,7 +120,7 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
                 className="flex-1 h-11 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#161616] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 dark:focus:ring-[#2a2a2a] transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
                 disabled={isLoading}
               >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
+                {language === 'uk' ? 'Скасувати' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -134,10 +134,10 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{language === 'tr' ? 'Siliniyor' : 'Deleting'}</span>
+                    <span>{language === 'uk' ? 'Видалення' : 'Deleting'}</span>
                   </>
                 ) : (
-                  language === 'tr' ? 'Sil' : 'Delete'
+                  language === 'uk' ? 'Видалити' : 'Delete'
                 )}
               </button>
             </div>

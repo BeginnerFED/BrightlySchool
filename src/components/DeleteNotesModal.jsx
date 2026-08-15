@@ -35,12 +35,12 @@ export default function DeleteNotesModal({ isOpen, onClose, onConfirm, note }) {
                 <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
               </div>
               <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Notu Sil' : 'Delete Note'}
+                {language === 'uk' ? 'Видалити нотатку' : 'Delete Note'}
               </h2>
             </div>
             <p className="text-[#424245] dark:text-[#86868b] mb-6">
-              {language === 'tr' 
-                ? 'Bu notu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+              {language === 'uk' 
+                ? 'Видалити цю нотатку? Цю дію не можна скасувати.'
                 : 'Are you sure you want to delete this note? This action cannot be undone.'
               }
             </p>
@@ -51,13 +51,13 @@ export default function DeleteNotesModal({ isOpen, onClose, onConfirm, note }) {
                 onClick={onClose}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98]"
               >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
+                {language === 'uk' ? 'Скасувати' : 'Cancel'}
               </button>
               <button
                 onClick={handleConfirm}
                 className="flex-1 h-10 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98]"
               >
-                {language === 'tr' ? 'Sil' : 'Delete'}
+                {language === 'uk' ? 'Видалити' : 'Delete'}
               </button>
             </div>
           </div>

@@ -22,11 +22,11 @@ import CreateExpenses from '../components/CreateExpenses'
 import UpdateExpensesModal from '../components/UpdateExpensesModal'
 import DeleteExpensesModal from '../components/DeleteExpensesModal'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 
 // Türkçe lokalizasyonu kaydet
-registerLocale('tr', tr)
+registerLocale('uk', uk)
 
 // Custom DatePicker Styles
 const customDatePickerStyles = `
@@ -656,8 +656,8 @@ export default function IncomeExpense() {
           status: record.payment_status,
           payment_date: record.payment_date || record.created_at, // Ödeme tarihi, yoksa created_at kullanılır
           transaction_type: record.transaction_type === 'initial_payment' 
-            ? (language === 'tr' ? 'İlk Kayıt' : 'Initial Registration')
-            : (language === 'tr' ? 'Paket Uzatma' : 'Package Extension'),
+            ? (language === 'uk' ? 'Перша реєстрація' : 'Initial Registration')
+            : (language === 'uk' ? 'Продовження абонемента' : 'Package Extension'),
           created_at: record.created_at
         };
       }));
@@ -808,7 +808,7 @@ export default function IncomeExpense() {
 
       // Grafik verilerini hazırla
       const monthlyData = {}
-      const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+      const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень']
 
       // Son seçilen ay sayısını döngüye al
       for (let i = 0; i < chartRange; i++) {
@@ -994,7 +994,7 @@ export default function IncomeExpense() {
 
   // Para formatı
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('tr-TR', {
+    return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'TRY',
       minimumFractionDigits: 2, // Değiştirildi: 0 -> 2
@@ -1048,7 +1048,7 @@ export default function IncomeExpense() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between h-auto lg:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 lg:py-0 gap-4 lg:gap-0">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-            {language === 'tr' ? 'Gelir/Gider' : 'Income/Expense'}
+            {language === 'uk' ? 'Доходи/Витрати' : 'Income/Expense'}
           </h1>
         </div>
 
@@ -1060,25 +1060,25 @@ export default function IncomeExpense() {
               onClick={() => handleQuickDateSelect('today')}
               className="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
             >
-              {language === 'tr' ? 'Bugün' : 'Today'}
+              {language === 'uk' ? 'Сьогодні' : 'Today'}
             </button>
             <button
               onClick={() => handleQuickDateSelect('next14')}
               className="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
             >
-              {language === 'tr' ? 'Son 14 Gün' : 'Last 14 Days'}
+              {language === 'uk' ? 'Останні 14 днів' : 'Last 14 Days'}
             </button>
             <button
               onClick={() => handleQuickDateSelect('lastMonth')}
               className="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
             >
-              {language === 'tr' ? 'Geçen Ay' : 'Last Month'}
+              {language === 'uk' ? 'Минулий місяць' : 'Last Month'}
             </button>
             <button
               onClick={() => handleQuickDateSelect('thisMonth')}
               className="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
             >
-              {language === 'tr' ? 'Bu Ay' : 'This Month'}
+              {language === 'uk' ? 'Цей місяць' : 'This Month'}
             </button>
           </div>
 
@@ -1089,14 +1089,15 @@ export default function IncomeExpense() {
               <CalendarDaysIcon className="w-5 h-5 text-[#86868b]" />
             </div>
             <DatePicker
+              portalId="root"
               selectsRange={true}
               startDate={dateRange[0]}
               endDate={dateRange[1]}
               onChange={(update) => setDateRange(update)}
               dateFormat="dd.MM.yyyy"
-              locale={language === 'tr' ? 'tr' : 'en'}
+              locale={language === 'uk' ? 'uk' : 'en'}
               className="h-10 pl-4 pr-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-all cursor-pointer w-full lg:w-[210px] focus:outline-none focus:ring-2 focus:ring-[#0071e3] focus:ring-opacity-50 focus:border-[#0071e3]"
-              placeholderText={language === 'tr' ? 'Tarih Aralığı Seçin' : 'Select Date Range'}
+              placeholderText={language === 'uk' ? 'Оберіть період' : 'Select Date Range'}
               showPopperArrow={false}
               isClearable={true}
               renderCustomHeader={({
@@ -1118,7 +1119,7 @@ export default function IncomeExpense() {
                     </svg>
                   </button>
                   <div className="text-[15px] font-semibold text-[#1d1d1f] dark:text-white tracking-[-0.01em]">
-                    {date.toLocaleString(language === 'tr' ? 'tr' : 'en', { 
+                    {date.toLocaleString(language === 'uk' ? 'uk' : 'en', { 
                       month: 'long',
                       year: 'numeric'
                     }).split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
@@ -1149,7 +1150,7 @@ export default function IncomeExpense() {
           {/* Sheet Header */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
             <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Gelir Filtreleri' : 'Income Filters'}
+              {language === 'uk' ? 'Фільтри доходів' : 'Income Filters'}
             </h2>
             <button
               onClick={() => setIsIncomeFilterSheetOpen(false)}
@@ -1164,7 +1165,7 @@ export default function IncomeExpense() {
             {/* Öğrenci Durumu Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Öğrenci Durumu' : 'Student Status'}
+                {language === 'uk' ? 'Статус дитини' : 'Student Status'}
               </h3>
               <div className="flex gap-2">
                 <button
@@ -1177,7 +1178,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Aktif' : 'Active'}
+                  {language === 'uk' ? 'Активний' : 'Active'}
                 </button>
                 <button
                   onClick={() => setIncomeFilters(prev => ({ ...prev, activeStatus: 'inactive' }))}
@@ -1189,7 +1190,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Pasif' : 'Inactive'}
+                  {language === 'uk' ? 'Неактивний' : 'Inactive'}
                 </button>
               </div>
             </div>
@@ -1197,7 +1198,7 @@ export default function IncomeExpense() {
             {/* Ödeme Yöntemi Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Ödeme Yöntemi' : 'Payment Method'}
+                {language === 'uk' ? 'Спосіб оплати' : 'Payment Method'}
               </h3>
               <div className="flex gap-2">
                 <button
@@ -1220,7 +1221,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Banka' : 'Bank'}
+                  {language === 'uk' ? 'Банк' : 'Bank'}
                 </button>
                 <button
                   onClick={() => {
@@ -1242,7 +1243,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Nakit' : 'Cash'}
+                  {language === 'uk' ? 'Готівка' : 'Cash'}
                 </button>
                 <button
                   onClick={() => {
@@ -1264,7 +1265,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Kredi Kartı' : 'Credit Card'}
+                  {language === 'uk' ? 'Картка' : 'Credit Card'}
                 </button>
               </div>
             </div>
@@ -1272,7 +1273,7 @@ export default function IncomeExpense() {
             {/* Ödeme Durumu Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Ödeme Durumu' : 'Payment Status'}
+                {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
               </h3>
               <div className="flex gap-2">
                 <button
@@ -1285,7 +1286,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Ödendi' : 'Paid'}
+                  {language === 'uk' ? 'Оплачено' : 'Paid'}
                 </button>
                 <button
                   onClick={() => setIncomeFilters(prev => ({ ...prev, paymentStatus: 'beklemede' }))}
@@ -1297,7 +1298,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Beklemede' : 'Pending'}
+                  {language === 'uk' ? 'Очікує' : 'Pending'}
                 </button>
               </div>
             </div>
@@ -1320,13 +1321,13 @@ export default function IncomeExpense() {
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+                {language === 'uk' ? 'Очистити фільтри' : 'Clear Filters'}
               </button>
               <button
                 onClick={() => setIsIncomeFilterSheetOpen(false)}
                 className="flex-1 h-10 bg-[#1d1d1f] dark:bg-[#0071e3] text-white font-medium rounded-xl hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Uygula' : 'Apply'}
+                {language === 'uk' ? 'Застосувати' : 'Apply'}
               </button>
             </div>
           </div>
@@ -1342,7 +1343,7 @@ export default function IncomeExpense() {
           {/* Sheet Header */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
             <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Gider Filtreleri' : 'Expense Filters'}
+              {language === 'uk' ? 'Фільтри витрат' : 'Expense Filters'}
             </h2>
             <button
               onClick={() => setIsExpenseFilterSheetOpen(false)}
@@ -1357,7 +1358,7 @@ export default function IncomeExpense() {
             {/* Gider Türü Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Gider Türü' : 'Expense Type'}
+                {language === 'uk' ? 'Тип витрати' : 'Expense Type'}
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {['kira', 'elektrik', 'su', 'internet', 'maas', 'malzeme', 'mutfak', 'reklam', 'filament', 'diger'].map((type) => (
@@ -1372,7 +1373,7 @@ export default function IncomeExpense() {
                       }
                     `}
                   >
-                    {language === 'tr'
+                    {language === 'uk'
                       ? type.charAt(0).toUpperCase() + type.slice(1)
                       : type === 'kira' ? 'Rent'
                       : type === 'elektrik' ? 'Electricity'
@@ -1382,7 +1383,7 @@ export default function IncomeExpense() {
                       : type === 'malzeme' ? 'Materials'
                       : type === 'mutfak' ? 'Kitchen'
                       : type === 'reklam' ? 'Advertising'
-                      : type === 'filament' ? 'Filament'
+                      : type === 'filament' ? 'Філамент'
                       : 'Other'
                     }
                   </button>
@@ -1393,7 +1394,7 @@ export default function IncomeExpense() {
             {/* Ödeme Yöntemi Filtresi */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'tr' ? 'Ödeme Yöntemi' : 'Payment Method'}
+                {language === 'uk' ? 'Спосіб оплати' : 'Payment Method'}
               </h3>
               <div className="flex gap-2">
                 <button
@@ -1406,7 +1407,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Banka' : 'Bank'}
+                  {language === 'uk' ? 'Банк' : 'Bank'}
                 </button>
                 <button
                   onClick={() => setExpenseFilters(prev => ({ ...prev, paymentMethod: 'nakit' }))}
@@ -1418,7 +1419,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Nakit' : 'Cash'}
+                  {language === 'uk' ? 'Готівка' : 'Cash'}
                 </button>
                 <button
                   onClick={() => setExpenseFilters(prev => ({ ...prev, paymentMethod: 'kart' }))}
@@ -1430,7 +1431,7 @@ export default function IncomeExpense() {
                     }
                   `}
                 >
-                  {language === 'tr' ? 'Kredi Kartı' : 'Credit Card'}
+                  {language === 'uk' ? 'Картка' : 'Credit Card'}
                 </button>
               </div>
             </div>
@@ -1451,13 +1452,13 @@ export default function IncomeExpense() {
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+                {language === 'uk' ? 'Очистити фільтри' : 'Clear Filters'}
               </button>
               <button
                 onClick={() => setIsExpenseFilterSheetOpen(false)}
                 className="flex-1 h-10 bg-[#1d1d1f] dark:bg-[#0071e3] text-white font-medium rounded-xl hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-colors"
               >
-                {language === 'tr' ? 'Uygula' : 'Apply'}
+                {language === 'uk' ? 'Застосувати' : 'Apply'}
               </button>
             </div>
           </div>
@@ -1494,14 +1495,14 @@ export default function IncomeExpense() {
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-[#6e6e73] dark:text-[#86868b] text-sm font-medium">
-                      {language === 'tr' ? 'Gelir' : 'Income'}
+                      {language === 'uk' ? 'Дохід' : 'Income'}
                       {incomeFilters.paymentMethod.length > 0 && (
                         <span className="ml-1 text-xs">
-                          ({language === 'tr' ? 
+                          ({language === 'uk' ? 
                             (incomeFilters.paymentMethod.map(method => 
-                              method === 'nakit' ? 'Nakit' : 
-                              method === 'banka' ? 'Banka' : 
-                              method === 'kart' ? 'Kredi Kartı' : ''
+                              method === 'nakit' ? 'Готівка' : 
+                              method === 'banka' ? 'Банк' : 
+                              method === 'kart' ? 'Картка' : ''
                             ).join(', ')) : 
                             (incomeFilters.paymentMethod.map(method => 
                               method === 'nakit' ? 'Cash' : 
@@ -1534,13 +1535,13 @@ export default function IncomeExpense() {
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-[#6e6e73] dark:text-[#86868b] text-sm font-medium">
-                      {language === 'tr' ? 'Gider' : 'Expense'}
+                      {language === 'uk' ? 'Витрати' : 'Expense'}
                       {expenseFilters.paymentMethod && (
                         <span className="ml-1 text-xs">
-                          ({language === 'tr' ? 
-                            (expenseFilters.paymentMethod === 'nakit' ? 'Nakit' : 
-                             expenseFilters.paymentMethod === 'banka' ? 'Banka' : 
-                             expenseFilters.paymentMethod === 'kart' ? 'Kredi Kartı' : '') : 
+                          ({language === 'uk' ? 
+                            (expenseFilters.paymentMethod === 'nakit' ? 'Готівка' : 
+                             expenseFilters.paymentMethod === 'banka' ? 'Банк' : 
+                             expenseFilters.paymentMethod === 'kart' ? 'Картка' : '') : 
                             (expenseFilters.paymentMethod === 'nakit' ? 'Cash' : 
                              expenseFilters.paymentMethod === 'banka' ? 'Bank' : 
                              expenseFilters.paymentMethod === 'kart' ? 'Credit Card' : '')})
@@ -1548,7 +1549,7 @@ export default function IncomeExpense() {
                       )}
                       {expenseFilters.expenseType && (
                         <span className="ml-1 text-xs">
-                          ({language === 'tr'
+                          ({language === 'uk'
                             ? expenseFilters.expenseType.charAt(0).toUpperCase() + expenseFilters.expenseType.slice(1)
                             : expenseFilters.expenseType === 'kira' ? 'Rent'
                             : expenseFilters.expenseType === 'elektrik' ? 'Electricity'
@@ -1558,7 +1559,7 @@ export default function IncomeExpense() {
                             : expenseFilters.expenseType === 'malzeme' ? 'Materials'
                             : expenseFilters.expenseType === 'mutfak' ? 'Kitchen'
                             : expenseFilters.expenseType === 'reklam' ? 'Advertising'
-                            : expenseFilters.expenseType === 'filament' ? 'Filament'
+                            : expenseFilters.expenseType === 'filament' ? 'Філамент'
                             : 'Other'})
                         </span>
                       )}
@@ -1582,10 +1583,10 @@ export default function IncomeExpense() {
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-[#6e6e73] dark:text-[#86868b] text-sm font-medium">
-                      {language === 'tr' ? 'Net Kazanç' : 'Net Income'}
+                      {language === 'uk' ? 'Чистий прибуток' : 'Net Income'}
                       {(incomeFilters.paymentMethod.length || expenseFilters.paymentMethod || expenseFilters.expenseType) && (
                         <span className="ml-1 text-xs">
-                          ({language === 'tr' ? 'Filtrelenmiş' : 'Filtered'})
+                          ({language === 'uk' ? 'Відфільтровано' : 'Filtered'})
                         </span>
                       )}
                     </p>
@@ -1618,7 +1619,7 @@ export default function IncomeExpense() {
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-[#6e6e73] dark:text-[#86868b] text-sm font-medium">
-                      {language === 'tr' ? 'Bekleyen Tahsilatlar' : 'Pending Payments'}
+                      {language === 'uk' ? 'Очікувані надходження' : 'Pending Payments'}
                     </p>
                     <div className="w-7 h-7 bg-[#fbbf24]/10 dark:bg-[#fbbf24]/20 rounded-lg flex items-center justify-center">
                       <ClockIcon className="w-4 h-4 text-[#fbbf24]" />
@@ -1646,7 +1647,7 @@ export default function IncomeExpense() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                      {language === 'tr' ? 'Gelir Detayları' : 'Income Details'}
+                      {language === 'uk' ? 'Деталі доходів' : 'Income Details'}
                     </h2>
                     <span className="text-sm font-medium text-[#424245] dark:text-[#86868b]">
                       ({applyFilters(incomeTableData, 'income').length})
@@ -1658,7 +1659,7 @@ export default function IncomeExpense() {
                   <div className="relative flex-1 sm:flex-none">
                     <input
                       type="search"
-                      placeholder={language === 'tr' ? 'Öğrenci veya veli ara...' : 'Search student or parent...'}
+                      placeholder={language === 'uk' ? 'Пошук за дитиною або батьками...' : 'Search student or parent...'}
                       value={incomeFilters.search}
                       onChange={(e) => setIncomeFilters(prev => ({ ...prev, search: e.target.value }))}
                       className="h-9 pl-9 pr-4 rounded-xl text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] focus:border-[#0071e3] dark:focus:border-[#0071e3] focus:bg-white dark:focus:bg-[#121621] focus:outline-none focus:ring-2 focus:ring-[#0071e3] focus:ring-opacity-20 transition-all w-full sm:w-[250px]"
@@ -1670,7 +1671,7 @@ export default function IncomeExpense() {
                   <button
                     onClick={() => setIsIncomeFilterSheetOpen(true)}
                     className="h-9 w-full sm:w-9 flex items-center justify-center rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors relative group"
-                    title={language === 'tr' ? 'Filtre' : 'Filter'}
+                    title={language === 'uk' ? 'Фільтр' : 'Filter'}
                   >
                     <AdjustmentsHorizontalIcon className="w-5 h-5 text-[#424245] dark:text-[#86868b]" />
                     {(incomeFilters.paymentMethod.length || 
@@ -1693,11 +1694,11 @@ export default function IncomeExpense() {
                     <BanknotesIcon className="w-8 h-8 text-[#86868b]" />
                   </div>
                   <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-2">
-                    {language === 'tr' ? 'Gelir kaydı bulunamadı' : 'No income records found'}
+                    {language === 'uk' ? 'Записів про доходи не знайдено' : 'No income records found'}
                   </h3>
                   <p className="text-sm text-[#6e6e73] dark:text-[#86868b] text-center max-w-sm">
-                    {language === 'tr' 
-                      ? 'Seçilen tarih aralığında herhangi bir gelir kaydı bulunmamaktadır.' 
+                    {language === 'uk' 
+                      ? 'За обраний період немає записів про доходи.' 
                       : 'There are no income records for the selected date range.'}
                   </p>
                 </div>
@@ -1708,46 +1709,46 @@ export default function IncomeExpense() {
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <div className="flex flex-col">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Öğrenci' : 'Student'}
+                            {language === 'uk' ? 'Дитина' : 'Student'}
                           </span>
                           <span className="text-[10px] font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b] opacity-75">
-                            {language === 'tr' ? 'Veli' : 'Parent'}
+                            {language === 'uk' ? 'Батьки' : 'Parent'}
                           </span>
                         </div>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Paket' : 'Package'}
+                          {language === 'uk' ? 'Абонемент' : 'Package'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Başlangıç-Bitiş' : 'Start-End'}
+                          {language === 'uk' ? 'Початок-Кінець' : 'Start-End'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Ödeme Günü' : 'Payment Date'}
+                          {language === 'uk' ? 'День оплати' : 'Payment Date'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-center bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Durum' : 'Status'}
+                          {language === 'uk' ? 'Статус' : 'Status'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-right bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Tutar' : 'Amount'}
+                          {language === 'uk' ? 'Сума' : 'Amount'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Yöntem' : 'Method'}
+                          {language === 'uk' ? 'Спосіб' : 'Method'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'tr' ? 'Ödeme Durumu' : 'Payment Status'}
+                          {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
                         </span>
                       </th>
                     </tr>
@@ -1778,25 +1779,25 @@ export default function IncomeExpense() {
                         </td>
                         <td className="py-4 px-6">
                           <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-[#0071e3]/5 to-[#34d399]/5 dark:from-[#0071e3]/10 dark:to-[#34d399]/10 text-[#0071e3] group-hover:from-[#0071e3]/10 group-hover:to-[#34d399]/10 dark:group-hover:from-[#0071e3]/20 dark:group-hover:to-[#34d399]/20 transition-all">
-                            {item.package === 'ucretsiz' ? 'Ücretsiz'
-                              : item.package === 'hafta-1' ? 'Haftada 1'
-                              : item.package === 'hafta-2' ? 'Haftada 2'
-                              : item.package === 'hafta-3' ? 'Haftada 3'
-                              : item.package === 'hafta-4' ? 'Haftada 4'
-                              : 'Tek Seferlik'}
+                            {item.package === 'ucretsiz' ? 'Безкоштовно'
+                              : item.package === 'hafta-1' ? '1 на тиждень'
+                              : item.package === 'hafta-2' ? '2 на тиждень'
+                              : item.package === 'hafta-3' ? '3 на тиждень'
+                              : item.package === 'hafta-4' ? '4 на тиждень'
+                              : 'Разове'}
                           </span>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
                             <span className="text-sm text-[#424245] dark:text-[#86868b]">
-                              {new Date(item.date).toLocaleDateString('tr-TR')} - {item.end_date ? new Date(item.end_date).toLocaleDateString('tr-TR') : new Date(item.date).toLocaleDateString('tr-TR')}
+                              {new Date(item.date).toLocaleDateString('uk-UA')} - {item.end_date ? new Date(item.end_date).toLocaleDateString('uk-UA') : new Date(item.date).toLocaleDateString('uk-UA')}
                             </span>
                           </div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
                             <span className="text-sm text-[#424245] dark:text-[#86868b]">
-                              {new Date(item.payment_date).toLocaleDateString('tr-TR')}
+                              {new Date(item.payment_date).toLocaleDateString('uk-UA')}
                             </span>
                           </div>
                         </td>
@@ -1812,12 +1813,12 @@ export default function IncomeExpense() {
                                 {item.is_active ? (
                                   <>
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#0f766e] dark:bg-[#34d399] " />
-                                    {language === 'tr' ? 'Aktif' : 'Active'}
+                                    {language === 'uk' ? 'Активний' : 'Active'}
                                   </>
                                 ) : (
                                   <>
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#be123c] dark:bg-[#ef4444]" />
-                                    {language === 'tr' ? 'Pasif' : 'Inactive'}
+                                    {language === 'uk' ? 'Неактивний' : 'Inactive'}
                                   </>
                                 )}
                             </span>
@@ -1880,7 +1881,7 @@ export default function IncomeExpense() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-                        {language === 'tr' ? 'Gider Detayları' : 'Expense Details'}
+                        {language === 'uk' ? 'Деталі витрат' : 'Expense Details'}
                       </h2>
                       <span className="text-sm font-medium text-[#424245] dark:text-[#86868b]">
                         ({applyFilters(expenseTableData, 'expense').length})
@@ -1904,7 +1905,7 @@ export default function IncomeExpense() {
                       className="h-9 w-full sm:w-auto px-4 rounded-xl bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0071e3] transition-all transform hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center sm:justify-start gap-2"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      <span>{language === 'tr' ? 'Gider Ekle' : 'Add Expense'}</span>
+                      <span>{language === 'uk' ? 'Додати витрату' : 'Add Expense'}</span>
                     </button>
                   </div>
                 </div>
@@ -1918,11 +1919,11 @@ export default function IncomeExpense() {
                       <ArrowTrendingDownIcon className="w-8 h-8 text-[#86868b]" />
                     </div>
                     <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-2">
-                      {language === 'tr' ? 'Gider kaydı bulunamadı' : 'No expense records found'}
+                      {language === 'uk' ? 'Записів про витрати не знайдено' : 'No expense records found'}
                     </h3>
                     <p className="text-sm text-[#6e6e73] dark:text-[#86868b] text-center max-w-sm">
-                      {language === 'tr' 
-                        ? 'Seçilen tarih aralığında herhangi bir gider kaydı bulunmamaktadır.' 
+                      {language === 'uk' 
+                        ? 'За обраний період немає записів про витрати.' 
                         : 'There are no expense records for the selected date range.'}
                     </p>
                   </div>
@@ -1932,37 +1933,37 @@ export default function IncomeExpense() {
                       <tr className="border-b-2 border-[#d2d2d7] dark:border-[#2a3241]">
                         <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Başlık' : 'Title'}
+                            {language === 'uk' ? 'Назва' : 'Title'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Kategori' : 'Category'}
+                            {language === 'uk' ? 'Категорія' : 'Category'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Tarih' : 'Date'}
+                            {language === 'uk' ? 'Дата' : 'Date'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-right bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Tutar' : 'Amount'}
+                            {language === 'uk' ? 'Сума' : 'Amount'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Yöntem' : 'Method'}
+                            {language === 'uk' ? 'Спосіб' : 'Method'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'Not' : 'Note'}
+                            {language === 'uk' ? 'Нотатка' : 'Note'}
                           </span>
                         </th>
                         <th className="py-4 px-6 text-right bg-[#f5f5f7]/50 dark:bg-[#161922] w-[100px]">
                           <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                            {language === 'tr' ? 'İşlemler' : 'Actions'}
+                            {language === 'uk' ? 'Дії' : 'Actions'}
                           </span>
                         </th>
                       </tr>
@@ -2011,7 +2012,7 @@ export default function IncomeExpense() {
                             </td>
                             <td className="py-4 px-6">
                               <span className="text-sm text-[#424245] dark:text-[#86868b]">
-                                {new Date(item.date).toLocaleDateString('tr-TR')}
+                                {new Date(item.date).toLocaleDateString('uk-UA')}
                               </span>
                             </td>
                             <td className="py-4 px-6 text-right">
@@ -2065,7 +2066,7 @@ export default function IncomeExpense() {
                                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-[#424245] dark:text-[#86868b]">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                           </svg>
-                                          {language === 'tr' ? 'Düzenle' : 'Edit'}
+                                          {language === 'uk' ? 'Редагувати' : 'Edit'}
                                         </button>
                                         <div className="h-[1px] w-full bg-[#d2d2d7] dark:bg-[#2a3241]" />
                                         <button
@@ -2079,7 +2080,7 @@ export default function IncomeExpense() {
                                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                           </svg>
-                                          {language === 'tr' ? 'Sil' : 'Delete'}
+                                          {language === 'uk' ? 'Видалити' : 'Delete'}
                                 </button>
                                       </div>
                                     )}
@@ -2099,10 +2100,10 @@ export default function IncomeExpense() {
             <div className="bg-white dark:bg-[#121621] rounded-2xl border border-[#d2d2d7] dark:border-[#2a3241] p-6 max-h-[485px] overflow-auto">
               <div className="space-y-1 mb-6">
                 <h2 className="text-[15px] font-medium text-[#1d1d1f] dark:text-white">
-                  {language === 'tr' ? 'Gider Dağılımı' : 'Expense Distribution'}
+                  {language === 'uk' ? 'Розподіл витрат' : 'Expense Distribution'}
                 </h2>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                  {language === 'tr' ? 'Kategorilere Göre' : 'By Category'}
+                  {language === 'uk' ? 'За категоріями' : 'By Category'}
                 </p>
               </div>
               
@@ -2113,11 +2114,11 @@ export default function IncomeExpense() {
                       <ChartPieIcon className="w-8 h-8 text-[#86868b]" />
                     </div>
                     <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-2">
-                      {language === 'tr' ? 'Gider dağılımı bulunamadı' : 'No expense distribution found'}
+                      {language === 'uk' ? 'Розподіл витрат не знайдено' : 'No expense distribution found'}
                     </h3>
                     <p className="text-sm text-[#6e6e73] dark:text-[#86868b] text-center max-w-sm">
-                      {language === 'tr' 
-                        ? 'Seçilen tarih aralığında herhangi bir gider dağılımı bulunmamaktadır.' 
+                      {language === 'uk' 
+                        ? 'За обраний період немає даних про витрати.' 
                         : 'There is no expense distribution for the selected date range.'}
                     </p>
                   </div>
@@ -2164,7 +2165,7 @@ export default function IncomeExpense() {
                         }}
                         formatter={(value, name) => [
                           formatCurrency(value),
-                          language === 'tr'
+                          language === 'uk'
                             ? name.charAt(0).toUpperCase() + name.slice(1)
                             : name === 'kira' ? 'Rent'
                             : name === 'elektrik' ? 'Electricity'
@@ -2175,7 +2176,7 @@ export default function IncomeExpense() {
                             : name === 'malzeme' ? 'Materials'
                             : name === 'mutfak' ? 'Kitchen'
                             : name === 'reklam' ? 'Advertising'
-                            : name === 'filament' ? 'Filament'
+                            : name === 'filament' ? 'Філамент'
                             : 'Other'
                         ]}
                         labelStyle={{ 
@@ -2201,7 +2202,7 @@ export default function IncomeExpense() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                           <span className="text-sm text-[#1d1d1f] dark:text-white">
-                            {language === 'tr'
+                            {language === 'uk'
                               ? item.name.charAt(0).toUpperCase() + item.name.slice(1)
                               : item.name === 'kira' ? 'Rent'
                               : item.name === 'elektrik' ? 'Electricity'
@@ -2212,7 +2213,7 @@ export default function IncomeExpense() {
                               : item.name === 'malzeme' ? 'Materials'
                               : item.name === 'mutfak' ? 'Kitchen'
                               : item.name === 'reklam' ? 'Advertising'
-                              : item.name === 'filament' ? 'Filament'
+                              : item.name === 'filament' ? 'Філамент'
                               : 'Other'
                             }
                           </span>
@@ -2236,23 +2237,23 @@ export default function IncomeExpense() {
             <div className="flex items-center justify-between mb-8">
               <div className="space-y-1">
                 <h2 className="text-[15px] font-medium text-[#1d1d1f] dark:text-white">
-                  {language === 'tr' ? 'Gelir & Gider Grafiği' : 'Income & Expense Chart'}
+                  {language === 'uk' ? 'Графік доходів і витрат' : 'Income & Expense Chart'}
                 </h2>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                  {language === 'tr' ? `Son ${chartRange} Ay` : `Last ${chartRange} Months`}
+                  {language === 'uk' ? `Son ${chartRange} Ay` : `Last ${chartRange} Months`}
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#0071e3]" />
                   <span className="text-sm text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? 'Gelir' : 'Income'}
+                    {language === 'uk' ? 'Дохід' : 'Income'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#ef4444]" />
                   <span className="text-sm text-[#1d1d1f] dark:text-white">
-                    {language === 'tr' ? 'Gider' : 'Expense'}
+                    {language === 'uk' ? 'Витрати' : 'Expense'}
                   </span>
                 </div>
               </div>
@@ -2306,8 +2307,8 @@ export default function IncomeExpense() {
                     itemStyle={{ color: '#f5f5f7', fontSize: '12px', padding: '4px 0' }}
                     formatter={(value, name) => [
                       formatTooltipValue(value),
-                      name === 'gelir' ? (language === 'tr' ? 'Gelir' : 'Income') :
-                      name === 'gider' ? (language === 'tr' ? 'Gider' : 'Expense') : name
+                      name === 'gelir' ? (language === 'uk' ? 'Дохід' : 'Income') :
+                      name === 'gider' ? (language === 'uk' ? 'Витрати' : 'Expense') : name
                     ]}
                     labelStyle={{ color: 'white', fontWeight: '500', fontSize: '14px', marginBottom: '8px' }}
                   />
@@ -2345,7 +2346,7 @@ export default function IncomeExpense() {
                   }
                 `}
               >
-                {language === 'tr' ? 'Son 3 Ay' : 'Last 3 Months'}
+                {language === 'uk' ? 'Останні 3 місяці' : 'Last 3 Months'}
               </button>
               <button
                 onClick={() => setChartRange(6)}
@@ -2357,7 +2358,7 @@ export default function IncomeExpense() {
                   }
                 `}
               >
-                {language === 'tr' ? 'Son 6 Ay' : 'Last 6 Months'}
+                {language === 'uk' ? 'Останні 6 місяців' : 'Last 6 Months'}
               </button>
               <button
                 onClick={() => setChartRange(12)}
@@ -2369,7 +2370,7 @@ export default function IncomeExpense() {
                   }
                 `}
               >
-                {language === 'tr' ? 'Son 12 Ay' : 'Last 12 Months'}
+                {language === 'uk' ? 'Останні 12 місяців' : 'Last 12 Months'}
               </button>
             </div>
           </div>

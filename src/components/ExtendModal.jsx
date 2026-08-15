@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { DateRange } from 'react-date-range'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
@@ -136,7 +136,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
 
   // Tarihi formatlama fonksiyonu
   const formatDate = (date) => {
-    return date.toLocaleDateString('tr-TR', {
+    return date.toLocaleDateString('uk-UA', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -292,7 +292,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
 
         setToast({
           visible: true,
-          message: language === 'tr' ? 'Uzatma başarıyla güncellendi' : 'Extension has been successfully updated',
+          message: language === 'uk' ? 'Продовження успішно оновлено' : 'Extension has been successfully updated',
           type: 'success'
         })
       } else {
@@ -354,7 +354,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
 
         setToast({
           visible: true,
-          message: language === 'tr' ? 'Paket başarıyla uzatıldı' : 'Package has been successfully extended',
+          message: language === 'uk' ? 'Абонемент успішно продовжено' : 'Package has been successfully extended',
           type: 'success'
         })
       }
@@ -366,8 +366,8 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
       setToast({
         visible: true,
         message: isEditMode
-          ? (language === 'tr' ? 'Uzatma güncellenirken bir hata oluştu' : 'An error occurred while updating the extension')
-          : (language === 'tr' ? 'Uzatma işlemi sırasında bir hata oluştu' : 'An error occurred during the extension process'),
+          ? (language === 'uk' ? 'Помилка при оновленні продовження' : 'An error occurred while updating the extension')
+          : (language === 'uk' ? 'Помилка під час продовження' : 'An error occurred during the extension process'),
         type: 'error'
       })
     } finally {
@@ -410,16 +410,16 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
               <div>
                 <h2 className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
                   {isEditMode
-                    ? (language === 'tr' ? 'Uzatmayı Düzenle' : 'Edit Extension')
-                    : (language === 'tr' ? 'Paketi Uzat' : 'Extend Package')}
+                    ? (language === 'uk' ? 'Редагувати продовження' : 'Edit Extension')
+                    : (language === 'uk' ? 'Продовжити абонемент' : 'Extend Package')}
                 </h2>
                 <p className="text-[#6e6e73] dark:text-[#86868b]">
                   {isEditMode
-                    ? (language === 'tr'
-                        ? `${registration?.student_name} için uzatma düzenleme`
+                    ? (language === 'uk'
+                        ? `Редагування продовження для ${registration?.student_name}`
                         : `Editing extension for ${registration?.student_name}`)
-                    : (language === 'tr'
-                        ? `${registration?.student_name} için paket uzatma işlemi`
+                    : (language === 'uk'
+                        ? `Продовження абонемента для ${registration?.student_name}`
                         : `Package extension for ${registration?.student_name}`)}
                 </p>
               </div>
@@ -439,7 +439,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     <input
                       type="text"
                       className={`${inputClasses} cursor-pointer peer`}
-                      placeholder={language === 'tr' ? "Yeni Bitiş Tarihi Seçin" : "Select New End Date"}
+                      placeholder={language === 'uk' ? "Оберіть нову дату закінчення" : "Select New End Date"}
                       value={`${formatDate(dateRange[0].startDate)} - ${formatDate(dateRange[0].endDate)}`}
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                       readOnly
@@ -447,7 +447,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       autoComplete="off"
                     />
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                      {language === 'tr' ? "Kayıt Başlangıç ve Kayıt Tarihi" : "Registration Start and End Date"}
+                      {language === 'uk' ? "Дата початку та реєстрації" : "Registration Start and End Date"}
                     </div>
                     {isCalendarOpen && (
                       <div className="absolute z-50 mt-2">
@@ -554,10 +554,10 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                               background-color: #4a4a4a;
                             }
                             .rdrDateDisplayItem:first-child::after {
-                              content: "Başlangıç Tarihi";
+                              content: "Дата початку";
                             }
                             .rdrDateDisplayItem:last-child::after {
-                              content: "Bitiş Tarihi";
+                              content: "Дата закінчення";
                             }
                           `}
                           </style>
@@ -572,7 +572,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                             months={1}
                             ranges={dateRange}
                             direction="horizontal"
-                            locale={tr}
+                            locale={uk}
                             rangeColors={['#007AFF']}
                             minDate={new Date(isEditMode && existingExtension ? existingExtension.previous_end_date : registration?.package_end_date)}
                           />
@@ -595,22 +595,22 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       autoComplete="off"
                     >
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Paket Türü Seçin" : "Select Package Type"}
+                        {language === 'uk' ? "Оберіть тип абонемента" : "Select Package Type"}
                       </option>
                       <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Tek Seferlik Katılım" : "One Time Participation"}
+                        {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
                       </option>
                       <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Haftada 1 Gün" : "1 Day Per Week"}
+                        {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
                       </option>
                       <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Haftada 2 Gün" : "2 Days Per Week"}
+                        {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
                       </option>
                       <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Haftada 3 Gün" : "3 Days Per Week"}
+                        {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
                       </option>
                       <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Haftada 4 Gün" : "4 Days Per Week"}
+                        {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
                       </option>
                     </select>
                   </div>
@@ -629,13 +629,13 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       autoComplete="off"
                     >
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Ödeme Durumu Seçin" : "Select Payment Status"}
+                        {language === 'uk' ? "Оберіть статус оплати" : "Select Payment Status"}
                       </option>
                       <option value="odendi" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Ödendi" : "Paid"}
+                        {language === 'uk' ? "Оплачено" : "Paid"}
                       </option>
                       <option value="beklemede" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Beklemede" : "Pending"}
+                        {language === 'uk' ? "Очікує" : "Pending"}
                       </option>
                     </select>
                   </div>
@@ -658,22 +658,22 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       disabled={formData.paymentStatus !== 'odendi'}
                     >
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Ödeme Yeri Seçin" : "Select Payment Method"}
+                        {language === 'uk' ? "Оберіть спосіб оплати" : "Select Payment Method"}
                       </option>
                       <option value="banka" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Banka" : "Bank"}
+                        {language === 'uk' ? "Банк" : "Bank"}
                       </option>
                       <option value="nakit" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Nakit" : "Cash"}
+                        {language === 'uk' ? "Готівка" : "Cash"}
                       </option>
                       <option value="kart" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'tr' ? "Kredi Kartı" : "Credit Card"}
+                        {language === 'uk' ? "Картка" : "Credit Card"}
                       </option>
                     </select>
                     {formData.paymentStatus !== 'odendi' && (
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                        {language === 'tr' 
-                          ? 'Ödeme durumu "Ödendi" seçildiğinde aktif olacaktır'
+                        {language === 'uk' 
+                          ? 'Стане активним, коли статус оплати «Оплачено»'
                           : 'Will be active when payment status is set to "Paid"'
                         }
                       </div>
@@ -691,7 +691,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       value={formData.amount}
                       onChange={handleInputChange}
                       className={`${inputClasses} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.paymentStatus !== 'odendi' && 'opacity-50 cursor-not-allowed'}`}
-                      placeholder={language === 'tr' ? "0.00 ₺" : "0.00 ₺"}
+                      placeholder={language === 'uk' ? "0.00 ₺" : "0.00 ₺"}
                       tabIndex={5}
                       autoComplete="off"
                       disabled={formData.paymentStatus !== 'odendi'}
@@ -707,8 +707,8 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     />
                     {formData.paymentStatus !== 'odendi' && (
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                        {language === 'tr' 
-                          ? 'Ödeme durumu "Ödendi" seçildiğinde aktif olacaktır'
+                        {language === 'uk' 
+                          ? 'Стане активним, коли статус оплати «Оплачено»'
                           : 'Will be active when payment status is set to "Paid"'
                         }
                       </div>
@@ -723,12 +723,12 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     <input
                       type="text"
                       className={`${inputClasses} cursor-pointer peer ${formData.paymentStatus !== 'odendi' && 'opacity-50 cursor-not-allowed'}`}
-                      placeholder={language === 'tr' ? "Ödeme Yapılan Gün" : "Payment Date"}
+                      placeholder={language === 'uk' ? "День оплати" : "Payment Date"}
                       value={formData.paymentDate 
                         ? formatDate(formData.paymentDate) 
                         : formData.paymentStatus === 'beklemede' 
-                          ? (language === 'tr' ? "Ödeme Beklemede" : "Payment Pending")
-                          : (language === 'tr' ? "Ödeme Tarihi Seçin" : "Select Payment Date")}
+                          ? (language === 'uk' ? "Очікує оплати" : "Payment Pending")
+                          : (language === 'uk' ? "Оберіть дату оплати" : "Select Payment Date")}
                       onClick={() => formData.paymentStatus === 'odendi' && setIsPaymentDatePickerOpen(!isPaymentDatePickerOpen)}
                       readOnly
                       tabIndex={6}
@@ -737,8 +737,8 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     />
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
                       {formData.paymentStatus === 'odendi' 
-                        ? (language === 'tr' ? "Ödeme Tarihi" : "Payment Date")
-                        : (language === 'tr' ? "Ödeme durumu 'Ödendi' olduğunda aktif olacaktır" : "Will be active when payment status is 'Paid'")
+                        ? (language === 'uk' ? "Дата оплати" : "Payment Date")
+                        : (language === 'uk' ? "Стане активним, коли статус оплати «Оплачено»" : "Will be active when payment status is 'Paid'")
                       }
                     </div>
                     {isPaymentDatePickerOpen && (
@@ -802,7 +802,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                               key: 'selection'
                             }]}
                             direction="horizontal"
-                            locale={tr}
+                            locale={uk}
                             rangeColors={['#007AFF']}
                             showDateDisplay={false}
                             staticRanges={[]}
@@ -825,7 +825,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     value={formData.note}
                     onChange={handleInputChange}
                     className={inputClasses}
-                    placeholder={language === 'tr' ? "Not ekle..." : "Add note..."}
+                    placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
                     tabIndex={7}
                     autoComplete="off"
                   />
@@ -841,7 +841,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                   tabIndex={8}
                   disabled={isLoading}
                 >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                  {language === 'uk' ? 'Скасувати' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -857,14 +857,14 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                       </svg>
                       <span>
                         {isEditMode
-                          ? (language === 'tr' ? 'Kaydediliyor' : 'Saving')
-                          : (language === 'tr' ? 'Uzatılıyor' : 'Extending')}
+                          ? (language === 'uk' ? 'Збереження' : 'Saving')
+                          : (language === 'uk' ? 'Продовження...' : 'Extending')}
                       </span>
                     </>
                   ) : (
                     isEditMode
-                      ? (language === 'tr' ? 'Kaydet' : 'Save')
-                      : (language === 'tr' ? 'Uzat' : 'Extend')
+                      ? (language === 'uk' ? 'Зберегти' : 'Save')
+                      : (language === 'uk' ? 'Продовжити' : 'Extend')
                   )}
                 </button>
               </div>

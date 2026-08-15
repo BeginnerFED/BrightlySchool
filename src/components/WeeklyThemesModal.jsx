@@ -8,7 +8,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import { format, startOfWeek, addDays, addWeeks, parseISO, startOfMonth, endOfMonth, addMonths } from 'date-fns';
-import { tr, enUS } from 'date-fns/locale';
+import { uk, enUS } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -17,7 +17,7 @@ import { useLanguage } from '../context/LanguageContext';
 // Konular etkinliklerden tamamen bağımsızdır (hafta kopyalama konulara dokunmaz).
 export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekStart }) {
   const { language } = useLanguage();
-  const locale = language === 'tr' ? tr : enUS;
+  const locale = language === 'uk' ? uk : enUS;
 
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
   // themes: sunucudaki kayıtlı değerler (fetch'lerde aralık boşaltılıp merge edilir)
@@ -147,9 +147,9 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
         });
         setLoadedRangeKey(fetchedRangeKey);
       } catch (err) {
-        console.error('Haftalık konular getirilirken hata:', err);
+        console.error('Помилка завантаження тем тижня:', err);
         if (!cancelled) {
-          setError(language === 'tr' ? 'Konular yüklenirken bir hata oluştu' : 'An error occurred while loading themes');
+          setError(language === 'uk' ? 'Помилка завантаження тем' : 'An error occurred while loading themes');
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -167,8 +167,8 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
   const handleClose = () => {
     if (hasUnsavedChanges) {
       const confirmed = window.confirm(
-        language === 'tr'
-          ? 'Kaydedilmemiş değişiklikler var. Yine de kapatmak istiyor musunuz?'
+        language === 'uk'
+          ? 'Є незбережені зміни. Все одно закрити?'
           : 'You have unsaved changes. Close anyway?'
       );
       if (!confirmed) return;
@@ -266,7 +266,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
       if (onSaved) onSaved();
     } catch (err) {
       console.error('Haftalık konular kaydedilirken hata:', err);
-      setError(language === 'tr' ? 'Konular kaydedilirken bir hata oluştu' : 'An error occurred while saving themes');
+      setError(language === 'uk' ? 'Помилка при збереженні тем' : 'An error occurred while saving themes');
     } finally {
       setIsSaving(false);
     }
@@ -292,17 +292,17 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#d2d2d7] dark:border-[#2a3241]">
             <div>
               <h2 className="font-medium text-lg text-[#1d1d1f] dark:text-white leading-tight">
-                {language === 'tr' ? 'Haftalık Konular' : 'Weekly Themes'}
+                {language === 'uk' ? 'Теми тижнів' : 'Weekly Themes'}
               </h2>
               <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-0.5">
-                {language === 'tr'
-                  ? 'Bir haftanın konusunu yazmak için üzerine tıklayın'
+                {language === 'uk'
+                  ? 'Натисніть на тиждень, щоб додати тему'
                   : 'Click on a week to set its theme'}
               </p>
             </div>
             <button
               onClick={handleClose}
-              aria-label={language === 'tr' ? 'Kapat' : 'Close'}
+              aria-label={language === 'uk' ? 'Закрити' : 'Close'}
               className="text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-white transition-colors"
             >
               <XMarkIcon className="w-6 h-6" />
@@ -314,14 +314,14 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => navigateMonth(-1)}
-                aria-label={language === 'tr' ? 'Önceki ay' : 'Previous month'}
+                aria-label={language === 'uk' ? 'Попередній місяць' : 'Previous month'}
                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors"
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                aria-label={language === 'tr' ? 'Sonraki ay' : 'Next month'}
+                aria-label={language === 'uk' ? 'Наступний місяць' : 'Next month'}
                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors"
               >
                 <ChevronRightIcon className="w-4 h-4" />
@@ -342,8 +342,8 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
               </button>
               {isGridReady && (
                 <div className="text-[11px] text-[#6e6e73] dark:text-[#86868b]">
-                  {language === 'tr'
-                    ? `${themedWeekCount}/${weeks.length} hafta planlandı`
+                  {language === 'uk'
+                    ? `Заплановано тижнів: ${themedWeekCount}/${weeks.length}`
                     : `${themedWeekCount}/${weeks.length} weeks planned`}
                 </div>
               )}
@@ -357,7 +357,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                   <div className="flex items-center justify-between mb-2">
                     <button
                       onClick={() => setPickerYear(y => y - 1)}
-                      aria-label={language === 'tr' ? 'Önceki yıl' : 'Previous year'}
+                      aria-label={language === 'uk' ? 'Попередній рік' : 'Previous year'}
                       className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1d2535] transition-colors"
                     >
                       <ChevronLeftIcon className="w-4 h-4" />
@@ -367,7 +367,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                     </span>
                     <button
                       onClick={() => setPickerYear(y => y + 1)}
-                      aria-label={language === 'tr' ? 'Sonraki yıl' : 'Next year'}
+                      aria-label={language === 'uk' ? 'Наступний рік' : 'Next year'}
                       className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1d2535] transition-colors"
                     >
                       <ChevronRightIcon className="w-4 h-4" />
@@ -404,7 +404,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
               onClick={goToCurrentMonth}
               className="h-8 px-3 rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] text-sm font-medium text-[#1d1d1f] dark:text-white hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors"
             >
-              {language === 'tr' ? 'Bugün' : 'Today'}
+              {language === 'uk' ? 'Сьогодні' : 'Today'}
             </button>
           </div>
 
@@ -416,13 +416,13 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
               <div className="py-16 flex flex-col items-center gap-3">
                 <ExclamationCircleIcon className="w-8 h-8 text-red-500" />
                 <span className="text-sm text-[#6e6e73] dark:text-[#86868b] text-center">
-                  {language === 'tr' ? 'Konular yüklenirken bir hata oluştu' : 'An error occurred while loading themes'}
+                  {language === 'uk' ? 'Помилка завантаження тем' : 'An error occurred while loading themes'}
                 </span>
                 <button
                   onClick={() => setRetryCounter(count => count + 1)}
                   className="px-4 py-2 bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium rounded-lg hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-all duration-200"
                 >
-                  {language === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                  {language === 'uk' ? 'Спробувати ще раз' : 'Retry'}
                 </button>
               </div>
             ) : (
@@ -472,7 +472,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                                 else if (e.key === 'Escape') cancelEdit(week.key);
                               }}
                               maxLength={80}
-                              placeholder={language === 'tr' ? 'Haftanın konusu' : 'Theme for this week'}
+                              placeholder={language === 'uk' ? 'Тема тижня' : 'Theme for this week'}
                               className="w-full h-8 pl-2.5 pr-8 rounded-lg border border-[#0071e3] bg-white dark:bg-[#121621] text-sm text-[#1d1d1f] dark:text-white placeholder:text-[#a1a1a6] dark:placeholder:text-[#6e6e73] focus:ring-2 focus:ring-[#0071e3]/25 outline-none"
                             />
                             {value.length > 0 && (
@@ -480,7 +480,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                                 type="button"
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => handleDraftChange(week.key, '')}
-                                aria-label={language === 'tr' ? 'Temizle' : 'Clear'}
+                                aria-label={language === 'uk' ? 'Очистити' : 'Clear'}
                                 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-md bg-gray-100 dark:bg-[#252d3f] border border-[#e5e5ea] dark:border-[#2a3241] text-[#8e8e93] dark:text-[#86868b] hover:bg-gray-200 dark:hover:bg-[#2f3950] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
                               >
                                 <XMarkIcon className="w-3.5 h-3.5" />
@@ -506,13 +506,13 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                                 </span>
                               ) : (
                                 <span className="text-sm text-[#a1a1a6] dark:text-[#6e6e73]">
-                                  {language === 'tr' ? '+ Konu ekle' : '+ Add theme'}
+                                  {language === 'uk' ? '+ Додати тему' : '+ Add theme'}
                                 </span>
                               )}
                               {isDirty && (
                                 <span
                                   className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                                  title={language === 'tr' ? 'Kaydedilmemiş değişiklik' : 'Unsaved change'}
+                                  title={language === 'uk' ? 'Незбережені зміни' : 'Unsaved change'}
                                 ></span>
                               )}
                             </button>
@@ -520,8 +520,8 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                               <button
                                 type="button"
                                 onClick={() => handleDraftChange(week.key, '')}
-                                aria-label={language === 'tr' ? 'Konuyu sil' : 'Remove theme'}
-                                title={language === 'tr' ? 'Konuyu sil' : 'Remove theme'}
+                                aria-label={language === 'uk' ? 'Видалити тему' : 'Remove theme'}
+                                title={language === 'uk' ? 'Видалити тему' : 'Remove theme'}
                                 className="mr-1.5 w-5 h-5 flex items-center justify-center rounded-md bg-gray-100 dark:bg-[#252d3f] border border-[#e5e5ea] dark:border-[#2a3241] text-[#8e8e93] dark:text-[#86868b] hover:bg-gray-200 dark:hover:bg-[#2f3950] hover:text-[#1d1d1f] dark:hover:text-white shrink-0 opacity-0 group-hover:opacity-100 transition duration-150"
                               >
                                 <XMarkIcon className="w-3.5 h-3.5" />
@@ -570,8 +570,8 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                 </div>
               ) : hasUnsavedChanges ? (
                 <span className="text-xs text-[#6e6e73] dark:text-[#86868b]">
-                  {language === 'tr'
-                    ? `${dirtyKeys.length} kaydedilmemiş değişiklik`
+                  {language === 'uk'
+                    ? `Незбережених змін: ${dirtyKeys.length}`
                     : `${dirtyKeys.length} unsaved ${dirtyKeys.length === 1 ? 'change' : 'changes'}`}
                 </span>
               ) : null}
@@ -582,7 +582,7 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                 disabled={isSaving}
                 className="px-4 py-2 text-[#1d1d1f] dark:text-white bg-transparent border border-[#d2d2d7] dark:border-[#2a3241] text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-[#1d2535]/70 focus:outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {language === 'tr' ? 'Kapat' : 'Close'}
+                {language === 'uk' ? 'Закрити' : 'Close'}
               </button>
               <button
                 onClick={handleSave}
@@ -596,15 +596,15 @@ export default function WeeklyThemesModal({ isOpen, onClose, onSaved, focusWeekS
                 {isSaving ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>{language === 'tr' ? 'Kaydediliyor...' : 'Saving...'}</span>
+                    <span>{language === 'uk' ? 'Збереження...' : 'Saving...'}</span>
                   </>
                 ) : saveFlash ? (
                   <>
                     <CheckIcon className="w-4 h-4" />
-                    <span>{language === 'tr' ? 'Kaydedildi' : 'Saved'}</span>
+                    <span>{language === 'uk' ? 'Збережено' : 'Saved'}</span>
                   </>
                 ) : (
-                  <span>{language === 'tr' ? 'Kaydet' : 'Save'}</span>
+                  <span>{language === 'uk' ? 'Зберегти' : 'Save'}</span>
                 )}
               </button>
             </div>

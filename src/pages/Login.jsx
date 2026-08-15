@@ -4,29 +4,29 @@ import { useNavigate } from 'react-router-dom'
 import { FaChild } from 'react-icons/fa'
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
-// Hata mesajlarını Türkçe'ye çeviren fonksiyon
+// Hata mesajlarını Ukraynacaya çeviren fonksiyon
 const translateError = (error) => {
   const errorMessages = {
-    'Invalid login credentials': 'Geçersiz email veya şifre',
-    'Email not confirmed': 'Email adresi onaylanmamış',
-    'Invalid email or password': 'Geçersiz email veya şifre',
-    'Email already registered': 'Bu email adresi zaten kayıtlı',
-    'Invalid email': 'Geçersiz email adresi',
-    'User not found': 'Kullanıcı bulunamadı',
-    'Password is too short': 'Şifre çok kısa',
-    'Password is too weak': 'Şifre çok zayıf',
-    'Password is required': 'Şifre gerekli',
-    'Email is required': 'Email gerekli',
-    'Something went wrong': 'Bir hata oluştu',
-    'Network error': 'Bağlantı hatası',
-    'Server error': 'Sunucu hatası',
-    'Too many requests': 'Çok fazla deneme yapıldı, lütfen daha sonra tekrar deneyin',
-    'Invalid or expired token': 'Geçersiz veya süresi dolmuş token',
-    'Rate limit exceeded': 'İstek limiti aşıldı, lütfen daha sonra tekrar deneyin'
+    'Invalid login credentials': 'Невірна пошта або пароль',
+    'Email not confirmed': 'Адресу пошти не підтверджено',
+    'Invalid email or password': 'Невірна пошта або пароль',
+    'Email already registered': 'Ця адреса пошти вже зареєстрована',
+    'Invalid email': 'Невірна адреса пошти',
+    'User not found': 'Користувача не знайдено',
+    'Password is too short': 'Пароль занадто короткий',
+    'Password is too weak': 'Пароль занадто простий',
+    'Password is required': 'Введіть пароль',
+    'Email is required': 'Введіть адресу пошти',
+    'Something went wrong': 'Сталася помилка',
+    'Network error': 'Помилка з’єднання',
+    'Server error': 'Помилка сервера',
+    'Too many requests': 'Забагато спроб, спробуйте пізніше',
+    'Invalid or expired token': 'Недійсний або протермінований токен',
+    'Rate limit exceeded': 'Перевищено ліміт запитів, спробуйте пізніше'
   }
 
   // Hata mesajı eşleşmesi varsa çeviriyi, yoksa genel hata mesajını döndür
-  return errorMessages[error] || 'Bir hata oluştu, lütfen tekrar deneyin'
+  return errorMessages[error] || 'Сталася помилка, спробуйте ще раз'
 }
 
 export default function Login() {
@@ -74,7 +74,7 @@ export default function Login() {
             Hello Kido
           </h1>
           <p className="text-[17px] text-[#6e6e73] dark:text-[#86868b]">
-            Yönetim Paneline Hoş Geldiniz
+            Ласкаво просимо до панелі управління
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-[15px] font-medium text-[#1d1d1f] dark:text-white mb-2">
-                Email Adresi
+                Адреса пошти
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -96,14 +96,14 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-11 pr-4 py-3 border border-[#d2d2d7] dark:border-[#424245] rounded-xl focus:ring-2 focus:ring-[#0071e3] focus:border-transparent dark:focus:ring-[#0A84FF] bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white placeholder-[#86868b] transition-all duration-300"
-                  placeholder="ornek@sirket.com"
+                  placeholder="example@school.com"
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-[15px] font-medium text-[#1d1d1f] dark:text-white mb-2">
-                Şifre
+                Пароль
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -139,7 +139,7 @@ export default function Login() {
                   </div>
                 </div>
                 <span className="text-[15px] text-[#1d1d1f] dark:text-white group-hover:text-[#007AFF] dark:group-hover:text-[#0A84FF] transition-colors duration-300">
-                  Beni Hatırla
+                  Запам’ятати мене
                 </span>
               </label>
             </div>
@@ -161,10 +161,10 @@ export default function Login() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Giriş yapılıyor...</span>
+                  <span>Вхід...</span>
                 </div>
               ) : (
-                <span>Giriş Yap</span>
+                <span>Увійти</span>
               )}
             </button>
           </form>
@@ -172,7 +172,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-center text-[13px] text-[#86868b]">
-          Hello Kido Yönetim Paneli © {new Date().getFullYear()}
+          Hello Kido Панель управління © {new Date().getFullYear()}
         </div>
       </div>
     </div>

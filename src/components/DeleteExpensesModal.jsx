@@ -48,7 +48,7 @@ export default function DeleteExpensesModal({ isOpen, onClose, expense, onDelete
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-[#f5f5f7] dark:border-[#2a3241]">
             <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-              {language === 'tr' ? 'Gider Sil' : 'Delete Expense'}
+              {language === 'uk' ? 'Видалити витрату' : 'Delete Expense'}
             </h2>
             <button
               onClick={onClose}
@@ -64,11 +64,11 @@ export default function DeleteExpensesModal({ isOpen, onClose, expense, onDelete
               <ExclamationTriangleIcon className="w-6 h-6 text-red-500" />
               <div>
                 <h3 className="text-base font-medium text-[#1d1d1f] dark:text-white mb-1">
-                  {language === 'tr' ? 'Emin misiniz?' : 'Are you sure?'}
+                  {language === 'uk' ? 'Ви впевнені?' : 'Are you sure?'}
                 </h3>
                 <p className="text-sm text-[#424245] dark:text-[#86868b]">
-                  {language === 'tr' 
-                    ? `"${expense?.title}" giderini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+                  {language === 'uk' 
+                    ? `Видалити витрату «${expense?.title}»? Цю дію не можна скасувати.`
                     : `Are you sure you want to delete the expense "${expense?.title}"? This action cannot be undone.`
                   }
                 </p>
@@ -90,7 +90,7 @@ export default function DeleteExpensesModal({ isOpen, onClose, expense, onDelete
               onClick={onClose}
               className="h-10 px-4 rounded-xl bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white text-sm font-medium hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
             >
-              {language === 'tr' ? 'İptal' : 'Cancel'}
+              {language === 'uk' ? 'Скасувати' : 'Cancel'}
             </button>
             <button
               type="button"
@@ -105,11 +105,11 @@ export default function DeleteExpensesModal({ isOpen, onClose, expense, onDelete
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{language === 'tr' ? 'Siliniyor...' : 'Deleting...'}</span>
+                    <span>{language === 'uk' ? 'Видалення...' : 'Deleting...'}</span>
                   </div>
                 </>
               ) : (
-                language === 'tr' ? 'Sil' : 'Delete'
+                language === 'uk' ? 'Видалити' : 'Delete'
               )}
             </button>
           </div>

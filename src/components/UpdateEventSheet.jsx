@@ -14,12 +14,12 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { tr } from 'date-fns/locale'
+import { uk } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import Select from 'react-select'
 
 // Türkçe lokalizasyonu kaydet
-registerLocale('tr', tr)
+registerLocale('uk', uk)
 
 export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }) {
   const { language } = useLanguage()
@@ -47,8 +47,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
   const dropdownRef = useRef(null)
 
   // Yaş grupları - Aylık gruplar üstte, yaş grupları altta
-  const monthlyGroups = ['12-18 Aylık', '18-24 Aylık', '24-36 Aylık']
-  const yearlyGroups = ['3+ Yaş', '4+ Yaş', '5+ Yaş']
+  const monthlyGroups = ['12-18 міс.', '18-24 міс.', '24-36 міс.']
+  const yearlyGroups = ['3+ р.', '4+ р.', '5+ р.']
 
   // Saat ve dakika seçenekleri
   const hours = ['09', '10', '11', '12', '13', '14', '15', '16', '17', '18']
@@ -228,8 +228,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
       >
         <span className="truncate">
           {selectedStudents.length > 0 
-            ? `${selectedStudents.length} öğrenci seçildi` 
-            : language === 'tr' ? 'Öğrenci seç...' : 'Select students...'}
+            ? `Обрано дітей: ${selectedStudents.length}` 
+            : language === 'uk' ? 'Оберіть дитину...' : 'Select students...'}
         </span>
         <svg className="shrink-0 size-3.5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m7 15 5 5 5-5"/>
@@ -254,7 +254,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 onKeyDown={(e) => e.stopPropagation()}
                 onFocus={(e) => e.stopPropagation()}
                 autoFocus
-                placeholder={language === 'tr' ? 'Ara...' : 'Search...'}
+                placeholder={language === 'uk' ? 'Пошук...' : 'Search...'}
                 className="w-full h-9 pl-9 pr-4 rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3] dark:focus:border-[#0071e3] transition-colors text-sm cursor-pointer"
               />
             </div>
@@ -384,7 +384,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
       });
 
       if (conflictingEvent) {
-        throw new Error('Bu tarih ve saatte başka bir etkinlik zaten mevcut. Lütfen farklı bir saat seçin.');
+        throw new Error('На цю дату й час уже є інше заняття. Оберіть інший час.');
       }
 
       if (isCopyMode) {
@@ -672,15 +672,16 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {/* Tarih Seçimi */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                    {isCopyMode ? 'Orijinal Etkinlik Tarihi' : 'Tarih'}
+                    {isCopyMode ? 'Orijinal Etkinlik Tarihi' : 'Дата'}
                   </label>
                   <div className="relative">
                     <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
                     <DatePicker
+                      portalId="root"
                       selected={formData.date}
                       onChange={date => setFormData(prev => ({ ...prev, date }))}
                       dateFormat="d MMMM yyyy"
-                      locale="tr"
+                      locale="uk"
                       minDate={new Date()}
                       className={`w-full h-[45px] sm:h-[50px] pl-12 pr-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base cursor-pointer ${isCopyMode ? 'opacity-70' : ''}`}
                       disabled={isCopyMode}
@@ -872,10 +873,11 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                     <div className="relative">
                       <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
                       <DatePicker
+                        portalId="root"
                         selected={copyDate}
                         onChange={date => setCopyDate(date)}
                         dateFormat="d MMMM yyyy"
-                        locale="tr"
+                        locale="uk"
                         minDate={new Date()}
                         className="w-full h-[45px] sm:h-[50px] pl-12 pr-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base cursor-pointer"
                       />
@@ -929,10 +931,10 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>{isCopyMode ? 'Kopyalanıyor...' : 'Güncelleniyor...'}</span>
+                  <span>{isCopyMode ? 'Копіювання...' : 'Оновлення...'}</span>
                 </>
               ) : (
-                isCopyMode ? 'Kopyala' : 'Güncelle'
+                isCopyMode ? 'Kopyala' : 'Оновити'
               )}
             </button>
           </div>

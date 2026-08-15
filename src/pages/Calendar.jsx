@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import trLocale from '@fullcalendar/core/locales/tr';
+import ukLocale from '@fullcalendar/core/locales/uk';
 import enLocale from '@fullcalendar/core/locales/en-gb';
 import { PlusIcon, UserGroupIcon, ClockIcon, AcademicCapIcon, DocumentDuplicateIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import CreateEvent from '../components/CreateEvent';
@@ -16,7 +16,7 @@ import { fetchLessonUsageMap } from '../lib/lessonUsage';
 import Toast from '../components/ui/Toast';
 import '../styles/calendar.css';
 import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
-import tr from 'date-fns/locale/tr';
+import uk from 'date-fns/locale/uk';
 import enUS from 'date-fns/locale/en-US';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ActionNotification from '../components/ActionNotification';
@@ -100,11 +100,11 @@ const Calendar = () => {
   const formatAgeGroup = (ageGroup) => {
     // If screen width is less than 1700px or zoomed
     if (width < 1700) {
-      // Remove "Aylık" or "Yaş" words for Turkish, "Month" or "Year" for English
-      if (language === 'tr') {
+      // Remove "міс." or "р." units for Ukrainian, "Month" or "Year" for English
+      if (language === 'uk') {
         return ageGroup
-          .replace('Aylık', '')
-          .replace('Yaş', '')
+          .replace('міс.', '')
+          .replace('р.', '')
           .trim();
       } else {
         return ageGroup
@@ -120,7 +120,7 @@ const Calendar = () => {
 
   // Format date with the correct locale
   const formatDate = (date, formatStr) => {
-    return format(new Date(date), formatStr || 'dd.MM.yyyy', { locale: language === 'tr' ? tr : enUS });
+    return format(new Date(date), formatStr || 'dd.MM.yyyy', { locale: language === 'uk' ? uk : enUS });
   };
 
   // Determine color and icon based on event type
@@ -130,19 +130,19 @@ const Calendar = () => {
         return {
           color: '#8b5cf6', // Violet color (Tailwind violet-500)
           icon: '🇬🇧',
-          label: language === 'tr' ? 'İngilizce' : 'English'
+          label: language === 'uk' ? 'Англійська' : 'English'
         };
       case 'duyusal':
         return {
           color: '#f97316', // Orange color (Tailwind orange-500)
           icon: '🎨',
-          label: language === 'tr' ? 'Duyusal' : 'Sensory'
+          label: language === 'uk' ? 'Сенсорика' : 'Sensory'
         };
       case 'ozel':
         return {
           color: '#059669',
           icon: '⭐',
-          label: language === 'tr' ? 'Özel' : 'Special'
+          label: language === 'uk' ? 'Індивідуальне' : 'Special'
         };
       default:
         return {
@@ -223,7 +223,7 @@ const Calendar = () => {
       // Group events by day and type
       groupEventsByDayAndType(formattedEvents);
     } catch (error) {
-      console.error(language === 'tr' ? 'Etkinlikler getirilirken hata:' : 'Error fetching events:', error);
+      console.error(language === 'uk' ? 'Помилка завантаження занять:' : 'Error fetching events:', error);
     } finally {
       setIsLoading(false);
     }
@@ -257,7 +257,7 @@ const Calendar = () => {
       setWeekThemes(themeMap);
     } catch (error) {
       // Konu sorgusu başarısız olsa da takvim çalışmaya devam etmeli
-      console.error(language === 'tr' ? 'Haftalık konular getirilirken hata:' : 'Error fetching weekly themes:', error);
+      console.error(language === 'uk' ? 'Помилка завантаження тем тижня:' : 'Error fetching weekly themes:', error);
     }
   };
 
@@ -353,7 +353,7 @@ const Calendar = () => {
             <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
               <ClockIcon className="w-3 h-3 text-white/70" />
               <span className="font-medium">
-                {new Date(eventInfo.event.start).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', {
+                {new Date(eventInfo.event.start).toLocaleTimeString(language === 'uk' ? 'uk-UA' : 'en-US', {
                   hour: '2-digit',
                   minute: '2-digit'
                 })}
@@ -454,13 +454,13 @@ const Calendar = () => {
   const handleCreateEvent = async (formData) => {
     try {
       if (!formData || !formData.date) {
-        throw new Error(language === 'tr' ? 'Geçersiz form verisi' : 'Invalid form data');
+        throw new Error(language === 'uk' ? 'Некоректні дані форми' : 'Invalid form data');
       }
 
       // Tarih ve saat bilgisini birleştir
       const eventDateTime = new Date(formData.date);
       if (isNaN(eventDateTime.getTime())) {
-        throw new Error(language === 'tr' ? 'Geçersiz tarih formatı' : 'Invalid date format');
+        throw new Error(language === 'uk' ? 'Некоректний формат дати' : 'Invalid date format');
       }
 
       eventDateTime.setHours(parseInt(formData.time.hour) || 0);
@@ -488,8 +488,8 @@ const Calendar = () => {
 
       if (conflictingEvent) {
         throw new Error(
-          language === 'tr'
-            ? 'Bu tarih ve saatte başka bir etkinlik zaten mevcut. Lütfen farklı bir saat seçin.'
+          language === 'uk'
+            ? 'На цю дату й час уже є інше заняття. Оберіть інший час.'
             : 'There is already another event at this date and time. Please select a different time.'
         );
       }
@@ -506,7 +506,7 @@ const Calendar = () => {
 
       // Zorunlu alanları kontrol et
       if (!eventData.age_group || !eventData.event_type) {
-        throw new Error(language === 'tr' ? 'Zorunlu alanlar eksik' : 'Required fields are missing');
+        throw new Error(language === 'uk' ? 'Не заповнені обовʼязкові поля' : 'Required fields are missing');
       }
 
       // Supabase'e etkinlik kaydetme işlemi
@@ -519,7 +519,7 @@ const Calendar = () => {
       if (eventError) throw eventError;
 
       if (!eventResult) {
-        throw new Error(language === 'tr' ? 'Etkinlik oluşturma başarısız' : 'Event creation failed');
+        throw new Error(language === 'uk' ? 'Не вдалося створити заняття' : 'Event creation failed');
       }
 
       // Katılımcıları ekle
@@ -538,7 +538,7 @@ const Calendar = () => {
 
       // Başarı mesajı göster
       showToast(
-        language === 'tr' ? 'Etkinlik başarıyla oluşturuldu' : 'Event created successfully',
+        language === 'uk' ? 'Заняття успішно створено' : 'Event created successfully',
         'success'
       );
 
@@ -549,7 +549,7 @@ const Calendar = () => {
       }
       handleCloseModal();
     } catch (error) {
-      console.error(language === 'tr' ? 'Etkinlik oluşturulurken hata:' : 'Error creating event:', error);
+      console.error(language === 'uk' ? 'Помилка створення заняття:' : 'Error creating event:', error);
       showToast(error.message, 'error');
     }
   };
@@ -628,7 +628,7 @@ const Calendar = () => {
 
       // Show success message
       showToast(
-        language === 'tr' ? 'Etkinlik başarıyla taşındı' : 'Event moved successfully',
+        language === 'uk' ? 'Заняття успішно перенесено' : 'Event moved successfully',
         'success'
       );
 
@@ -639,11 +639,11 @@ const Calendar = () => {
       }
     } catch (error) {
       console.error(
-        language === 'tr' ? 'Etkinlik taşınırken hata:' : 'Error moving event:',
+        language === 'uk' ? 'Помилка перенесення заняття:' : 'Error moving event:',
         error
       );
       showToast(
-        language === 'tr' ? 'Etkinlik taşınırken bir hata oluştu' : 'An error occurred while moving the event',
+        language === 'uk' ? 'Помилка під час перенесення заняття' : 'An error occurred while moving the event',
         'error'
       );
       dropInfo.revert();
@@ -716,8 +716,8 @@ const Calendar = () => {
   const handleExtendFromPrecheck = (registration) => {
     if (registration.package_type === 'ucretsiz') {
       showToast(
-        language === 'tr'
-          ? 'Ücretsiz katılımlarda paket uzatma yapılmaz'
+        language === 'uk'
+          ? 'Безкоштовні відвідування не продовжуються'
           : 'Package extension is not available for free participation',
         'error'
       );
@@ -725,8 +725,8 @@ const Calendar = () => {
     }
     if (registration.payment_status === 'beklemede') {
       showToast(
-        language === 'tr'
-          ? "Uzatma işlemi için ödeme durumu 'Beklemede' olamaz"
+        language === 'uk'
+          ? "Для продовження статус оплати не може бути «Очікує»"
           : "Payment status cannot be 'Pending' for extension",
         'error'
       );
@@ -821,7 +821,7 @@ const Calendar = () => {
   };
 
   // Haftayı kopyalama işlemini gerçekleştir
-  // excludedRegistrationIds: ön kontrol listesinden "Hariç Tut" denen öğrenciler.
+  // excludedRegistrationIds: ön kontrol listesinden "Виключити" denen öğrenciler.
   // Dersler yine kopyalanır, sadece bu öğrenciler katılımcı olarak eklenmez.
   const handleCopyWeek = async (targetWeekStart, excludedRegistrationIds = []) => {
     try {
@@ -966,9 +966,9 @@ const Calendar = () => {
 
               // Başarı mesajı göster
               if (successCount > 0) {
-                let message = `${successCount} etkinlik başarıyla kopyalandı`;
+                let message = `Скопійовано занять: ${successCount}`;
                 if (conflictCount > 0) {
-                  message += `, ${conflictCount} etkinlik çakışma nedeniyle atlandı`;
+                  message += `, пропущено через накладання: ${conflictCount}`;
                 }
                 setToast({
                   message,
@@ -981,11 +981,11 @@ const Calendar = () => {
 
                 // Takvim görünümünü kopyalanan haftaya çevirme işlemi yerine bildirim göster
                 setTargetWeekForNavigation(targetWeekStart);
-                setActionNotificationMessage(`Etkinlikler ${format(targetWeekStart, 'dd MMMM yyyy', { locale: tr })} - ${format(addDays(targetWeekStart, 6), 'dd MMMM yyyy', { locale: tr })} tarihlerine kopyalandı.`);
+                setActionNotificationMessage(`Заняття скопійовано на ${format(targetWeekStart, 'dd MMMM yyyy', { locale: uk })} - ${format(addDays(targetWeekStart, 6), 'dd MMMM yyyy', { locale: uk })}.`);
                 setIsActionNotificationVisible(true);
               } else if (conflictCount > 0) {
                 setToast({
-                  message: `Kopyalama tamamlandı, ancak ${conflictCount} etkinlik çakışma nedeniyle kopyalanamadı`,
+                  message: `Копіювання завершено, але ${conflictCount} занять не скопійовано через накладання`,
                   type: 'warning',
                   isVisible: true
                 });
@@ -1103,9 +1103,9 @@ const Calendar = () => {
 
       // Başarı mesajı göster
       if (successCount > 0) {
-        let message = `${successCount} etkinlik başarıyla kopyalandı`;
+        let message = `Скопійовано занять: ${successCount}`;
         if (conflictCount > 0) {
-          message += `, ${conflictCount} etkinlik çakışma nedeniyle atlandı`;
+          message += `, пропущено через накладання: ${conflictCount}`;
         }
         setToast({
           message,
@@ -1121,11 +1121,11 @@ const Calendar = () => {
 
         // Takvim görünümünü kopyalanan haftaya çevirme işlemi yerine bildirim göster
         setTargetWeekForNavigation(targetWeekStart);
-        setActionNotificationMessage(`Etkinlikler ${format(targetWeekStart, 'dd MMMM yyyy', { locale: tr })} - ${format(addDays(targetWeekStart, 6), 'dd MMMM yyyy', { locale: tr })} tarihlerine kopyalandı.`);
+        setActionNotificationMessage(`Заняття скопійовано на ${format(targetWeekStart, 'dd MMMM yyyy', { locale: uk })} - ${format(addDays(targetWeekStart, 6), 'dd MMMM yyyy', { locale: uk })}.`);
         setIsActionNotificationVisible(true);
       } else if (conflictCount > 0) {
         setToast({
-          message: `Kopyalama tamamlandı, ancak ${conflictCount} etkinlik çakışma nedeniyle kopyalanamadı`,
+          message: `Копіювання завершено, але ${conflictCount} занять не скопійовано через накладання`,
           type: 'warning',
           isVisible: true
         });
@@ -1152,7 +1152,7 @@ const Calendar = () => {
     }
   };
 
-  // Hafta görünümündeyken ve takvim yüklendikten sonra "Bu Haftayı Kopyala" ikonunu ekle
+  // Hafta görünümündeyken ve takvim yüklendikten sonra "Копіювати цей тиждень" ikonunu ekle
   useEffect(() => {
     const addCopyWeekButton = () => {
       if (!calendarRef.current) return;
@@ -1198,7 +1198,7 @@ const Calendar = () => {
         'rounded', 'opacity-0', 'group-hover:opacity-100', 'transition-opacity',
         'duration-200', 'whitespace-nowrap', 'pointer-events-none', 'z-10'
       );
-      tooltip.textContent = 'Bu Haftayı Kopyala';
+      tooltip.textContent = 'Копіювати цей тиждень';
 
       // İkon tıklama işlevi
       iconElement.addEventListener('click', handleCopyWeekClick);
@@ -1242,7 +1242,7 @@ const Calendar = () => {
       <div className="flex flex-wrap sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 sm:py-0 gap-4 sm:gap-0 bg-white dark:bg-[#1a1f2e] mb-6 rounded-t-xl">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-            {language === 'tr' ? 'Takvim' : 'Calendar'}
+            {language === 'uk' ? 'Календар' : 'Calendar'}
           </h1>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
@@ -1253,7 +1253,7 @@ const Calendar = () => {
             className="h-10 sm:h-8 px-3 bg-purple-100 dark:bg-purple-800/20 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/30 focus:outline-none transition-all duration-200 flex items-center justify-center gap-1.5 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <CalendarDaysIcon className="w-3.5 h-3.5" />
-            <span>{language === 'tr' ? 'Herkese Açık Takvim' : 'Public Calendar'}</span>
+            <span>{language === 'uk' ? 'Публічний календар' : 'Public Calendar'}</span>
             <ArrowTopRightOnSquareIcon className="w-3 h-3" />
           </a>
           <button
@@ -1264,7 +1264,7 @@ const Calendar = () => {
             className="h-10 sm:h-8 px-3 bg-pink-100 dark:bg-pink-800/20 text-pink-700 dark:text-pink-300 text-sm font-medium rounded-lg hover:bg-pink-200 dark:hover:bg-pink-800/30 focus:outline-none transition-all duration-200 flex items-center justify-center gap-1.5 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <BookOpenIcon className="w-3.5 h-3.5" />
-            <span>{language === 'tr' ? 'Haftalık Konular' : 'Weekly Themes'}</span>
+            <span>{language === 'uk' ? 'Теми тижнів' : 'Weekly Themes'}</span>
           </button>
           <button
             onClick={() => {
@@ -1277,7 +1277,7 @@ const Calendar = () => {
             className="h-10 sm:h-8 px-4 bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium rounded-lg hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <PlusIcon className="w-4 h-4" />
-            <span>{language === 'tr' ? 'Yeni Etkinlik' : 'New Event'}</span>
+            <span>{language === 'uk' ? 'Нове заняття' : 'New Event'}</span>
           </button>
         </div>
       </div>
@@ -1288,7 +1288,7 @@ const Calendar = () => {
           <div className="flex items-center justify-between gap-4 px-6 py-2.5 border-b border-[#d2d2d7] dark:border-[#2a3241]">
             <div className="flex items-center gap-2.5 min-w-0 text-sm">
               <span className="text-[#6e6e73] dark:text-[#86868b] shrink-0">
-                {language === 'tr' ? 'Haftanın Konusu' : 'Weekly Theme'}
+                {language === 'uk' ? 'Тема тижня' : 'Weekly Theme'}
               </span>
               <span className="h-3.5 w-px bg-[#d2d2d7] dark:bg-[#2a3241] shrink-0"></span>
               {activeWeekTheme ? (
@@ -1297,7 +1297,7 @@ const Calendar = () => {
                 </span>
               ) : (
                 <span className="text-[#a1a1a6] dark:text-[#6e6e73]">
-                  {language === 'tr' ? 'Belirlenmedi' : 'Not set'}
+                  {language === 'uk' ? 'Не визначено' : 'Not set'}
                 </span>
               )}
             </div>
@@ -1309,8 +1309,8 @@ const Calendar = () => {
               className="h-7 px-3.5 rounded-full border border-[#d2d2d7] dark:border-[#2a3241] text-[13px] font-medium text-[#6e6e73] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] hover:border-[#0071e3] dark:hover:border-[#0071e3] hover:bg-[#0071e3]/[0.04] dark:hover:bg-[#0071e3]/10 active:scale-[0.96] transition-all duration-200 shrink-0"
             >
               {activeWeekTheme
-                ? (language === 'tr' ? 'Düzenle' : 'Edit')
-                : (language === 'tr' ? 'Konu Ekle' : 'Add Theme')}
+                ? (language === 'uk' ? 'Редагувати' : 'Edit')
+                : (language === 'uk' ? 'Додати тему' : 'Add Theme')}
             </button>
           </div>
         )}
@@ -1321,7 +1321,7 @@ const Calendar = () => {
             <div className="flex flex-col items-center gap-3">
               <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
               <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                {language === 'tr' ? 'Yükleniyor...' : 'Loading...'}
+                {language === 'uk' ? 'Завантаження...' : 'Loading...'}
               </span>
             </div>
           </div>
@@ -1337,13 +1337,13 @@ const Calendar = () => {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
           buttonText={{
-            today: language === 'tr' ? 'Bugün' : 'Today',
-            month: language === 'tr' ? 'Ay' : 'Month',
-            week: language === 'tr' ? 'Hafta' : 'Week',
-            day: language === 'tr' ? 'Gün' : 'Day'
+            today: language === 'uk' ? 'Сьогодні' : 'Today',
+            month: language === 'uk' ? 'Місяць' : 'Month',
+            week: language === 'uk' ? 'Тиждень' : 'Week',
+            day: language === 'uk' ? 'День' : 'Day'
           }}
           buttonClassNames="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
-          locale={language === 'tr' ? trLocale : enLocale}
+          locale={language === 'uk' ? ukLocale : enLocale}
           selectable={true}
           select={handleDateSelect}
           events={events}
@@ -1463,7 +1463,7 @@ const Calendar = () => {
       <ActionNotification
         isVisible={isActionNotificationVisible}
         message={actionNotificationMessage}
-        actionText={language === 'tr' ? "Kopyalanan Haftaya Git" : "Go to Copied Week"}
+        actionText={language === 'uk' ? "Перейти до скопійованого тижня" : "Go to Copied Week"}
         onAction={navigateToTargetWeek}
         onClose={() => setIsActionNotificationVisible(false)}
       />
