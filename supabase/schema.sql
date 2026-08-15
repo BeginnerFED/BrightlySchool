@@ -469,27 +469,27 @@ CREATE POLICY "Haftalık konu ekleme politikası" ON public.weekly_themes FOR IN
 CREATE POLICY "Haftalık konu güncelleme politikası" ON public.weekly_themes FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Haftalık konu silme politikası" ON public.weekly_themes FOR DELETE TO authenticated USING (true);
 
--- registrations
-CREATE POLICY "Kayıt görüntüleme politikası" ON public.registrations FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Kayıt ekleme politikası" ON public.registrations FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Kayıt güncelleme politikası" ON public.registrations FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Kayıt silme politikası" ON public.registrations FOR DELETE TO anon, authenticated USING (true);
+-- registrations — öğrenci/veli kişisel verisi, yalnızca giriş yapmış kullanıcı
+CREATE POLICY "Kayıt görüntüleme politikası" ON public.registrations FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Kayıt ekleme politikası" ON public.registrations FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Kayıt güncelleme politikası" ON public.registrations FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Kayıt silme politikası" ON public.registrations FOR DELETE TO authenticated USING (true);
 
 -- extension_history
-CREATE POLICY "Uzatma geçmişi görüntüleme politikası" ON public.extension_history FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Uzatma geçmişi ekleme politikası" ON public.extension_history FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Uzatma geçmişi güncelleme politikası" ON public.extension_history FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Uzatma geçmişi görüntüleme politikası" ON public.extension_history FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Uzatma geçmişi ekleme politikası" ON public.extension_history FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Uzatma geçmişi güncelleme politikası" ON public.extension_history FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
 -- financial_records
-CREATE POLICY "Finansal kayıt görüntüleme politikası" ON public.financial_records FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Finansal kayıt ekleme politikası" ON public.financial_records FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Finansal kayıt güncelleme politikası" ON public.financial_records FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Finansal kayıt görüntüleme politikası" ON public.financial_records FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Finansal kayıt ekleme politikası" ON public.financial_records FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Finansal kayıt güncelleme politikası" ON public.financial_records FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
 -- expenses
-CREATE POLICY "Gider görüntüleme politikası" ON public.expenses FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Gider ekleme politikası" ON public.expenses FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Gider güncelleme politikası" ON public.expenses FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Gider silme politikası" ON public.expenses FOR DELETE TO anon, authenticated USING (true);
+CREATE POLICY "Gider görüntüleme politikası" ON public.expenses FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Gider ekleme politikası" ON public.expenses FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Gider güncelleme politikası" ON public.expenses FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Gider silme politikası" ON public.expenses FOR DELETE TO authenticated USING (true);
 
 -- waitlist
 CREATE POLICY "Authenticated users can view waitlist" ON public.waitlist FOR SELECT TO authenticated USING (true);
@@ -502,3 +502,14 @@ CREATE POLICY "Authenticated users can view notes" ON public.notes FOR SELECT TO
 CREATE POLICY "Authenticated users can insert notes" ON public.notes FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Authenticated users can update notes" ON public.notes FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Authenticated users can delete notes" ON public.notes FOR DELETE TO authenticated USING (true);
+
+-- ---------------------------------------------------------------------
+-- 8. FONKSİYON YETKİLERİ
+-- ---------------------------------------------------------------------
+-- delete_last_extension SECURITY DEFINER'dır, yani RLS'i baypas eder.
+-- Postgres fonksiyonlara varsayılan olarak PUBLIC üzerinden EXECUTE verir;
+-- sadece anon'dan almak yetmez, önce PUBLIC mirası kaldırılmalıdır.
+REVOKE EXECUTE ON FUNCTION public.delete_last_extension(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.delete_last_extension(uuid) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.delete_last_extension(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.delete_last_extension(uuid) TO service_role;
