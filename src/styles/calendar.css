@@ -1,0 +1,953 @@
+/* Modern takvim stilleri */
+.fc {
+  --fc-border-color: transparent;
+  --fc-today-bg-color: rgba(59, 130, 246, 0.1);
+  --fc-neutral-bg-color: #ffffff;
+  --fc-list-event-hover-bg-color: #f3f4f6;
+  --fc-button-text-color: #374151;
+  --fc-button-bg-color: #ffffff;
+  --fc-button-border-color: #e5e7eb;
+  --fc-button-hover-bg-color: #f3f4f6;
+  --fc-button-hover-border-color: #e5e7eb;
+  --fc-button-active-bg-color: #3b82f6;
+  --fc-button-active-border-color: #3b82f6;
+}
+
+/* Dark mode için */
+.dark .fc {
+  --fc-border-color: transparent;
+  --fc-today-bg-color: rgba(59, 130, 246, 0.2);
+  --fc-neutral-bg-color: #161b2c;
+  --fc-list-event-hover-bg-color: #1f2937;
+  --fc-button-text-color: #e2e8f0;
+  --fc-button-bg-color: #1f2937;
+  --fc-button-border-color: #374151;
+  --fc-button-hover-bg-color: #374151;
+  --fc-button-hover-border-color: #4b5563;
+  --fc-button-active-bg-color: #3b82f6;
+  --fc-button-active-border-color: #3b82f6;
+  --fc-button-light-bg-color: #1a1f2e;
+}
+
+/* Toolbar stilleri */
+.fc .fc-toolbar {
+  padding: 1.5rem;
+  margin-bottom: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.5rem !important;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dark .fc .fc-toolbar-title {
+  color: #f3f4f6;
+}
+
+/* Buton stilleri */
+.fc .fc-button-group {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  gap: 0.5rem;
+}
+
+.dark .fc .fc-button-group {
+  background: transparent;
+}
+
+.fc .fc-button {
+  height: 2.25rem !important;
+  padding: 0 1rem !important;
+  font-weight: 500 !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s !important;
+  border: 1px solid #d2d2d7 !important;
+  background: white !important;
+  color: #1d1d1f !important;
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+}
+
+.dark .fc .fc-button {
+  background: #121621 !important;
+  border-color: #2a3241 !important;
+  color: white !important;
+}
+
+.fc .fc-button:hover {
+  border-color: #0071e3 !important;
+}
+
+.dark .fc .fc-button:hover {
+  border-color: #0071e3 !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background: #1d1d1f !important;
+  border-color: #1d1d1f !important;
+  color: white !important;
+}
+
+.dark .fc .fc-button-primary:not(:disabled).fc-button-active,
+.dark .fc .fc-button-primary:not(:disabled):active {
+  background: #0071e3 !important;
+  border-color: #0071e3 !important;
+  color: white !important;
+}
+
+/* Takvim başlık ve içerik stilleri */
+.fc .fc-col-header {
+  background-color: var(--fc-button-light-bg-color);
+}
+
+.fc .fc-col-header-cell {
+  padding: 1rem 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.7);
+}
+
+.dark .fc .fc-col-header-cell {
+  color: #9ca3af;
+  border-bottom: 1px solid rgba(55, 65, 81, 0.4);
+}
+
+.fc .fc-daygrid-day {
+  transition: background-color 0.2s;
+  border-right: 1px solid rgba(229, 231, 235, 0.5);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.dark .fc .fc-daygrid-day {
+  border-right: 1px solid rgba(55, 65, 81, 0.3);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+.fc .fc-daygrid-day:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.dark .fc .fc-daygrid-day:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.fc .fc-daygrid-day-top {
+  padding: 0.75rem;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+.dark .fc .fc-daygrid-day-number {
+  color: #e5e7eb;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Event stilleri */
+.fc-event {
+  border: none !important;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fc-event-time {
+  font-weight: 500;
+}
+
+.fc-event-title {
+  font-weight: 400;
+}
+
+/* TimeLine görünümü için */
+.fc .fc-timegrid-slot {
+  height: 3.5rem;
+  border-color: rgba(229, 231, 235, 0.5);
+}
+
+.dark .fc .fc-timegrid-slot {
+  border-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Haftalık görünüm için padding */
+.fc-timeGridWeek-view.fc-view.fc-timegrid {
+  padding: 0 15px;
+}
+
+/* Günler arasına soft çizgi ekle */
+.fc .fc-timegrid-col-frame {
+  border-right: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.dark .fc .fc-timegrid-col-frame {
+  border-right: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+.fc .fc-timegrid-slot-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  padding-right: 1rem;
+}
+
+.dark .fc .fc-timegrid-slot-label {
+  color: #9ca3af;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    padding: 1rem;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1.25rem !important;
+  }
+
+  .fc .fc-button {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.75rem;
+  }
+
+  .fc .fc-col-header-cell {
+    padding: 0.75rem 0;
+    font-size: 0.7rem;
+  }
+
+  .fc .fc-daygrid-day-top {
+    padding: 0.5rem;
+  }
+  
+  /* Mobil görünümde kartlardaki dikey yazıların görünmesi için padding ayarlaması */
+  .fc-event {
+    padding: 0.375rem 0.5rem !important;
+  }
+}
+
+/* 500px ve altındaki ekranlar için özel düzenlemeler */
+@media (max-width: 500px) {
+  /* Toolbar'ı tam genişlik yap ve ortalı göster */
+  .fc .fc-toolbar {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 0.75rem;
+  }
+  
+  /* Başlık ve butonları ortalı göster */
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  /* Başlık metnini ortalı göster */
+  .fc .fc-toolbar-title {
+    text-align: center;
+    width: 100%;
+  }
+  
+  /* Buton gruplarını tam genişlik yap ve düzgün aralıklandır */
+  .fc .fc-button-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  /* Önceki ve sonraki butonlarını düzgün hizala */
+  .fc .fc-prev-button,
+  .fc .fc-next-button {
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  /* Bugün butonunu düzgün göster */
+  .fc .fc-today-button {
+    margin: 0 0.5rem !important;
+  }
+  
+  /* Ay, hafta, gün butonlarını düzgün hizala */
+  .fc .fc-dayGridMonth-button,
+  .fc .fc-timeGridWeek-button,
+  .fc .fc-timeGridDay-button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.7rem !important;
+  }
+}
+
+/* DatePicker Stilleri */
+.react-datepicker-wrapper {
+  width: 100% !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: none;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  margin-top: 8px;
+  backdrop-filter: blur(20px);
+}
+
+.dark .react-datepicker {
+  background: #121621;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.react-datepicker__header {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.react-datepicker__month {
+  margin: 0;
+  padding: 12px 0;
+}
+
+.react-datepicker__day-names {
+  display: flex;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 12px;
+}
+
+.dark .react-datepicker__day-names {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.react-datepicker__day-name {
+  color: #86868b;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  margin: 0;
+}
+
+.react-datepicker__month-container {
+  float: none;
+  background: transparent;
+}
+
+.react-datepicker__week {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  padding: 0 8px;
+}
+
+.react-datepicker__day {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  margin: 0;
+  border-radius: 50%;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dark .react-datepicker__day {
+  color: #fff;
+}
+
+.react-datepicker__day:hover:not(.react-datepicker__day--selected):not(.react-datepicker__day--in-range) {
+  background: rgba(0, 113, 227, 0.1);
+  border-radius: 50%;
+}
+
+.dark .react-datepicker__day:hover:not(.react-datepicker__day--selected):not(.react-datepicker__day--in-range) {
+  background: rgba(0, 113, 227, 0.2);
+}
+
+.react-datepicker__day--selected {
+  background: #0071e3 !important;
+  color: white !important;
+  border-radius: 50% !important;
+  font-weight: 600;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background: none;
+}
+
+.react-datepicker__day--outside-month {
+  color: #86868b;
+  opacity: 0.5;
+}
+
+.dark .react-datepicker__day--outside-month {
+  color: #86868b;
+  opacity: 0.3;
+}
+
+.react-datepicker__triangle {
+  display: none;
+}
+
+/* TimePicker Stilleri */
+.react-datepicker__time-container {
+  width: 120px;
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .react-datepicker__time-container {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.react-datepicker__time {
+  background: transparent;
+}
+
+.react-datepicker__time-box {
+  width: 100% !important;
+}
+
+.react-datepicker__time-list {
+  height: 300px !important;
+  overflow-y: auto;
+}
+
+.react-datepicker__time-list-item {
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 !important;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dark .react-datepicker__time-list-item {
+  color: #fff;
+}
+
+.react-datepicker__time-list-item:hover {
+  background: rgba(0, 113, 227, 0.1) !important;
+}
+
+.dark .react-datepicker__time-list-item:hover {
+  background: rgba(0, 113, 227, 0.2) !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background: #0071e3 !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+/* FullCalendar özelleştirmeleri */
+
+/* Box shadow'u kaldır */
+.fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: none !important;
+}
+
+/* Etkinlik kartları için temel stiller */
+.fc-timegrid-event, .fc-daygrid-event {
+  border-radius: 8px !important;
+  border: none !important;
+  overflow: hidden !important;
+  transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  position: relative !important;
+  z-index: 1;
+  height: 100% !important;
+  max-height: 7rem !important; /* 1 saatlik yükseklik (3.5rem * 2) */
+}
+
+.dark .fc-timegrid-event, .dark .fc-daygrid-event {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hover durumunda kartın stilini değiştir */
+.fc-timegrid-event:hover, .fc-daygrid-event:hover {
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2) !important;
+  z-index: 9999 !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 150px !important;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Ay görünümündeki kartlar için hover efektini devre dışı bırak */
+.fc-dayGridMonth-view .fc-daygrid-event:hover {
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: initial !important;
+  min-height: initial !important;
+}
+
+.dark .fc-dayGridMonth-view .fc-daygrid-event:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hover durumunda diğer kartları blur yap - Yeni yaklaşım */
+.fc-timegrid-body:has(.fc-timegrid-event:hover) .fc-timegrid-event:not(:hover),
+.fc-daygrid-body:not(.fc-dayGridMonth-view):has(.fc-daygrid-event:hover) .fc-daygrid-event:not(:hover) {
+  filter: blur(2px) opacity(0.7) !important;
+  transition: filter 0.5s ease !important;
+}
+
+/* Ay görünümünde öğrenci listesini gizli tut */
+.fc-dayGridMonth-view .fc-event:hover .student-list {
+  opacity: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+  display: none !important;
+}
+
+/* Etkinlik kartı içeriği */
+.event-card {
+  position: relative !important;
+  transition: all 0.4s ease !important;
+  height: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  overflow: hidden !important;
+  padding: 0.25rem !important;
+}
+
+/* Etkinlik başlığı için dikey stil */
+.event-title {
+  writing-mode: vertical-rl !important;
+  transform: rotate(180deg) !important;
+  text-orientation: mixed !important;
+  margin-right: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.5px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-left: 2px !important;
+  min-width: 20px !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.50) !important; /* Daha kırık beyaz renk */
+  height: auto !important; /* Yüksekliği içeriğe göre ayarla */
+  margin-top: 2px !important; /* Üstten biraz boşluk */
+}
+
+/* Etkinlik içeriği için konteyner */
+.event-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  padding: 0.25rem !important;
+}
+
+.fc-event:hover .event-card {
+  overflow: visible !important;
+}
+
+/* Öğrenci listesi bölümü - Yeni yaklaşım */
+.student-list {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  margin-top: auto;
+  display: none;
+}
+
+/* Hover durumunda öğrenci listesini göster */
+.fc-event:hover .student-list {
+  opacity: 1 !important;
+  max-height: 120px !important;
+  overflow-y: auto !important;
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+  display: block !important;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Öğrenci listesi başlığı */
+.student-list-header {
+  display: none !important; /* Varsayılan olarak gizli */
+}
+
+/* Gün görünümünde öğrenci listesi başlığını göster */
+.fc-timeGridDay-view .student-list-header {
+  display: flex !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Hafta görünümünde hover durumunda bile başlığı gizli tut */
+.fc-timeGridWeek-view .student-list-header {
+  display: none !important;
+}
+
+/* Öğrenci listesi içeriği */
+.student-list-items {
+  max-height: 100px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+/* Etkinlik türlerine göre özel stiller */
+.fc-event[style*="#8b5cf6"] {
+  background-image: linear-gradient(to right, #8b5cf6, #9333ea) !important;
+}
+
+.fc-event[style*="#f97316"] {
+  background-image: linear-gradient(to right, #f97316, #fb923c) !important;
+}
+
+.fc-event[style*="#059669"] {
+  background-image: linear-gradient(to right, #059669, #10b981) !important;
+}
+
+/* FullCalendar'ın kendi sınırlamalarını geçersiz kıl */
+.fc-timegrid-event-harness {
+  height: 7rem !important; /* 1 saatlik yükseklik (3.5rem * 2) */
+  max-height: 7rem !important;
+  overflow: visible !important;
+}
+
+.fc-timegrid-event-harness:hover {
+  height: auto !important;
+  max-height: none !important;
+  z-index: 9999 !important;
+}
+
+.fc-timegrid-events-container,
+.fc-timegrid-col-events {
+  z-index: auto !important;
+}
+
+/* Hover durumunda arka planı karartma efekti - Kaldırıldı */
+/* .fc-event:hover::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: -1;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease-out forwards;
+} */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Gruplandırılmış etkinlik kartları için stiller */
+.grouped-event-card {
+  border-radius: 8px !important;
+  padding: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.dark .grouped-event-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.grouped-event-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Ay görünümünde gruplandırılmış etkinlikler için özel stiller */
+.fc-daygrid-day-events .fc-event {
+  margin-bottom: 2px !important;
+}
+
+/* Gruplandırılmış etkinlik türlerine göre özel stiller */
+.fc-event[style*="#8b5cf6"] .grouped-event-card {
+  background-image: linear-gradient(to right, #8b5cf6, #9333ea) !important;
+}
+
+.fc-event[style*="#f97316"] .grouped-event-card {
+  background-image: linear-gradient(to right, #f97316, #fb923c) !important;
+}
+
+.fc-event[style*="#059669"] .grouped-event-card {
+  background-image: linear-gradient(to right, #059669, #10b981) !important;
+}
+
+/* Gün görünümü için özel stiller */
+.fc-timeGridDay-view .fc-timegrid-event {
+  height: auto !important;
+  max-height: none !important;
+  min-height: -webkit-fill-available !important;
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: none !important;
+}
+
+.dark .fc-timeGridDay-view .fc-timegrid-event {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Gün görünümünde hover efektini devre dışı bırak */
+.fc-timeGridDay-view .fc-timegrid-event:hover {
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  z-index: 1 !important;
+}
+
+.dark .fc-timeGridDay-view .fc-timegrid-event:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Gün görünümünde öğrenci listesini her zaman göster */
+.fc-timeGridDay-view .fc-event .student-list {
+  opacity: 1 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+  display: block !important;
+}
+
+/* Hover efektlerini sadece hafta görünümü için uygula */
+.fc-timeGridWeek-view .fc-timegrid-event:hover {
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2) !important;
+  z-index: 9999 !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 150px !important;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Hover durumunda diğer kartları blur yapma efektini sadece hafta görünümüne uygula */
+.fc-timeGridWeek-view .fc-timegrid-body:has(.fc-timegrid-event:hover) .fc-timegrid-event:not(:hover) {
+  filter: blur(2px) opacity(0.7) !important;
+  transition: filter 0.5s ease !important;
+}
+
+/* Sürükleme animasyonları ve stilleri */
+.event-dragging {
+  opacity: 0.9 !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3) !important;
+  z-index: 10000 !important;
+  transition: all 0.15s ease !important;
+  cursor: grabbing !important;
+  border: 3px dashed #0071e3 !important;
+  background-color: rgba(0, 113, 227, 0.2) !important;
+  backdrop-filter: blur(2px) !important;
+  color: #1d1d1f !important; /* Koyu metin rengi */
+}
+
+.event-dragging .event-title,
+.event-dragging .event-content {
+  color: #1d1d1f !important;
+}
+
+.event-dragging .event-title {
+  color: #1d1d1f !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.event-dragging .student-list-items,
+.event-dragging .flex.items-center.gap-1 {
+  color: #1d1d1f !important;
+}
+
+.dark .event-dragging {
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5) !important;
+  border: 3px dashed #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.3) !important;
+  color: #ffffff !important; /* Koyu modda beyaz metin rengi */
+}
+
+.dark .event-dragging .event-title,
+.dark .event-dragging .event-content {
+  color: #ffffff !important;
+}
+
+.dark .event-dragging .event-title {
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Sürükleme hedef göstergesi */
+.fc-event.fc-event-dragging::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 113, 227, 0.15);
+  border-radius: 8px;
+  animation: pulse 1s infinite;
+}
+
+.dark .fc-event.fc-event-dragging::after {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 113, 227, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0);
+  }
+}
+
+/* Sürükleme sırasında hedef hücre vurgusu */
+.fc-highlight {
+  background: rgba(0, 113, 227, 0.25) !important;
+  border: 3px dashed #0071e3 !important;
+  border-radius: 8px !important;
+  animation: targetPulse 0.8s infinite !important;
+}
+
+.dark .fc-highlight {
+  background: rgba(59, 130, 246, 0.35) !important;
+  border: 3px dashed #3b82f6 !important;
+}
+
+@keyframes targetPulse {
+  0% {
+    background: rgba(0, 113, 227, 0.15);
+  }
+  50% {
+    background: rgba(0, 113, 227, 0.3);
+  }
+  100% {
+    background: rgba(0, 113, 227, 0.15);
+  }
+}
+
+/* Sürükleme sırasında diğer etkinlikleri hafifçe soluklaştır */
+.fc-event-dragging ~ .fc-event:not(.fc-event-dragging) {
+  opacity: 0.5 !important;
+  filter: blur(2px) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Sürükleme sırasında imleç stilini değiştir */
+.fc-event {
+  cursor: grab !important;
+}
+
+.fc-event:active {
+  cursor: grabbing !important;
+}
+
+/* Sürükleme sırasında geçiş animasyonu */
+.fc-event-mirror {
+  opacity: 0.9 !important;
+  background: linear-gradient(to right, rgba(0, 113, 227, 0.2), rgba(0, 113, 227, 0.3)) !important;
+  backdrop-filter: blur(4px) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+  border: 3px dashed #0071e3 !important;
+  animation: float 1.5s infinite ease-in-out !important;
+  cursor: grabbing !important;
+  color: #1d1d1f !important; /* Koyu metin rengi */
+}
+
+.fc-event-mirror .event-title,
+.fc-event-mirror .event-content {
+  color: #1d1d1f !important;
+}
+
+.fc-event-mirror .event-title {
+  color: #1d1d1f !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .fc-event-mirror {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.4)) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+  border: 3px dashed #3b82f6 !important;
+  color: #ffffff !important; /* Koyu modda beyaz metin rengi */
+}
+
+.dark .fc-event-mirror .event-title,
+.dark .fc-event-mirror .event-content {
+  color: #ffffff !important;
+}
+
+.dark .fc-event-mirror .event-title {
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Ay görünümündeki kartlara hover yapıldığında cursor-pointer olsun */
+.fc-dayGridMonth-view .fc-daygrid-event:hover {
+  cursor: pointer !important;
+}
+
+/* Diğer takvim özelleştirmeleri buraya eklenebilir */ 

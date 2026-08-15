@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Yönlendiriliyor… | Hello Kido</title>
+    <script>
+      // GitHub Pages + HashRouter yönlendirmesi.
+      //
+      // Instagram gibi platformlar bio bağlantısındaki '#' karakterini '%23'
+      // olarak kodlayabiliyor. Bu durumda tarayıcı '#/takvim' yerine gerçek bir
+      // dosya yolu olan '/%23/takvim' adresini ister; GitHub Pages böyle bir
+      // dosya bulamaz ve bu 404.html dosyasını çalıştırır.
+      //
+      // Burada '%23' işaretini yakalayıp doğru hash adresine geri yönlendiriyoruz:
+      //   /yulia-school/%23/takvim  ->  /yulia-school/#/takvim
+      (function () {
+        var loc = window.location;
+        var base = '/yulia-school/';
+
+        // Kodlanmış '#' (yani %23) işaretinden sonrası asıl gitmek istenen rotadır.
+        var idx = loc.href.indexOf('%23');
+
+        if (idx !== -1) {
+          var route = loc.href.substring(idx + 3); // '%23' (3 karakter) sonrası, ör. "/takvim"
+          if (route.charAt(0) !== '/') route = '/' + route;
+          loc.replace(loc.origin + base + '#' + route);
+          return;
+        }
+
+        // '%23' yoksa bilinmeyen bir yol demektir; uygulamanın ana sayfasına gönder.
+        loc.replace(loc.origin + base + '#/');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>
+      Yönlendiriliyorsunuz… Otomatik yönlenmezseniz
+      <a href="/yulia-school/#/takvim">buraya tıklayın</a>.
+    </p>
+  </body>
+</html>

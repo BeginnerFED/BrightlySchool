@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Euclid Circular A';
+  src: url('./assets/fonts/Euclid-Circular-A-Regular.woff2') format('woff2'),
+       url('./assets/fonts/Euclid-Circular-A-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Euclid Circular A';
+  src: url('./assets/fonts/Euclid-Circular-A-Medium.woff2') format('woff2'),
+       url('./assets/fonts/Euclid-Circular-A-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Euclid Circular A';
+  src: url('./assets/fonts/Euclid-Circular-A-SemiBold.woff2') format('woff2'),
+       url('./assets/fonts/Euclid-Circular-A-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    font-family: 'Euclid Circular A', system-ui, sans-serif;
+  }
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #86868b;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #424245;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #636366;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d2d2d7 transparent;
+}
+
+.dark * {
+  scrollbar-color: #424245 transparent;
+}
