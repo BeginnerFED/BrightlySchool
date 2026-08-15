@@ -14,10 +14,10 @@
       // dosya bulamaz ve bu 404.html dosyasını çalıştırır.
       //
       // Burada '%23' işaretini yakalayıp doğru hash adresine geri yönlendiriyoruz:
-      //   /yulia-school/%23/takvim  ->  /yulia-school/#/takvim
+      //   /YuliaSchool/%23/takvim  ->  /YuliaSchool/#/takvim
       (function () {
         var loc = window.location;
-        var base = '/yulia-school/';
+        var base = '/YuliaSchool/';
 
         // Kodlanmış '#' (yani %23) işaretinden sonrası asıl gitmek istenen rotadır.
         var idx = loc.href.indexOf('%23');
@@ -37,7 +37,7 @@
   <body>
     <p>
       Yönlendiriliyorsunuz… Otomatik yönlenmezseniz
-      <a href="/yulia-school/#/takvim">buraya tıklayın</a>.
+      <a href="/YuliaSchool/#/takvim">buraya tıklayın</a>.
     </p>
   </body>
 </html>
