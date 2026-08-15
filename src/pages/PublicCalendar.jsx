@@ -169,8 +169,10 @@ const PublicCalendar = () => {
           ).catch(err => ({ data: null, error: err }))
         : Promise.resolve({ data: null, error: null });
 
+      // public_events görünümü: teacher_id dışarıda, yalnızca aktif dersler.
+      // Taban tabloda anon politikası yok — bu sayfa oradan beslenmez.
       let query = supabase
-        .from('events')
+        .from('public_events')
         .select('*')
         .eq('is_active', true)
         .gte('event_date', weekStart.toISOString())
@@ -187,24 +189,28 @@ const PublicCalendar = () => {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Her etkinlik için aktif katılımcı sayısını getir
-      const eventsWithActiveCapacity = await Promise.all(data.map(async (event) => {
-        const { data: participants, error: participantsError } = await supabase
-          .from('event_participants')
-          .select('status')
-          .eq('event_id', event.id);
+      // Aktif katılımcı sayısı public_event_capacity görünümünden gelir:
+      // yalnızca sayı döner, registration_id dışarı çıkmaz. Ayrıca ders
+      // başına bir sorgu yerine tek sorgu — N+1 de ortadan kalkar.
+      const eventIds = (data || []).map(event => event.id);
+      let capacityByEvent = {};
 
-        if (participantsError) throw participantsError;
+      if (eventIds.length > 0) {
+        const { data: capacities, error: capacityError } = await supabase
+          .from('public_event_capacity')
+          .select('event_id, active_capacity')
+          .in('event_id', eventIds);
 
-        // Aktif statüdeki katılımcıları say (scheduled, makeup, attended)
-        const activeCount = participants ?
-          participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length :
-          0;
+        if (capacityError) throw capacityError;
 
-        return {
-          ...event,
-          active_capacity: activeCount
-        };
+        capacityByEvent = Object.fromEntries(
+          (capacities || []).map(row => [row.event_id, row.active_capacity])
+        );
+      }
+
+      const eventsWithActiveCapacity = (data || []).map(event => ({
+        ...event,
+        active_capacity: capacityByEvent[event.id] || 0
       }));
 
       setEvents(eventsWithActiveCapacity);
@@ -525,7 +531,7 @@ const PublicCalendar = () => {
               </div>
               <div className="min-w-0 relative">
                 <div className="text-[12px] font-semibold text-white/90 leading-tight">
-                  Haftanın Konusu
+                  Тема тижня
                 </div>
                 <div className="text-[18px] font-bold tracking-tight text-white leading-snug break-words">
                   {weekTheme}
@@ -672,7 +678,7 @@ const PublicCalendar = () => {
                     onClick={() => setFilters({ ageGroup: '', eventType: '' })}
                     className="text-[13px] font-semibold text-sky-600 hover:text-sky-700 transition-colors"
                   >
-                    Sıfırla
+                    Скинути
                   </button>
                 )}
                 <button
@@ -717,7 +723,7 @@ const PublicCalendar = () => {
                       : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                   }`}
                 >
-                  Tümü
+                  Усі
                 </button>
                 {EVENT_TYPES.filter(type => type.value !== 'ozel').map(type => (
                   <button

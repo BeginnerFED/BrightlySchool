@@ -273,7 +273,7 @@ CREATE INDEX idx_financial_records_transaction_type ON public.financial_records 
 
 -- Genel updated_at güncelleyicileri
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
 begin
     new.updated_at = now();
     return new;
@@ -281,7 +281,7 @@ end;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.update_event_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
@@ -289,7 +289,7 @@ END;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.update_participant_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
@@ -297,7 +297,7 @@ END;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.set_weekly_themes_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
 begin
   new.updated_at = now();
   return new;
@@ -306,8 +306,11 @@ $function$;
 
 -- Derse katılımcı eklenince/silinince kontenjan sayacını günceller.
 -- DİKKAT: status güncellemelerinde ÇALIŞMAZ (yalnızca INSERT/DELETE).
+-- SECURITY DEFINER ZORUNLU: bu trigger event_participants üzerinden events
+-- tablosunu günceller. Rol tabanlı RLS altında kullanıcının o dersi güncelleme
+-- hakkı yoksa UPDATE sessizce 0 satır etkiler — hata vermez, sayaç bozulur.
 CREATE OR REPLACE FUNCTION public.update_event_capacity()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $function$
 BEGIN
     IF TG_OP = 'INSERT' THEN
         UPDATE events
@@ -324,7 +327,7 @@ $function$;
 
 -- Yeni kayıtta ilk paket/ödeme bilgilerini initial_* kolonlarına kopyalar
 CREATE OR REPLACE FUNCTION public.save_initial_registration_data()
-RETURNS trigger LANGUAGE plpgsql AS $function$
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
 begin
     if new.extension_count = 0 then
         new.initial_package_type = new.package_type;
@@ -352,6 +355,12 @@ DECLARE
   v_reg registrations%ROWTYPE;
   v_latest_id uuid;
 BEGIN
+  -- SECURITY DEFINER olduğu için RLS baypas edilir; yetki kontrolü burada
+  -- olmak zorunda. Aksi halde öğretmen bu RPC ile sahibin uzatmalarını geri alır.
+  IF NOT public.is_owner() THEN
+    RAISE EXCEPTION 'Only the owner can delete an extension' USING ERRCODE = '42501';
+  END IF;
+
   SELECT * INTO v_ext FROM extension_history WHERE id = p_extension_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Extension not found: %', p_extension_id;
@@ -436,10 +445,181 @@ CREATE TRIGGER weekly_themes_set_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_weekly_themes_updated_at();
 
 -- ---------------------------------------------------------------------
--- 7. RLS (SATIR BAZLI GÜVENLİK)
+-- 7. ROL KATMANI
 -- ---------------------------------------------------------------------
--- Herkese açık takvim sayfası oturumsuz (anon) çalıştığı için events,
--- event_participants ve weekly_themes tablolarında anon SELECT izni vardır.
+-- İki rol var: 'owner' (okul sahibi) ve 'teacher' (öğretmen).
+-- Öğretmen finansal veriyi ve sahibin derslerini GÖREMEZ. Bu ayrım burada,
+-- veritabanında kurulur — arayüzde menü gizlemek koruma değildir, çünkü anon
+-- anahtar tarayıcıya inen paketin içindedir ve herkes doğrudan API'ye istek
+-- atabilir.
+
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  full_name text,
+  role text DEFAULT 'teacher'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- Varsayılan 'teacher': yapılandırması unutulan hesap en dar yetkiyle açılır
+  CONSTRAINT profiles_role_check CHECK (role = ANY (ARRAY['owner'::text, 'teacher'::text]))
+);
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE TRIGGER profiles_set_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Yeni kullanıcı açılınca profil satırı kendiliğinden oluşsun
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+BEGIN
+  INSERT INTO public.profiles (id) VALUES (NEW.id) ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Sahiplik kolonları.
+-- DİKKAT: events.teacher_id'nin DEFAULT auth.uid() olması YENİ ders için doğru,
+-- KOPYALAMA için yanlıştır. Kopyalarken sahiplik kaynak dersten taşınmalı,
+-- yoksa sahibin kopyaladığı ders öğretmenin takviminden düşer.
+ALTER TABLE public.events
+  ADD COLUMN teacher_id uuid NOT NULL DEFAULT auth.uid()
+  REFERENCES auth.users(id) ON DELETE RESTRICT;
+
+-- NULL = henüz bir öğretmene atanmamış (yalnızca sahip görür)
+ALTER TABLE public.registrations
+  ADD COLUMN teacher_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_events_teacher_id ON public.events USING btree (teacher_id);
+CREATE INDEX idx_registrations_teacher_id ON public.registrations USING btree (teacher_id);
+
+-- SECURITY DEFINER ZORUNLU: aksi halde profiles üzerindeki RLS'i tetikler ve
+-- politikalar bu fonksiyonu çağırdığı için sonsuz döngü oluşur.
+-- profiles tablosuna ASLA FORCE ROW LEVEL SECURITY uygulanmamalı — o durumda
+-- RLS tablo sahibine de uygulanır ve döngü geri gelir.
+CREATE OR REPLACE FUNCTION public.is_owner()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'owner'
+  )
+$function$;
+
+-- Politika içindeki EXISTS alt sorgusuna da RLS uygulanır. Öğretmenin
+-- registrations tablosuna SELECT hakkı olmadığı için "bu öğrenci bana atanmış mı"
+-- kontrolü politika içinde doğrudan yazılamaz — bu yardımcıya taşındı.
+CREATE OR REPLACE FUNCTION public.is_my_student(p_registration_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.registrations
+    WHERE id = p_registration_id AND teacher_id = auth.uid()
+  )
+$function$;
+
+-- Ders hakkı sayımı. Bu bir DOĞRULUK düzeltmesidir:
+-- İstemcide sayım yapılsaydı, öğrencinin BAŞKA öğretmenin dersinde yaktığı haklar
+-- öğretmenin sorgusuna hiç gelmez ve kalan ders olduğundan fazla görünürdü.
+-- Kurallar src/lib/lessonUsage.js ile AYNI olmalı: kullanılan = attended + no_show,
+-- sayım package_start_date ve sonrasından, ücretsizde kota yok.
+CREATE OR REPLACE FUNCTION public.get_lesson_usage(p_registration_ids uuid[])
+RETURNS TABLE (
+  registration_id uuid, is_free boolean, total integer, used integer,
+  remaining integer, attended integer, no_show integer, makeup integer,
+  scheduled integer, postponed integer
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_is_owner boolean := public.is_owner();
+BEGIN
+  RETURN QUERY
+  SELECT
+    r.id,
+    (r.package_type = 'ucretsiz') AS is_free,
+    CASE WHEN r.package_type = 'ucretsiz' THEN NULL::integer ELSE t.total END,
+    c.used,
+    CASE WHEN r.package_type = 'ucretsiz' THEN NULL::integer
+         ELSE GREATEST(t.total - c.used, 0) END,
+    c.attended, c.no_show, c.makeup, c.scheduled, c.postponed
+  FROM public.registrations r
+  CROSS JOIN LATERAL (
+    SELECT CASE r.package_type
+      WHEN 'hafta-1' THEN 4 WHEN 'hafta-2' THEN 8 WHEN 'hafta-3' THEN 12
+      WHEN 'hafta-4' THEN 16 WHEN 'tek-seferlik' THEN 1 ELSE 0
+    END AS total
+  ) t
+  CROSS JOIN LATERAL (
+    SELECT
+      COUNT(*) FILTER (WHERE ep.status = 'attended')::integer AS attended,
+      COUNT(*) FILTER (WHERE ep.status = 'no_show')::integer AS no_show,
+      COUNT(*) FILTER (WHERE ep.status = 'makeup')::integer AS makeup,
+      COUNT(*) FILTER (WHERE ep.status = 'scheduled')::integer AS scheduled,
+      COUNT(*) FILTER (WHERE ep.status = 'postponed')::integer AS postponed,
+      COUNT(*) FILTER (WHERE ep.status IN ('attended', 'no_show'))::integer AS used
+    FROM public.event_participants ep
+    JOIN public.events e ON e.id = ep.event_id
+    WHERE ep.registration_id = r.id
+      AND (r.package_type = 'ucretsiz' OR r.package_start_date IS NULL
+           OR e.event_date >= r.package_start_date)
+  ) c
+  -- Kapsam BURADA daraltılır: yabancı bir kaydın kimliği gönderilse bile
+  -- satır dönmez, yani bu fonksiyon bir yoklama bilgi kaynağına dönüşmez.
+  WHERE r.id = ANY (p_registration_ids)
+    AND (v_is_owner OR r.teacher_id = auth.uid());
+END;
+$function$;
+
+-- ---------------------------------------------------------------------
+-- 8. GÖRÜNÜMLER
+-- ---------------------------------------------------------------------
+-- RLS satır bazlıdır, KOLON gizleyemez. Sahip de öğretmen de aynı
+-- 'authenticated' rolüdür, dolayısıyla kolon bazlı REVOKE de işe yaramaz
+-- (sahipten de alırdı). Kolon maskelemenin tek yolu görünümdür.
+--
+-- security_invoker KAPALI (varsayılan): görünüm postgres rolüyle çalışır,
+-- o rolde BYPASSRLS açıktır, yani taban tablonun RLS'i devreye girmez ve
+-- görünümün WHERE şartı TEK koruma katmanı olur. Bu yüzden şart hatasız
+-- yazılmalıdır. auth.uid() görünümün içinde yine ÇAĞIRANIN kimliğini döner.
+CREATE VIEW public.my_students AS
+SELECT
+  r.id, r.student_name, r.student_age, r.package_type,
+  r.package_start_date, r.package_end_date, r.is_active, r.teacher_id,
+  -- Veli adı sahibe açık, öğretmene NULL: seçicilerde tek kod yolu kalsın diye
+  -- kolon tamamen atılmadı, maskelendi.
+  CASE WHEN (SELECT public.is_owner()) THEN r.parent_name END AS parent_name
+FROM public.registrations r
+WHERE (SELECT public.is_owner()) OR r.teacher_id = auth.uid();
+
+-- Herkese açık takvim bu iki görünümden beslenir. Taban tablolarda anon
+-- politikası YOKTUR: aksi halde çıkış yapmış bir öğretmen (ya da isteğinden
+-- Authorization başlığını atan biri) tüm dersleri ve katılımcı satırlarını
+-- okuyabilir, rol ayrımı tamamen baypas edilirdi.
+CREATE VIEW public.public_events AS
+SELECT id, event_code, event_date, age_group, event_type, custom_description,
+       max_capacity, current_capacity, is_active, created_at, updated_at
+FROM public.events
+WHERE is_active;   -- teacher_id DIŞARIDA: kimin dersi olduğu herkese açık bilgi değil
+
+-- Yalnızca sayı döner; registration_id dışarı çıkmaz.
+CREATE VIEW public.public_event_capacity AS
+SELECT ep.event_id,
+       count(*) FILTER (
+         WHERE ep.status = ANY (ARRAY['scheduled'::text, 'makeup'::text, 'attended'::text])
+       )::integer AS active_capacity
+FROM public.event_participants ep
+GROUP BY ep.event_id;
+
+-- ---------------------------------------------------------------------
+-- 9. RLS POLİTİKALARI
+-- ---------------------------------------------------------------------
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_participants ENABLE ROW LEVEL SECURITY;
@@ -450,65 +630,139 @@ ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.weekly_themes ENABLE ROW LEVEL SECURITY;
 
--- events
-CREATE POLICY "Etkinlik görüntüleme politikası" ON public.events FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Etkinlik oluşturma politikası" ON public.events FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Etkinlik güncelleme politikası" ON public.events FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Etkinlik silme politikası" ON public.events FOR DELETE TO authenticated USING (true);
+-- is_owner() çağrıları (SELECT ...) biçiminde skaler alt sorgu olarak yazıldı:
+-- Postgres bunu InitPlan'e çevirip sorgu başına BİR KEZ çalıştırır. Düz çağrı
+-- satır başına bir kez çalışırdı.
 
--- event_participants
-CREATE POLICY "Katılımcı görüntüleme politikası" ON public.event_participants FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Katılımcı ekleme politikası" ON public.event_participants FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Katılımcı güncelleme politikası" ON public.event_participants FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Katılımcı silme politikası" ON public.event_participants FOR DELETE TO authenticated USING (true);
+-- profiles: herkes kendi satırını okur (rolünü öğrenmek için), sahip hepsini yönetir.
+-- Öğretmene INSERT/UPDATE politikası verilmez — kendi rolünü 'owner' yapamaz.
+CREATE POLICY profiles_select_self_or_owner ON public.profiles
+  FOR SELECT TO authenticated USING (id = auth.uid() OR (SELECT public.is_owner()));
+CREATE POLICY profiles_insert_owner ON public.profiles
+  FOR INSERT TO authenticated WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY profiles_update_owner ON public.profiles
+  FOR UPDATE TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY profiles_delete_owner ON public.profiles
+  FOR DELETE TO authenticated USING ((SELECT public.is_owner()));
 
--- weekly_themes
-CREATE POLICY "Haftalık konu görüntüleme politikası" ON public.weekly_themes FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Haftalık konu ekleme politikası" ON public.weekly_themes FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Haftalık konu güncelleme politikası" ON public.weekly_themes FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Haftalık konu silme politikası" ON public.weekly_themes FOR DELETE TO authenticated USING (true);
+-- Yalnızca sahip: finansal veri, idari listeler ve öğrenci kayıtları.
+-- registrations ödeme ve veli bilgisi içerdiği için taban tablo öğretmene
+-- tamamen kapalıdır; öğretmen my_students görünümünü okur.
+CREATE POLICY registrations_owner_only ON public.registrations
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY financial_records_owner_only ON public.financial_records
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY extension_history_owner_only ON public.extension_history
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY expenses_owner_only ON public.expenses
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY waitlist_owner_only ON public.waitlist
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY notes_owner_only ON public.notes
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
 
--- registrations — öğrenci/veli kişisel verisi, yalnızca giriş yapmış kullanıcı
-CREATE POLICY "Kayıt görüntüleme politikası" ON public.registrations FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Kayıt ekleme politikası" ON public.registrations FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Kayıt güncelleme politikası" ON public.registrations FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Kayıt silme politikası" ON public.registrations FOR DELETE TO authenticated USING (true);
+-- Dersler: sahip hepsini, öğretmen kendininkini
+CREATE POLICY events_staff_rw ON public.events
+  FOR ALL TO authenticated
+  USING ((SELECT public.is_owner()) OR teacher_id = auth.uid())
+  WITH CHECK ((SELECT public.is_owner()) OR teacher_id = auth.uid());
 
--- extension_history
-CREATE POLICY "Uzatma geçmişi görüntüleme politikası" ON public.extension_history FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Uzatma geçmişi ekleme politikası" ON public.extension_history FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Uzatma geçmişi güncelleme politikası" ON public.extension_history FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+-- Katılımcılar: ders benim olmalı; eklerken AYRICA öğrenci bana atanmış olmalı.
+-- Güncelleme kısıtında öğrenci şartı yoktur — yoklama alabilmesi için gerekli.
+CREATE POLICY participants_staff_read ON public.event_participants
+  FOR SELECT TO authenticated
+  USING ((SELECT public.is_owner())
+         OR EXISTS (SELECT 1 FROM public.events e
+                    WHERE e.id = event_id AND e.teacher_id = auth.uid()));
+CREATE POLICY participants_staff_write ON public.event_participants
+  FOR INSERT TO authenticated
+  WITH CHECK ((SELECT public.is_owner())
+              OR (EXISTS (SELECT 1 FROM public.events e
+                          WHERE e.id = event_id AND e.teacher_id = auth.uid())
+                  AND public.is_my_student(registration_id)));
+CREATE POLICY participants_staff_update ON public.event_participants
+  FOR UPDATE TO authenticated
+  USING ((SELECT public.is_owner())
+         OR EXISTS (SELECT 1 FROM public.events e
+                    WHERE e.id = event_id AND e.teacher_id = auth.uid()))
+  WITH CHECK ((SELECT public.is_owner())
+              OR EXISTS (SELECT 1 FROM public.events e
+                         WHERE e.id = event_id AND e.teacher_id = auth.uid()));
+CREATE POLICY participants_staff_delete ON public.event_participants
+  FOR DELETE TO authenticated
+  USING ((SELECT public.is_owner())
+         OR EXISTS (SELECT 1 FROM public.events e
+                    WHERE e.id = event_id AND e.teacher_id = auth.uid()));
 
--- financial_records
-CREATE POLICY "Finansal kayıt görüntüleme politikası" ON public.financial_records FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Finansal kayıt ekleme politikası" ON public.financial_records FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Finansal kayıt güncelleme politikası" ON public.financial_records FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-
--- expenses
-CREATE POLICY "Gider görüntüleme politikası" ON public.expenses FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Gider ekleme politikası" ON public.expenses FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Gider güncelleme politikası" ON public.expenses FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Gider silme politikası" ON public.expenses FOR DELETE TO authenticated USING (true);
-
--- waitlist
-CREATE POLICY "Authenticated users can view waitlist" ON public.waitlist FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can insert waitlist" ON public.waitlist FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Authenticated users can update waitlist" ON public.waitlist FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated users can delete waitlist" ON public.waitlist FOR DELETE TO authenticated USING (true);
-
--- notes
-CREATE POLICY "Authenticated users can view notes" ON public.notes FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can insert notes" ON public.notes FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Authenticated users can update notes" ON public.notes FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated users can delete notes" ON public.notes FOR DELETE TO authenticated USING (true);
+-- Haftanın konusu: öğretmen görür, değiştiremez. Herkese açık takvim de okur.
+CREATE POLICY weekly_themes_public_read ON public.weekly_themes
+  FOR SELECT TO anon USING (true);
+CREATE POLICY weekly_themes_staff_read ON public.weekly_themes
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY weekly_themes_owner_write ON public.weekly_themes
+  FOR INSERT TO authenticated WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY weekly_themes_owner_update ON public.weekly_themes
+  FOR UPDATE TO authenticated
+  USING ((SELECT public.is_owner())) WITH CHECK ((SELECT public.is_owner()));
+CREATE POLICY weekly_themes_owner_delete ON public.weekly_themes
+  FOR DELETE TO authenticated USING ((SELECT public.is_owner()));
 
 -- ---------------------------------------------------------------------
--- 8. FONKSİYON YETKİLERİ
+-- 10. YETKİLER
 -- ---------------------------------------------------------------------
--- delete_last_extension SECURITY DEFINER'dır, yani RLS'i baypas eder.
 -- Postgres fonksiyonlara varsayılan olarak PUBLIC üzerinden EXECUTE verir;
--- sadece anon'dan almak yetmez, önce PUBLIC mirası kaldırılmalıdır.
+-- yalnızca anon'dan almak yetmez, önce PUBLIC mirası kaldırılmalıdır.
 REVOKE EXECUTE ON FUNCTION public.delete_last_extension(uuid) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.delete_last_extension(uuid) FROM anon;
 GRANT  EXECUTE ON FUNCTION public.delete_last_extension(uuid) TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.delete_last_extension(uuid) TO service_role;
+
+REVOKE EXECUTE ON FUNCTION public.is_owner() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_owner() FROM anon;
+GRANT  EXECUTE ON FUNCTION public.is_owner() TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.is_owner() TO service_role;
+
+REVOKE EXECUTE ON FUNCTION public.is_my_student(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_my_student(uuid) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.is_my_student(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.is_my_student(uuid) TO service_role;
+
+REVOKE EXECUTE ON FUNCTION public.get_lesson_usage(uuid[]) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.get_lesson_usage(uuid[]) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.get_lesson_usage(uuid[]) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.get_lesson_usage(uuid[]) TO service_role;
+
+REVOKE ALL ON public.my_students FROM PUBLIC;
+REVOKE ALL ON public.my_students FROM anon;
+GRANT SELECT ON public.my_students TO authenticated;
+
+GRANT SELECT ON public.public_events TO anon, authenticated;
+GRANT SELECT ON public.public_event_capacity TO anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- KURULUM SONRASI
+-- ---------------------------------------------------------------------
+-- Yönetici hesabını Authentication > Users bölümünden oluşturduktan sonra
+-- rolünü 'owner' yapmayı UNUTMAYIN — trigger her yeni kullanıcıyı 'teacher'
+-- olarak açar ve öğretmen hiçbir yönetim ekranını göremez:
+--
+--   UPDATE public.profiles SET role = 'owner', full_name = 'Yulia'
+--   WHERE id = (SELECT id FROM auth.users WHERE email = 'ADRES');
+
+-- Trigger fonksiyonlarının RPC olarak çağrılabilmesine gerek yok; trigger zaten
+-- tablo bağlamında çalışır. EXECUTE açık kalırsa /rest/v1/rpc/... üzerinden
+-- dışarıdan çağrılabilir hale gelirler (Supabase güvenlik denetçisi de uyarır).
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.update_event_capacity() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.update_updated_at_column() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.update_event_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.update_participant_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.set_weekly_themes_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.save_initial_registration_data() FROM PUBLIC, anon, authenticated;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Home from './pages/Home'
 import Calendar from './pages/Calendar'
@@ -94,16 +94,21 @@ function App() {
 
                           <div className="bg-white dark:bg-[#1a1f2e] border border-[#E2E4E9] dark:border-[#2a3241] rounded-xl min-h-[calc(100%-0px)]">
                             {/* Routes */}
+                            {/* Sahibe özel sayfalar tek tek sarmalanıyor: kenar
+                                çubuğunda gizlemek yetmez, adres doğrudan yazılabilir.
+                                Öğretmen bunlara girmeye çalışırsa /calendar'a düşer. */}
                             <Routes>
-                              <Route path="/" element={<Home />} />
+                              <Route path="/" element={<ProtectedRoute requireOwner><Home /></ProtectedRoute>} />
                               <Route path="/calendar" element={<Calendar />} />
-                              <Route path="/registration" element={<Registration />} />
-                              <Route path="/remaining-usage" element={<RemainingUsage />} />
-                              <Route path="/income-expense" element={<IncomeExpense />} />
-                              <Route path="/waitlist" element={<Waitlist />} />
-                              <Route path="/notes" element={<Notes />} />
+                              <Route path="/registration" element={<ProtectedRoute requireOwner><Registration /></ProtectedRoute>} />
+                              <Route path="/remaining-usage" element={<ProtectedRoute requireOwner><RemainingUsage /></ProtectedRoute>} />
+                              <Route path="/income-expense" element={<ProtectedRoute requireOwner><IncomeExpense /></ProtectedRoute>} />
+                              <Route path="/waitlist" element={<ProtectedRoute requireOwner><Waitlist /></ProtectedRoute>} />
+                              <Route path="/notes" element={<ProtectedRoute requireOwner><Notes /></ProtectedRoute>} />
                               <Route path="/settings" element={<Settings />} />
-                              <Route path="/idea-center" element={<IdeaCenter />} />
+                              <Route path="/idea-center" element={<ProtectedRoute requireOwner><IdeaCenter /></ProtectedRoute>} />
+                              {/* Tanınmayan adres boş beyaz kart gösteriyordu */}
+                              <Route path="*" element={<Navigate to="/calendar" replace />} />
                             </Routes>
                           </div>
                         </main>

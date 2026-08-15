@@ -15,10 +15,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { FaChild } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
 const Sidebar = ({ onClose }) => {
   const { t } = useLanguage();
+  const { isOwner } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState('');
@@ -42,16 +44,18 @@ const Sidebar = ({ onClose }) => {
     getUser();
   }, []);
 
+  // ownerOnly: öğretmene gösterilmez. Bu yalnızca görsel katman —
+  // asıl koruma rota sarmalayıcısında ve veritabanı politikalarında.
   const menuItems = [
-    { icon: HomeIcon, text: 'home', path: '/' },
+    { icon: HomeIcon, text: 'home', path: '/', ownerOnly: true },
     { icon: CalendarDaysIcon, text: 'calendar', path: '/calendar' },
-    { icon: UserPlusIcon, text: 'registration', path: '/registration' },
-    { icon: ChartBarIcon, text: 'remainingUsage', path: '/remaining-usage' },
-    { icon: BanknotesIcon, text: 'incomeExpense', path: '/income-expense' },
-    { icon: QueueListIcon, text: 'waitlist', path: '/waitlist' },
-    { icon: DocumentTextIcon, text: 'notes', path: '/notes' },
-    { icon: LightBulbIcon, text: 'ideaCenter', path: '/idea-center' },
-  ];
+    { icon: UserPlusIcon, text: 'registration', path: '/registration', ownerOnly: true },
+    { icon: ChartBarIcon, text: 'remainingUsage', path: '/remaining-usage', ownerOnly: true },
+    { icon: BanknotesIcon, text: 'incomeExpense', path: '/income-expense', ownerOnly: true },
+    { icon: QueueListIcon, text: 'waitlist', path: '/waitlist', ownerOnly: true },
+    { icon: DocumentTextIcon, text: 'notes', path: '/notes', ownerOnly: true },
+    { icon: LightBulbIcon, text: 'ideaCenter', path: '/idea-center', ownerOnly: true },
+  ].filter(item => isOwner || !item.ownerOnly);
 
   const handleLogout = async () => {
     try {

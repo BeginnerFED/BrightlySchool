@@ -334,12 +334,17 @@ export default function CopyWeekModal({
                             >
                               {isUk ? 'Виключити' : 'Exclude'}
                             </button>
-                            <button
-                              onClick={() => onExtendStudent && onExtendStudent(student)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-800/50 hover:bg-yellow-200 dark:hover:bg-yellow-900/60 active:scale-95 transition-all"
-                            >
-                              {isUk ? 'Продовжити' : 'Extend'}
-                            </button>
+                            {/* Uzatma finansal kayıt yazar. onExtendStudent
+                                yalnızca sahibe verilir; öğretmende buton hiç çıkmaz
+                                ama uyarı listesi ona da gösterilir. */}
+                            {onExtendStudent && (
+                              <button
+                                onClick={() => onExtendStudent(student)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-800/50 hover:bg-yellow-200 dark:hover:bg-yellow-900/60 active:scale-95 transition-all"
+                              >
+                                {isUk ? 'Продовжити' : 'Extend'}
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

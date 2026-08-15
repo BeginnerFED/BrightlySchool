@@ -51,8 +51,10 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
+        // my_students görünümü: sahip herkesi, öğretmen yalnızca kendisine
+        // atanmış öğrencileri görür. Ödeme bilgisi bu görünümde hiç yok.
         const { data, error } = await supabase
-          .from('registrations')
+          .from('my_students')
           .select('id, student_name, student_age, parent_name')
           .eq('is_active', true)
           .order('student_name')
@@ -104,9 +106,11 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
   }
 
   // Arama filtrelemesi ve sıralama
+  // parent öğretmende null gelir (görünümde maskeli) — korumasız
+  // toLowerCase() ilk tuşa basıldığında çökerdi
   const filteredStudents = students.filter(student =>
     student.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.parent.toLowerCase().includes(searchTerm.toLowerCase())
+    (student.parent || '').toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     // Seçili öğrencileri üste taşı
     const aSelected = selectedStudents.some(s => s.value === a.value)

@@ -21,6 +21,7 @@ import enUS from 'date-fns/locale/en-US';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ActionNotification from '../components/ActionNotification';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 // Custom hook to monitor screen width
 const useWindowSize = () => {
@@ -50,6 +51,7 @@ const useWindowSize = () => {
 
 const Calendar = () => {
   const { language } = useLanguage();
+  const { isOwner, user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateSheetOpen, setIsUpdateSheetOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -179,7 +181,7 @@ const Calendar = () => {
       let studentMap = {};
       if (registrationIds.length > 0) {
         const { data: studentsData, error: studentsError } = await supabase
-          .from('registrations')
+          .from('my_students')
           .select('id, student_name')
           .in('id', registrationIds);
 
@@ -684,8 +686,11 @@ const Calendar = () => {
     try {
       setPrecheckLoading(true);
 
+      // my_students görünümü: öğretmen için de DOLU döner. Taban tablo
+      // kullanılsaydı öğretmene boş liste dönerdi ve modal "kotası biten
+      // öğrenci yok" derdi — oysa gerçek "bakmama izin verilmedi" olurdu.
       const { data: registrations, error } = await supabase
-        .from('registrations')
+        .from('my_students')
         .select('*')
         .in('id', registrationIds)
         .eq('is_active', true);
@@ -712,9 +717,12 @@ const Calendar = () => {
     }
   };
 
-  // Ön kontrol listesinden uzatma modalını aç (Registration.jsx'teki guard'ların aynısı)
-  const handleExtendFromPrecheck = (registration) => {
-    if (registration.package_type === 'ucretsiz') {
+  // Ön kontrol listesinden uzatma modalını aç (Registration.jsx'teki guard'ların aynısı).
+  // Yalnızca sahip çağırır — uzatma finansal kayıt yazar.
+  // Liste my_students görünümünden geldiği için ödeme kolonları yok;
+  // uzatma için tam kaydı burada ayrıca çekiyoruz.
+  const handleExtendFromPrecheck = async (student) => {
+    if (student.package_type === 'ucretsiz') {
       showToast(
         language === 'uk'
           ? 'Безкоштовні відвідування не продовжуються'
@@ -723,6 +731,21 @@ const Calendar = () => {
       );
       return;
     }
+
+    const { data: registration, error } = await supabase
+      .from('registrations')
+      .select('*')
+      .eq('id', student.id)
+      .single();
+
+    if (error || !registration) {
+      showToast(
+        language === 'uk' ? 'Не вдалося завантажити запис' : 'Could not load the record',
+        'error'
+      );
+      return;
+    }
+
     if (registration.payment_status === 'beklemede') {
       showToast(
         language === 'uk'
@@ -927,6 +950,10 @@ const Calendar = () => {
                   event_type: originalEvent.event_type,
                   custom_description: originalEvent.custom_description,
                   max_capacity: originalEvent.max_capacity,
+                  // Sahiplik kaynaktan taşınır: aksi halde teacher_id'nin
+                  // DEFAULT auth.uid() değeri devreye girer ve Yulia bir
+                  // öğretmenin haftasını kopyalayınca dersler ona geçerdi.
+                  teacher_id: originalEvent.teacher_id,
                   current_capacity: 0 // Başlangıçta 0 olmalı, trigger katılımcılar eklendiğinde bu değeri arttıracak
                 };
 
@@ -991,7 +1018,7 @@ const Calendar = () => {
                 });
               } else {
                 setToast({
-                  message: 'Kopyalanacak etkinlik bulunamadı',
+                  message: 'Немає занять для копіювання',
                   type: 'error',
                   isVisible: true
                 });
@@ -1002,7 +1029,7 @@ const Calendar = () => {
           }
         }
 
-        showToast('Bu haftada kopyalanacak etkinlik bulunamadı', 'error');
+        showToast('На цьому тижні немає занять для копіювання', 'error');
         setCopyWeekLoading(false);
         setIsCopyWeekModalOpen(false);
         return;
@@ -1064,6 +1091,8 @@ const Calendar = () => {
           event_type: originalEvent.event_type,
           custom_description: originalEvent.custom_description,
           max_capacity: originalEvent.max_capacity,
+          // Sahiplik kaynaktan taşınır (yukarıdaki kurtarma yolundaki gibi)
+          teacher_id: originalEvent.teacher_id,
           current_capacity: 0 // Başlangıçta 0 olmalı, trigger katılımcılar eklendiğinde bu değeri arttıracak
         };
 
@@ -1131,7 +1160,7 @@ const Calendar = () => {
         });
       } else {
         setToast({
-          message: 'Kopyalanacak etkinlik bulunamadı',
+          message: 'Немає занять для копіювання',
           type: 'error',
           isVisible: true
         });
@@ -1256,7 +1285,9 @@ const Calendar = () => {
             <span>{language === 'uk' ? 'Публічний календар' : 'Public Calendar'}</span>
             <ArrowTopRightOnSquareIcon className="w-3 h-3" />
           </a>
-          <button
+          {/* Konu düzenleme sahibe ait; öğretmen konuyu aşağıdaki
+              bantta görür ama değiştiremez (DB de reddeder). */}
+          {isOwner && <button
             onClick={() => {
               setThemesModalFocusWeek(null);
               setIsThemesModalOpen(true);
@@ -1265,7 +1296,7 @@ const Calendar = () => {
           >
             <BookOpenIcon className="w-3.5 h-3.5" />
             <span>{language === 'uk' ? 'Теми тижнів' : 'Weekly Themes'}</span>
-          </button>
+          </button>}
           <button
             onClick={() => {
               setSelectedTime({
@@ -1301,7 +1332,7 @@ const Calendar = () => {
                 </span>
               )}
             </div>
-            <button
+            {isOwner && <button
               onClick={() => {
                 setThemesModalFocusWeek(activeWeekKey);
                 setIsThemesModalOpen(true);
@@ -1311,7 +1342,7 @@ const Calendar = () => {
               {activeWeekTheme
                 ? (language === 'uk' ? 'Редагувати' : 'Edit')
                 : (language === 'uk' ? 'Додати тему' : 'Add Theme')}
-            </button>
+            </button>}
           </div>
         )}
 
@@ -1421,22 +1452,25 @@ const Calendar = () => {
         hasConflicts={hasConflictsInTargetWeek}
         precheckStudents={precheckStudents}
         precheckLoading={precheckLoading}
-        onExtendStudent={handleExtendFromPrecheck}
+        onExtendStudent={isOwner ? handleExtendFromPrecheck : null}
       />
 
       {/* Paket Uzatma Modal — CopyWeekModal'ın KARDEŞİ olarak monte edilir.
           İçine konulsaydı her tıklama CopyWeekModal'ın overlay'ine sızıp onu kapatırdı.
-          z-50 (ExtendModal) > z-40 (CopyWeekModal) olduğu için üstte çıkar. */}
-      <ExtendModal
-        isOpen={isExtendModalOpen}
-        onClose={() => setIsExtendModalOpen(false)}
-        onSuccess={() => {
-          // ExtendModal onClose'u onSuccess'ten ÖNCE çağırdığı için kaydı burada
-          // null'lamıyoruz. Uzatma sonrası liste yenilenir (uzatılan öğrenci düşer).
-          fetchCopyWeekPrecheck(getWeekRegistrationIds(currentWeekRange));
-        }}
-        registration={extendTargetRegistration}
-      />
+          z-50 (ExtendModal) > z-40 (CopyWeekModal) olduğu için üstte çıkar.
+          Uzatma finansal kayıt yazar — öğretmende hiç monte edilmez. */}
+      {isOwner && (
+        <ExtendModal
+          isOpen={isExtendModalOpen}
+          onClose={() => setIsExtendModalOpen(false)}
+          onSuccess={() => {
+            // ExtendModal onClose'u onSuccess'ten ÖNCE çağırdığı için kaydı burada
+            // null'lamıyoruz. Uzatma sonrası liste yenilenir (uzatılan öğrenci düşer).
+            fetchCopyWeekPrecheck(getWeekRegistrationIds(currentWeekRange));
+          }}
+          registration={extendTargetRegistration}
+        />
+      )}
 
       {/* Haftalık Konular Modal */}
       <WeeklyThemesModal

@@ -17,6 +17,7 @@ import {
   CreditCardIcon,
   BanknotesIcon,
   CurrencyDollarIcon,
+  AcademicCapIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
@@ -46,12 +47,14 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
     phone: '',
     age: '',
     packageType: '',
+    teacherId: '',
     paymentStatus: '',
     paymentMethod: '',
     amount: '',
     note: '',
     paymentDate: null // Varsayılan olarak null
   })
+  const { teachers } = useTeachers(isOpen)
 
   // Tarih aralığını mevcut kayıt verileriyle başlat
   const [dateRange, setDateRange] = useState([{
@@ -69,6 +72,7 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         phone: registration.parent_phone || '',
         age: registration.student_age || '',
         packageType: registration.package_type || '',
+        teacherId: registration.teacher_id || '',
         paymentStatus: registration.payment_status || '',
         paymentMethod: registration.payment_method || '',
         amount: registration.payment_amount?.toString() || '',
@@ -239,7 +243,8 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         payment_method: paymentMethod,
         payment_amount: paymentAmount,
         payment_date: paymentDate, // Ödeme beklemede/ücretsiz ise null
-        notes: formData.note.trim() || null
+        notes: formData.note.trim() || null,
+        teacher_id: formData.teacherId || null
       }
 
       // Eğer ilk kayıt güncelleniyorsa (uzatma yoksa), initial_* alanlarını da ekle
@@ -506,6 +511,30 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                     tabIndex={4}
                     autoComplete="off"
                   />
+                </div>
+
+
+                {/* Öğretmen ataması */}
+                <div className="relative">
+                  <div className={iconWrapperClasses}>
+                    <AcademicCapIcon className={iconClasses} />
+                  </div>
+                  <select
+                    name="teacherId"
+                    value={formData.teacherId || ''}
+                    onChange={handleInputChange}
+                    className={`${inputClasses} ${!formData.teacherId && 'text-[#86868b]'}`}
+                    autoComplete="off"
+                  >
+                    <option value="" className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
+                      {language === 'uk' ? "Без викладача" : "No teacher"}
+                    </option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                        {teacher.full_name || (language === 'uk' ? "Викладач" : "Teacher")}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Paket Türü */}

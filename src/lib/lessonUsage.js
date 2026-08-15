@@ -70,70 +70,57 @@ export const computeLessonUsage = (registration, rows) => {
   };
 };
 
-// Birden çok kayıt için ders kullanımını TEK toplu sorguyla getirir.
-// Dönüş: { [registrationId]: usage }
-// PostgREST'in 1000 satır sınırına takılmamak için sayfalamalı çeker
-// (mevcut kodda bu sınır ~550 satırın sessizce düşmesine yol açıyordu).
+// Birden çok kayıt için ders kullanımını getirir. Dönüş: { [registrationId]: usage }
+//
+// Sayım veritabanındaki get_lesson_usage() RPC'sine yaptırılır. Bunun iki sebebi var:
+//
+// 1) DOĞRULUK. Öğretmen yalnızca kendi derslerini görebilir. Sayımı istemcide
+//    yapsaydık öğrencinin BAŞKA öğretmenin dersinde yaktığı haklar sorguya hiç
+//    gelmez, öğretmen kalan dersi olduğundan fazla görürdü. RPC RLS'i baypas edip
+//    doğru sayar ama yalnızca sayı döner — kimin nerede olduğunu göstermez.
+// 2) Eski kod PostgREST'in 1000 satır sınırına takılmamak için sayfalama yapıyordu;
+//    toplama sunucuda yapıldığı için o döngü tamamen kalktı.
+//
+// Sayım kuralları (attended+no_show, paket dönemi, ücretsizde kota yok) RPC ile
+// computeLessonUsage arasında AYNI olmalı — biri değişirse diğeri de değişmeli.
 export const fetchLessonUsageMap = async (registrations) => {
   const usageMap = {};
   if (!registrations || registrations.length === 0) return usageMap;
 
   const ids = registrations.map(reg => reg.id);
 
-  // Sunucu tarafı tarih filtresi: en erken paket başlangıcından itibaren çek.
-  // Kayıtlardan biri ücretsizse veya start'ı yoksa filtre atlanır — aksi halde
-  // ücretsiz öğrencinin kayıt gününden önceki dersleri sunucuda elenir ve
-  // istatistik sayaçları sıfırlanırdı (istemci tarafı kapsam yine uygulanır).
-  const startDates = registrations
-    .map(reg => reg.package_start_date)
-    .filter(Boolean)
-    .map(date => new Date(date));
-  const hasUnscopedRegistration = registrations.some(
-    reg => !reg.package_start_date || isFreePackage(reg.package_type)
-  );
-  const minStart = !hasUnscopedRegistration && startDates.length > 0
-    ? new Date(Math.min(...startDates.map(date => date.getTime())))
-    : null;
-
-  const PAGE_SIZE = 1000;
-  const allRows = [];
-  let from = 0;
-
-  for (;;) {
-    let query = supabase
-      .from('event_participants')
-      .select('status, registration_id, events!inner(event_date)')
-      .in('registration_id', ids)
-      .order('id')
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (minStart) {
-      query = query.gte('events.event_date', minStart.toISOString());
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    allRows.push(...(data || []));
-    if (!data || data.length < PAGE_SIZE) break;
-    from += PAGE_SIZE;
-  }
-
-  // Satırları kayda göre grupla
-  const rowsByRegistration = {};
-  allRows.forEach(row => {
-    if (!rowsByRegistration[row.registration_id]) {
-      rowsByRegistration[row.registration_id] = [];
-    }
-    rowsByRegistration[row.registration_id].push(row);
+  const { data, error } = await supabase.rpc('get_lesson_usage', {
+    p_registration_ids: ids
   });
+  if (error) throw error;
 
-  // Satırı olmayan kayıtlar da haritada yer alır (remaining = total)
+  const byRegistration = Object.fromEntries(
+    (data || []).map(row => [row.registration_id, row])
+  );
+
   registrations.forEach(registration => {
-    usageMap[registration.id] = computeLessonUsage(
-      registration,
-      rowsByRegistration[registration.id] || []
-    );
+    const row = byRegistration[registration.id];
+    const free = isFreePackage(registration.package_type);
+    const total = getPackageLessonTotal(registration.package_type);
+
+    // RPC'nin döndürmediği kayıt = çağıranın görme hakkı yok.
+    // Sayaçlar sıfırlanır, böylece çağıran taraf undefined ile karşılaşmaz.
+    const counts = {
+      attended: row?.attended ?? 0,
+      noShow: row?.no_show ?? 0,
+      makeup: row?.makeup ?? 0,
+      scheduled: row?.scheduled ?? 0,
+      postponed: row?.postponed ?? 0
+    };
+    const used = counts.attended + counts.noShow;
+
+    usageMap[registration.id] = {
+      isFree: free,
+      total,
+      used,
+      remaining: free ? null : Math.max(total - used, 0),
+      ...counts
+    };
   });
 
   return usageMap;

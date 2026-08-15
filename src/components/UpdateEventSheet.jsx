@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
+import AttendanceList from './AttendanceList'
 import { 
   XMarkIcon,
   CalendarDaysIcon,
@@ -108,7 +109,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         
         // Kayıt bilgilerini çek
         const { data: registrations, error: registrationsError } = await supabase
-          .from('registrations')
+          .from('my_students')
           .select('id, student_name, student_age, parent_name')
           .in('id', registrationIds);
           
@@ -151,7 +152,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
     const fetchStudents = async () => {
       try {
         const { data, error } = await supabase
-          .from('registrations')
+          .from('my_students')
           .select('id, student_name, student_age, parent_name')
           .eq('is_active', true)
           .order('student_name');
@@ -207,7 +208,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
   // Arama filtrelemesi ve sıralama
   const filteredStudents = students.filter(student =>
     student.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.parent.toLowerCase().includes(searchTerm.toLowerCase())
+    (student.parent || '').toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     // Seçili öğrencileri üste taşı
     const aSelected = selectedStudents.some(s => s.value === a.value);
@@ -395,6 +396,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           event_type: formData.eventType,
           custom_description: formData.eventType === 'ozel' ? formData.customDescription : null,
           max_capacity: eventData.max_capacity,
+          // Tek ders kopyalarken de sahiplik kaynaktan taşınır
+          teacher_id: eventData.teacher_id,
           current_capacity: 0 // Başlangıçta katılımcı olmayacak, katılımcılar ayrıca eklenecek
         };
 
@@ -423,7 +426,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
 
         // Başarılı mesajı göster
         if (onSuccess) {
-          onSuccess('Etkinlik başarıyla kopyalandı');
+          onSuccess('Заняття успішно скопійовано');
         }
       } else {
         // ############ GÜNCELLEME MODU BAŞLANGICI ############
@@ -497,7 +500,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
 
         // Başarılı mesajı göster
         if (onSuccess) {
-          onSuccess('Etkinlik başarıyla güncellendi');
+          onSuccess('Заняття успішно оновлено');
         }
         // ############ GÜNCELLEME MODU SONU ############
       }
@@ -527,7 +530,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
 
       // Başarılı mesajı göster
       if (onSuccess) {
-        onSuccess('Etkinlik başarıyla silindi');
+        onSuccess('Заняття успішно видалено');
       }
       
       // Paneli kapat
@@ -621,7 +624,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 disabled={isDeleting}
                 className="flex-1 py-3 px-4 text-[#1d1d1f] dark:text-white bg-transparent border border-[#d2d2d7] dark:border-[#2a3241] text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-[#1d2535]/70 focus:outline-none transition-all duration-200"
               >
-                İptal
+                Скасувати
               </button>
               <button
                 type="button"
@@ -653,7 +656,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">
-              {isCopyMode ? 'Etkinliği Kopyala' : 'Etkinliği Düzenle'}
+              {isCopyMode ? 'Копіювати заняття' : 'Редагувати заняття'}
             </h2>
             <button 
               onClick={onClose}
@@ -689,7 +692,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                   </div>
                   {isCopyMode && (
                     <p className="mt-1 text-xs text-[#6e6e73] dark:text-[#86868b]">
-                      Kopyalama modunda orijinal etkinlik tarihi değiştirilemez.
+                      Дату оригінального заняття не можна змінити в режимі копіювання.
                     </p>
                   )}
                 </div>
@@ -741,7 +744,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {/* Öğrenci Seçimi - MOVED BETWEEN SAAT AND YAŞ GRUBU */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                    Katılımcı Öğrenciler
+                    Учасники
                   </label>
                   <div className="relative">
                     <UsersIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
@@ -771,7 +774,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {/* Yaş Grubu */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                    Yaş Grubu
+                    Вікова група
                   </label>
                   <div className="relative">
                     <AcademicCapIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
@@ -799,7 +802,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {/* Etkinlik Türü */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                    Etkinlik Türü
+                    Тип заняття
                   </label>
                   <div className="relative">
                     <TagIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
@@ -825,14 +828,14 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {formData.eventType === 'ozel' && (
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                      Özel Etkinlik Açıklaması
+                      Опис індивідуального заняття
                     </label>
                     <textarea
                       name="customDescription"
                       value={formData.customDescription}
                       onChange={handleInputChange}
                       className="w-full h-16 px-4 py-3 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base cursor-text resize-none"
-                      placeholder="Özel etkinlik için açıklama girin..."
+                      placeholder="Опис індивідуального заняття..."
                     />
                   </div>
                 )}
@@ -843,7 +846,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                     <div className="flex items-center gap-2">
                       <DocumentDuplicateIcon className="w-5 h-5 text-[#6e6e73] dark:text-[#86868b]" />
                       <span className="text-sm font-medium text-[#424245] dark:text-[#86868b]">
-                        Bu Etkinliği Kopyala
+                        Копіювати це заняття
                       </span>
                     </div>
                     <label className="inline-flex relative items-center cursor-pointer">
@@ -868,7 +871,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 {isCopyMode && (
                   <div className="mt-4 mb-2">
                     <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
-                      Kopyalanacak Tarih
+                      Дата копіювання
                     </label>
                     <div className="relative">
                       <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6e6e73] dark:text-[#86868b] z-10 pointer-events-none" />
@@ -883,8 +886,20 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                       />
                     </div>
                     <p className="mt-2 text-xs text-[#6e6e73] dark:text-[#86868b]">
-                      Etkinlik, aynı bilgiler ve katılımcılarla bu tarihe kopyalanacaktır.
+                      Заняття буде скопійовано на цю дату з тими самими даними та учасниками.
                     </p>
+                  </div>
+                )}
+
+                {/* Yoklama — öğretmenin ders hakkı sayacını işletebilmesi için
+                    tek yeri burası. Statü güncellemesi RLS ile kendi dersleriyle
+                    sınırlı; sahip her derste alabilir. */}
+                {!isCopyMode && eventId && (
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-3">
+                      {language === 'uk' ? 'Відвідуваність' : 'Attendance'}
+                    </label>
+                    <AttendanceList eventId={eventId} />
                   </div>
                 )}
 
@@ -904,13 +919,13 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                   onClick={() => setIsDeleteModalOpen(true)}
                   disabled={isLoading || isDeleting}
                   className="w-12 h-12 flex items-center justify-center text-red-500 dark:text-red-400 bg-transparent border border-[#d2d2d7] dark:border-[#2a3241] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1d2535]/70 focus:outline-none transition-all duration-200"
-                  aria-label="Etkinliği sil"
+                  aria-label="Видалити заняття"
                 >
                   <TrashIcon className="w-5 h-5" />
                 </button>
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                  Etkinliği Sil
+                  Видалити заняття
                 </div>
               </div>
             )}
@@ -920,7 +935,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
               disabled={isLoading || isDeleteModalOpen}
               className={`flex-1 h-12 px-4 text-[#1d1d1f] dark:text-white bg-transparent border border-[#d2d2d7] dark:border-[#2a3241] text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-[#1d2535]/70 focus:outline-none transition-all duration-200 ${(isLoading || isDeleteModalOpen) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              İptal
+              Скасувати
             </button>
             <button
               type="button"

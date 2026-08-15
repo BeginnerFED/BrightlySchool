@@ -17,6 +17,7 @@ import {
   CreditCardIcon,
   BanknotesIcon,
   CurrencyDollarIcon,
+  AcademicCapIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
@@ -33,6 +34,7 @@ const initialFormData = {
   phone: '',
   age: '',
   packageType: '',
+  teacherId: '',
   paymentStatus: '',
   paymentMethod: '',
   amount: '',
@@ -57,6 +59,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
     type: 'success'
   })
   const [formData, setFormData] = useState(initialFormData)
+  const { teachers } = useTeachers(isOpen)
   const [dateRange, setDateRange] = useState(initialDateRange)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isPaymentDatePickerOpen, setIsPaymentDatePickerOpen] = useState(false)
@@ -239,6 +242,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
             parent_name: formData.parentName.trim(),
             parent_phone: formData.phone.trim(),
             package_type: formData.packageType,
+            teacher_id: formData.teacherId || null,
             package_start_date: packageStartDate,
             package_end_date: packageEndDate,
             payment_status: formData.paymentStatus,
@@ -508,6 +512,31 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     tabIndex={4}
                     autoComplete="off"
                   />
+                </div>
+
+
+                {/* Öğretmen ataması — öğretmen yalnızca kendisine atanmış
+                    öğrencileri görür. Boş bırakılırsa öğrenci yalnızca sahibindir. */}
+                <div className="relative">
+                  <div className={iconWrapperClasses}>
+                    <AcademicCapIcon className={iconClasses} />
+                  </div>
+                  <select
+                    name="teacherId"
+                    value={formData.teacherId || ''}
+                    onChange={handleInputChange}
+                    className={`${inputClasses} ${!formData.teacherId && 'text-[#86868b]'}`}
+                    autoComplete="off"
+                  >
+                    <option value="" className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
+                      {language === 'uk' ? "Без викладача" : "No teacher"}
+                    </option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                        {teacher.full_name || (language === 'uk' ? "Викладач" : "Teacher")}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Paket Türü */}
