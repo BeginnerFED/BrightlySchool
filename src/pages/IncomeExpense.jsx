@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { EXPENSE_TYPES, getExpenseLabel, getExpenseColor, getExpenseCard } from '../lib/expenseTypes'
 import { 
   BanknotesIcon,
   ArrowTrendingUpIcon,
@@ -740,17 +741,7 @@ export default function IncomeExpense() {
           acc[type] = {
             name: type,
             value: 0,
-            color: type === 'kira' ? '#0071e3'
-              : type === 'elektrik' ? '#34d399'
-              : type === 'su' ? '#fbbf24'
-              : type === 'dogalgaz' ? '#f87171'
-              : type === 'internet' ? '#a78bfa'
-              : type === 'maas' ? '#60a5fa'
-              : type === 'malzeme' ? '#fb923c'
-              : type === 'mutfak' ? '#4ade80'
-              : type === 'reklam' ? '#f472b6'
-              : type === 'filament' ? '#22d3ee'
-              : '#94a3b8'
+            color: getExpenseColor(type)
           }
         }
         acc[type].value += curr.amount
@@ -1361,7 +1352,7 @@ export default function IncomeExpense() {
                 {language === 'uk' ? 'Тип витрати' : 'Expense Type'}
               </h3>
               <div className="grid grid-cols-3 gap-2">
-                {['kira', 'elektrik', 'su', 'internet', 'maas', 'malzeme', 'mutfak', 'reklam', 'filament', 'diger'].map((type) => (
+                {EXPENSE_TYPES.map(({ value: type }) => (
                   <button
                     key={type}
                     onClick={() => setExpenseFilters(prev => ({ ...prev, expenseType: type }))}
@@ -1373,19 +1364,7 @@ export default function IncomeExpense() {
                       }
                     `}
                   >
-                    {language === 'uk'
-                      ? type.charAt(0).toUpperCase() + type.slice(1)
-                      : type === 'kira' ? 'Rent'
-                      : type === 'elektrik' ? 'Electricity'
-                      : type === 'su' ? 'Water'
-                      : type === 'internet' ? 'Internet'
-                      : type === 'maas' ? 'Salary'
-                      : type === 'malzeme' ? 'Materials'
-                      : type === 'mutfak' ? 'Kitchen'
-                      : type === 'reklam' ? 'Advertising'
-                      : type === 'filament' ? 'Філамент'
-                      : 'Other'
-                    }
+                    {getExpenseLabel(type, language)}
                   </button>
                 ))}
               </div>
@@ -1549,18 +1528,7 @@ export default function IncomeExpense() {
                       )}
                       {expenseFilters.expenseType && (
                         <span className="ml-1 text-xs">
-                          ({language === 'uk'
-                            ? expenseFilters.expenseType.charAt(0).toUpperCase() + expenseFilters.expenseType.slice(1)
-                            : expenseFilters.expenseType === 'kira' ? 'Rent'
-                            : expenseFilters.expenseType === 'elektrik' ? 'Electricity'
-                            : expenseFilters.expenseType === 'su' ? 'Water'
-                            : expenseFilters.expenseType === 'internet' ? 'Internet'
-                            : expenseFilters.expenseType === 'maas' ? 'Salary'
-                            : expenseFilters.expenseType === 'malzeme' ? 'Materials'
-                            : expenseFilters.expenseType === 'mutfak' ? 'Kitchen'
-                            : expenseFilters.expenseType === 'reklam' ? 'Advertising'
-                            : expenseFilters.expenseType === 'filament' ? 'Філамент'
-                            : 'Other'})
+                          ({getExpenseLabel(expenseFilters.expenseType, language)})
                         </span>
                       )}
                     </p>
@@ -1970,22 +1938,7 @@ export default function IncomeExpense() {
                     </thead>
                     <tbody>
                       {applyFilters(expenseTableData, 'expense').map((item, index) => {
-                        // Sabit kategori renkleri
-                        const categoryColors = {
-                          'kira': { bg: 'from-[#0071e3]/5 to-[#34d399]/5', text: 'text-[#0071e3]' },
-                          'elektrik': { bg: 'from-[#f59e0b]/5 to-[#f97316]/5', text: 'text-[#f97316]' },
-                          'su': { bg: 'from-[#8b5cf6]/5 to-[#6366f1]/5', text: 'text-[#6366f1]' },
-                          'dogalgaz': { bg: 'from-[#ec4899]/5 to-[#d946ef]/5', text: 'text-[#d946ef]' },
-                          'internet': { bg: 'from-[#10b981]/5 to-[#34d399]/5', text: 'text-[#10b981]' },
-                          'maas': { bg: 'from-[#3b82f6]/5 to-[#60a5fa]/5', text: 'text-[#3b82f6]' },
-                          'malzeme': { bg: 'from-[#f43f5e]/5 to-[#fb7185]/5', text: 'text-[#f43f5e]' },
-                          'mutfak': { bg: 'from-[#14b8a6]/5 to-[#2dd4bf]/5', text: 'text-[#14b8a6]' },
-                          'reklam': { bg: 'from-[#f472b6]/5 to-[#ec4899]/5', text: 'text-[#ec4899]' },
-                          'filament': { bg: 'from-[#22d3ee]/5 to-[#06b6d4]/5', text: 'text-[#06b6d4]' },
-                          'diger': { bg: 'from-[#6b7280]/5 to-[#9ca3af]/5', text: 'text-[#6b7280]' }
-                        };
-
-                        const color = categoryColors[item.category.toLowerCase()] || categoryColors['diger'];
+                        const color = getExpenseCard(item.category);
 
                         return (
                           <tr 
@@ -2165,19 +2118,7 @@ export default function IncomeExpense() {
                         }}
                         formatter={(value, name) => [
                           formatCurrency(value),
-                          language === 'uk'
-                            ? name.charAt(0).toUpperCase() + name.slice(1)
-                            : name === 'kira' ? 'Rent'
-                            : name === 'elektrik' ? 'Electricity'
-                            : name === 'su' ? 'Water'
-                            : name === 'dogalgaz' ? 'Natural Gas'
-                            : name === 'internet' ? 'Internet'
-                            : name === 'maas' ? 'Salary'
-                            : name === 'malzeme' ? 'Materials'
-                            : name === 'mutfak' ? 'Kitchen'
-                            : name === 'reklam' ? 'Advertising'
-                            : name === 'filament' ? 'Філамент'
-                            : 'Other'
+                          getExpenseLabel(name, language)
                         ]}
                         labelStyle={{ 
                           color: 'white', 
@@ -2202,20 +2143,7 @@ export default function IncomeExpense() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                           <span className="text-sm text-[#1d1d1f] dark:text-white">
-                            {language === 'uk'
-                              ? item.name.charAt(0).toUpperCase() + item.name.slice(1)
-                              : item.name === 'kira' ? 'Rent'
-                              : item.name === 'elektrik' ? 'Electricity'
-                              : item.name === 'su' ? 'Water'
-                              : item.name === 'dogalgaz' ? 'Natural Gas'
-                              : item.name === 'internet' ? 'Internet'
-                              : item.name === 'maas' ? 'Salary'
-                              : item.name === 'malzeme' ? 'Materials'
-                              : item.name === 'mutfak' ? 'Kitchen'
-                              : item.name === 'reklam' ? 'Advertising'
-                              : item.name === 'filament' ? 'Філамент'
-                              : 'Other'
-                            }
+                            {getExpenseLabel(item.name, language)}
                           </span>
                         </div>
                         <span className="text-sm font-medium text-[#424245] dark:text-[#86868b]">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { EXPENSE_TYPES } from '../lib/expenseTypes'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { uk } from 'date-fns/locale'
 import "react-datepicker/dist/react-datepicker.css"
@@ -284,41 +285,11 @@ export default function UpdateExpensesModal({ isOpen, onClose, expense, onUpdate
                       <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
                         {language === 'uk' ? "Оберіть категорію" : "Select Category"}
                       </option>
-                      <option value="kira" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Оренда" : "Rent"}
-                      </option>
-                      <option value="elektrik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Електрика" : "Electricity"}
-                      </option>
-                      <option value="su" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Вода" : "Water"}
-                      </option>
-                      {formData.category === 'dogalgaz' && (
-                        <option value="dogalgaz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                          {language === 'uk' ? "Газ" : "Natural Gas"}
+                      {EXPENSE_TYPES.map(({ value, uk, en }) => (
+                        <option key={value} value={value} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                          {language === 'uk' ? uk : en}
                         </option>
-                      )}
-                      <option value="internet" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Інтернет" : "Internet"}
-                      </option>
-                      <option value="maas" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Зарплата" : "Salary"}
-                      </option>
-                      <option value="malzeme" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Матеріали" : "Materials"}
-                      </option>
-                      <option value="mutfak" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Кухня" : "Kitchen"}
-                      </option>
-                      <option value="reklam" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Реклама" : "Advertising"}
-                      </option>
-                      <option value="filament" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Філамент" : "Філамент"}
-                      </option>
-                      <option value="diger" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Інше" : "Other"}
-                      </option>
+                      ))}
                     </select>
                   </div>
                 </div>
