@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { DateRange } from 'react-date-range'
+import { DateRange, Calendar } from 'react-date-range'
 import { uk } from 'date-fns/locale'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
 import Toast from './ui/Toast'
 import { useLanguage } from '../context/LanguageContext'
+import { LESSON_COUNT_OPTIONS, DEFAULT_LESSON_COUNT, formatLessonCount } from '../lib/lessonCounts'
+import { resolvePeriodStart } from '../lib/dates'
 import { 
   XMarkIcon,
   CalendarDaysIcon,
@@ -38,7 +40,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
 
   // Form state'lerini tanımla
   const [formData, setFormData] = useState({
-    packageType: '',
+    lessonCount: DEFAULT_LESSON_COUNT,
     paymentStatus: 'odendi', // Varsayılan: ödendi
     paymentMethod: '',
     amount: '',
@@ -46,25 +48,17 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
     paymentDate: null // Varsayılan olarak null
   })
 
-  // Tarih aralığı için state tanımla
-  const [dateRange, setDateRange] = useState([{
-    startDate: new Date(),
-    endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-    key: 'selection'
-  }])
+  // Uzatma = yeni ders paketi + yeni başlangıç tarihi. Bitiş tarihi yok.
+  const [startDate, setStartDate] = useState(() => new Date())
 
   // Modal açıldığında formu güncelle
   useEffect(() => {
     if (isOpen && registration) {
       if (isEditMode && existingExtension) {
         // Edit modu: mevcut uzatma verilerini forma yükle
-        setDateRange([{
-          startDate: new Date(existingExtension.new_start_date || existingExtension.previous_end_date),
-          endDate: new Date(existingExtension.new_end_date),
-          key: 'selection'
-        }])
+        setStartDate(new Date(existingExtension.new_start_date))
         setFormData({
-          packageType: existingExtension.new_package_type,
+          lessonCount: existingExtension.new_lesson_count ?? DEFAULT_LESSON_COUNT,
           paymentStatus: existingExtension.payment_status || 'odendi',
           paymentMethod: existingExtension.payment_status === 'beklemede' ? '' : (existingExtension.payment_method || ''),
           amount: existingExtension.payment_status === 'beklemede' ? '' : (existingExtension.payment_amount?.toString() || ''),
@@ -72,18 +66,14 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
           paymentDate: existingExtension.payment_date ? new Date(existingExtension.payment_date) : null
         })
       } else {
-        // Create modu: son paket bitişini başlangıç olarak öner
-        const lastEndDate = new Date(registration.package_end_date)
-        const suggestedStartDate = new Date(lastEndDate)
-
-        setDateRange([{
-          startDate: suggestedStartDate,
-          endDate: suggestedStartDate,
-          key: 'selection'
-        }])
+        // Create modu: yeni dönem bugünden başlasın.
+        // Eskiden paketin bitiş tarihinden öneriliyordu; bitiş tarihi
+        // kalktığı için o hesap Invalid Date üretirdi ve form sessizce
+        // gönderilemez hale gelirdi.
+        setStartDate(new Date())
 
         setFormData({
-          packageType: registration.package_type,
+          lessonCount: registration.lesson_count ?? DEFAULT_LESSON_COUNT,
           paymentStatus: 'odendi',
           paymentMethod: '',
           amount: '',
@@ -98,18 +88,14 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
   useEffect(() => {
     if (!isOpen) {
       setFormData({
-        packageType: '',
+        lessonCount: DEFAULT_LESSON_COUNT,
         paymentStatus: 'odendi',
         paymentMethod: '',
         amount: '',
         note: '',
         paymentDate: null // Varsayılan olarak null
       })
-      setDateRange([{
-        startDate: new Date(),
-        endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-        key: 'selection'
-      }])
+      setStartDate(new Date())
       setIsCalendarOpen(false)
       setIsPaymentDatePickerOpen(false)
     }
@@ -178,7 +164,11 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
   // Form validasyonu
   const isFormValid = () => {
     // Temel paket bilgileri gerekli
-    const packageInfoValid = formData.packageType !== '' && dateRange[0].startDate <= dateRange[0].endDate
+    // Not: eskiden "packageType !== ''" deniyordu; undefined da bu kontrolü
+    // geçtiği için boş değer yazılıp PostgREST sessizce hiçbir şey yapmıyordu.
+    // Sayıya çevirip pozitif olmasını şart koşuyoruz.
+    const packageInfoValid = Number(formData.lessonCount) > 0 &&
+      startDate instanceof Date && !isNaN(startDate)
     
     // Eğer ödeme durumu "ödendi" ise ödeme yöntemi, tutar ve ödeme tarihi zorunludur
     const paymentDetailsValid = formData.paymentStatus === 'beklemede' || 
@@ -196,9 +186,11 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
 
     setIsLoading(true)
     try {
-      const newStartDate = dateRange[0].startDate
-      const newEndDate = dateRange[0].endDate
-      const newPackageType = formData.packageType
+      // Takvim seçilen günü 00:00 döndürüyor. Uzatma genelde O GÜNKÜ ders
+      // yapıldıktan SONRA giriliyor; 00:00 yazılırsa zaten harcanmış ders
+      // yeni kotadan ikinci kez sayılır. Bugün seçildiyse "şu an" kullanılır.
+      const newStartDate = resolvePeriodStart(startDate)
+      const newLessonCount = Number(formData.lessonCount)
 
       const finalPaymentMethod = formData.paymentStatus === 'beklemede' ? 'belirlenmedi' : formData.paymentMethod
       const finalPaymentAmount = formData.paymentStatus === 'beklemede' ? 0 : parseFloat(formData.amount)
@@ -212,8 +204,7 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
           .from('extension_history')
           .update({
             new_start_date: newStartDate,
-            new_end_date: newEndDate,
-            new_package_type: newPackageType,
+            new_lesson_count: newLessonCount,
             payment_status: formData.paymentStatus,
             payment_method: finalPaymentMethod,
             payment_amount: finalPaymentAmount,
@@ -227,9 +218,8 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
         const { error: updateError } = await supabase
           .from('registrations')
           .update({
-            package_type: newPackageType,
+            lesson_count: newLessonCount,
             package_start_date: newStartDate,
-            package_end_date: newEndDate,
             payment_status: formData.paymentStatus,
             payment_method: finalPaymentMethod,
             payment_amount: finalPaymentAmount,
@@ -297,15 +287,12 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
         })
       } else {
         // --- CREATE MODE ---
-        const previousEndDate = new Date(registration.package_end_date)
-
         // 1. Uzatma tarihini ve sayacını güncelle
         const { error: updateError } = await supabase
           .from('registrations')
           .update({
-            package_type: newPackageType,
+            lesson_count: newLessonCount,
             package_start_date: newStartDate,
-            package_end_date: newEndDate,
             payment_status: formData.paymentStatus,
             payment_method: finalPaymentMethod,
             payment_amount: finalPaymentAmount,
@@ -322,11 +309,9 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
           .from('extension_history')
           .insert({
             registration_id: registration.id,
-            previous_end_date: previousEndDate,
             new_start_date: newStartDate,
-            new_end_date: newEndDate,
-            previous_package_type: registration.package_type,
-            new_package_type: newPackageType,
+            previous_lesson_count: registration.lesson_count,
+            new_lesson_count: newLessonCount,
             payment_status: formData.paymentStatus,
             payment_method: finalPaymentMethod,
             payment_amount: finalPaymentAmount,
@@ -439,15 +424,15 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                     <input
                       type="text"
                       className={`${inputClasses} cursor-pointer peer`}
-                      placeholder={language === 'uk' ? "Оберіть нову дату закінчення" : "Select New End Date"}
-                      value={`${formatDate(dateRange[0].startDate)} - ${formatDate(dateRange[0].endDate)}`}
+                      placeholder={language === 'uk' ? "Оберіть нову дату початку" : "Select New Start Date"}
+                      value={formatDate(startDate)}
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                       readOnly
                       tabIndex={1}
                       autoComplete="off"
                     />
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                      {language === 'uk' ? "Дата початку та реєстрації" : "Registration Start and End Date"}
+                      {language === 'uk' ? "Початок нового періоду" : "New Period Start Date"}
                     </div>
                     {isCalendarOpen && (
                       <div className="absolute z-50 mt-2">
@@ -561,57 +546,41 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
                             }
                           `}
                           </style>
-                          <DateRange
-                            onChange={item => {
-                              setDateRange([item.selection])
-                              if (item.selection.endDate > item.selection.startDate) {
-                                setIsCalendarOpen(false)
-                              }
+                          {/* Aralık değil tek tarih: paketin bitişi yok.
+                              minDate de kalktı — eskiden paketin bitiş tarihinden
+                              önceye izin vermiyordu, o tarih artık yok. */}
+                          <Calendar
+                            date={startDate}
+                            onChange={date => {
+                              setStartDate(date)
+                              setIsCalendarOpen(false)
                             }}
-                            moveRangeOnFirstSelection={false}
-                            months={1}
-                            ranges={dateRange}
-                            direction="horizontal"
                             locale={uk}
-                            rangeColors={['#007AFF']}
-                            minDate={new Date(isEditMode && existingExtension ? existingExtension.previous_end_date : registration?.package_end_date)}
+                            color="#007AFF"
                           />
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Paket Türü */}
+                  {/* Ders sayısı — okul paket değil, doğrudan ders satıyor */}
                   <div className="relative">
                     <div className={iconWrapperClasses}>
                       <CubeIcon className={iconClasses} />
                     </div>
-                    <select 
-                      name="packageType"
-                      value={formData.packageType}
+                    <select
+                      name="lessonCount"
+                      value={formData.lessonCount}
                       onChange={handleInputChange}
-                      className={`${inputClasses} ${!formData.packageType && 'text-[#86868b]'}`}
+                      className={inputClasses}
                       tabIndex={2}
                       autoComplete="off"
                     >
-                      <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Оберіть тип абонемента" : "Select Package Type"}
-                      </option>
-                      <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
-                      </option>
-                      <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
-                      </option>
-                      <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
-                      </option>
-                      <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
-                      </option>
-                      <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
-                      </option>
+                      {LESSON_COUNT_OPTIONS.map(count => (
+                        <option key={count} value={count} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                          {formatLessonCount(count, language)}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

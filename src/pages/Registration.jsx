@@ -5,6 +5,8 @@ import ExtendModal from '../components/ExtendModal'
 import { createClient } from '@supabase/supabase-js'
 import Masonry from 'react-masonry-css'
 import { useLanguage } from '../context/LanguageContext'
+import { getPaymentMethodLabel } from '../lib/paymentMethods'
+import { LESSON_COUNT_OPTIONS, formatLessonCount } from '../lib/lessonCounts'
 import { 
   UserPlusIcon, 
   CalendarDaysIcon, 
@@ -21,8 +23,7 @@ import {
   XMarkIcon,
   AdjustmentsHorizontalIcon,
   ClockIcon as HistoryIcon,
-  ArrowUturnUpIcon,
-  GiftIcon
+  ArrowUturnUpIcon
 } from '@heroicons/react/24/outline'
 import DeleteRegisterModal from '../components/DeleteRegisterModal'
 import DeleteExtensionModal from '../components/DeleteExtensionModal'
@@ -46,7 +47,7 @@ export default function Registration() {
   const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState({
     paymentStatus: '',
-    packageType: '',
+    lessonCount: '',
     showArchived: false
   })
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -93,39 +94,18 @@ export default function Registration() {
     fetchRegistrations()
   }, [filters.showArchived]) // filters.showArchived değiştiğinde kayıtları yeniden getir
 
-  // Paket türünü formatla
-  const formatPackageType = (type) => {
-    const types = {
-      'tek-seferlik': language === 'uk' ? 'Разове відвідування' : 'One Time Participation',
-      'hafta-1': language === 'uk' ? '1 день на тиждень' : '1 Day Per Week',
-      'hafta-2': language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week',
-      'hafta-3': language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week',
-      'hafta-4': language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week',
-      'ucretsiz': language === 'uk' ? 'Безкоштовне відвідування' : 'Free Participation'
-    }
-    return types[type] || type
-  }
-
   // Ödeme durumunu formatla
   const formatPaymentStatus = (status) => {
     const statuses = {
       'odendi': language === 'uk' ? 'Оплачено' : 'Paid',
-      'beklemede': language === 'uk' ? 'Очікує' : 'Pending',
-      'ucretsiz': language === 'uk' ? 'Безкоштовно' : 'Free'
+      'beklemede': language === 'uk' ? 'Очікує' : 'Pending'
     }
     return statuses[status] || status
   }
 
-  // Ödeme yöntemini formatla
-  const formatPaymentMethod = (method) => {
-    const methods = {
-      'banka': language === 'uk' ? 'Банк' : 'Bank',
-      'nakit': language === 'uk' ? 'Готівка' : 'Cash',
-      'kart': language === 'uk' ? 'Картка' : 'Credit Card',
-      'belirlenmedi': <span className="capitalize">{language === 'uk' ? 'belirlenmedi' : 'not specified'}</span>
-    }
-    return methods[method] || method
-  }
+  // Ödeme yöntemini formatla — etiketler lib/paymentMethods.js'te.
+  // Eskiden 'belirlenmedi' Ukraynaca modda ham Türkçe olarak basılıyordu.
+  const formatPaymentMethod = (method) => getPaymentMethodLabel(method, language)
 
   // Tarihi formatla
   const formatDate = (date) => {
@@ -146,9 +126,9 @@ export default function Registration() {
     )
 
     const matchesPaymentStatus = !filters.paymentStatus || registration.payment_status === filters.paymentStatus
-    const matchesPackageType = !filters.packageType || registration.package_type === filters.packageType
+    const matchesLessonCount = !filters.lessonCount || registration.lesson_count === Number(filters.lessonCount)
 
-    return matchesSearch && matchesPaymentStatus && matchesPackageType
+    return matchesSearch && matchesPaymentStatus && matchesLessonCount
   })
 
   // Güncelleme modalını açma fonksiyonu
@@ -159,15 +139,6 @@ export default function Registration() {
 
   // Uzatma modalını açma fonksiyonu
   const handleExtendClick = (registration) => {
-    if (registration.package_type === 'ucretsiz') {
-      showToast(
-        language === 'uk'
-          ? 'Безкоштовні відвідування не продовжуються'
-          : 'Package extension is not available for free participation',
-        'error'
-      );
-      return;
-    }
     if (registration.payment_status === 'beklemede') {
       showToast(
         language === 'uk' 
@@ -365,7 +336,7 @@ export default function Registration() {
               className="h-10 sm:h-8 px-3 bg-white dark:bg-[#121621] text-[#424245] dark:text-[#86868b] text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] focus:outline-none transition-colors flex items-center justify-center gap-2 relative"
             >
               <AdjustmentsHorizontalIcon className="w-4 h-4" />
-              {(filters.paymentStatus || filters.packageType || filters.showArchived) && (
+              {(filters.paymentStatus || filters.lessonCount || filters.showArchived) && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0071e3] rounded-full ring-2 ring-white dark:ring-[#121621]" />
               )}
             </button>
@@ -403,63 +374,37 @@ export default function Registration() {
                   {/* Kart Başlığı */}
                   <div className="flex items-start justify-between pb-4 border-b border-[#d2d2d7] dark:border-[#2a3241]">
                     <div>
-                      <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 animate-pulse" />
                     </div>
-                    <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 animate-pulse" />
                   </div>
 
                   {/* Kart Detayları */}
                   <div className="space-y-3 mt-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-36 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-36 animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-44 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-44 animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] shrink-0 animate-pulse" />
+                      <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 animate-pulse" />
                     </div>
                   </div>
                 </div>
@@ -509,15 +454,11 @@ export default function Registration() {
                         </div>
                         <div className={`
                           flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium
-                          ${registration.payment_status === 'ucretsiz'
-                            ? 'bg-gray-400/10 text-gray-700 dark:text-gray-300 ring-1 ring-gray-500/20 dark:ring-gray-400/20'
-                            : registration.payment_status === 'odendi'
+                          ${registration.payment_status === 'odendi'
                             ? 'bg-[#34c759]/10 text-[#1c7430] dark:bg-[#32d74b]/10 dark:text-[#32d74b] ring-1 ring-[#00390e]/20 dark:ring-[#32d74b]/20'
                             : 'bg-[#ffd60a]/10 text-[#946800] dark:text-[#ffd60a] dark:bg-[#ffd60a]/10 ring-1 ring-[#574800]/20 dark:ring-[#ffd60a]/20'}
                         `}>
-                          {registration.payment_status === 'ucretsiz' ? (
-                            <GiftIcon className="w-4 h-4" />
-                          ) : registration.payment_status === 'odendi' ? (
+                          {registration.payment_status === 'odendi' ? (
                             <CheckCircleIcon className="w-4 h-4" />
                           ) : (
                             <ClockIcon className="w-4 h-4" />
@@ -553,30 +494,22 @@ export default function Registration() {
 
                         <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
                           <CubeIcon className="w-[18px] h-[18px] shrink-0" />
-                          <span>{formatPackageType(registration.package_type)}</span>
+                          <span>{formatLessonCount(registration.lesson_count, language)}</span>
                         </div>
 
                         <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
                           <CalendarDaysIcon className="w-[18px] h-[18px] shrink-0" />
                           <span className="text-[12px]">
-                            {registration.package_type === 'ucretsiz'
-                              ? (language === 'uk' ? 'Безстроково' : 'Unlimited')
-                              : `${formatDate(registration.package_start_date)} - ${formatDate(registration.package_end_date)}`}
+                            {language === 'uk' ? 'Початок: ' : 'Start: '}{formatDate(registration.package_start_date)}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
                           <CreditCardIcon className="w-[18px] h-[18px] shrink-0" />
                           <span>
-                            {registration.package_type === 'ucretsiz' ? (
-                              language === 'uk' ? 'Безкоштовно' : 'Free'
-                            ) : (
-                              <>
-                                {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₴
-                                {registration.payment_status === 'odendi' && registration.payment_date && (
-                                  <> - {formatDate(registration.payment_date)}</>
-                                )}
-                              </>
+                            {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₴
+                            {registration.payment_status === 'odendi' && registration.payment_date && (
+                              <> - {formatDate(registration.payment_date)}</>
                             )}
                           </span>
                         </div>
@@ -612,15 +545,13 @@ export default function Registration() {
                           <span>{language === 'uk' ? 'Оновити' : 'Update'}</span>
                         </button>
 
-                        {registration.package_type !== 'ucretsiz' && (
-                          <button
-                            onClick={() => handleExtendClick(registration)}
-                            className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#34c759] dark:hover:text-[#32d74b] hover:bg-[#34c759]/5 dark:hover:bg-[#32d74b]/10"
-                          >
-                            <ArrowPathIcon className="w-4 h-4" />
-                            <span>{language === 'uk' ? 'Продовжити' : 'Extend'}</span>
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleExtendClick(registration)}
+                          className="flex-1 h-11 flex items-center justify-center gap-2 font-medium transition-colors text-sm text-[#424245] dark:text-[#86868b] hover:text-[#34c759] dark:hover:text-[#32d74b] hover:bg-[#34c759]/5 dark:hover:bg-[#32d74b]/10"
+                        >
+                          <ArrowPathIcon className="w-4 h-4" />
+                          <span>{language === 'uk' ? 'Продовжити' : 'Extend'}</span>
+                        </button>
 
                         <button
                           onClick={() => handleDeleteClick(registration)}
@@ -714,99 +645,33 @@ export default function Registration() {
                 >
                   {language === 'uk' ? 'Очікує' : 'Pending'}
                 </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, paymentStatus: 'ucretsiz' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors
-                    ${filters.paymentStatus === 'ucretsiz'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Безкоштовно' : 'Free'}
-                </button>
               </div>
             </div>
 
-            {/* Paket Türü Filtresi */}
+            {/* Ders sayısı filtresi — seçenekler lib/lessonCounts.js'te */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
+                {language === 'uk' ? 'Кількість занять' : 'Lesson Count'}
               </h3>
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'tek-seferlik' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'tek-seferlik'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Разове відвідування' : 'One Time Participation'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-1' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-1'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '1 день на тиждень' : '1 Day Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-2' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-2'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-3' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-3'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-4' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-4'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'ucretsiz' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'ucretsiz'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Безкоштовне відвідування' : 'Free Participation'}
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {LESSON_COUNT_OPTIONS.map(count => (
+                  <button
+                    key={count}
+                    onClick={() => setFilters(prev => ({
+                      ...prev,
+                      lessonCount: prev.lessonCount === count ? '' : count
+                    }))}
+                    className={`
+                      h-9 px-2 rounded-lg text-sm font-medium transition-colors
+                      ${filters.lessonCount === count
+                        ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                        : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                      }
+                    `}
+                  >
+                    {count}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -816,7 +681,7 @@ export default function Registration() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  setFilters({ paymentStatus: '', packageType: '', showArchived: false })
+                  setFilters({ paymentStatus: '', lessonCount: '', showArchived: false })
                   setIsFilterSheetOpen(false)
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"
@@ -1030,13 +895,13 @@ export default function Registration() {
                       <div className="flex items-center gap-2 text-sm">
                         <CubeIcon className="w-4 h-4 text-[#86868b]" />
                         <span className="text-[#424245] dark:text-[#86868b]">
-                          {formatPackageType(selectedHistoryRegistration.initial_package_type)}
+                          {formatLessonCount(selectedHistoryRegistration.initial_lesson_count, language)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <CalendarDaysIcon className="w-4 h-4 text-[#86868b]" />
                         <span className="text-[#424245] dark:text-[#86868b]">
-                          {formatDate(selectedHistoryRegistration.initial_start_date)} - {formatDate(selectedHistoryRegistration.initial_end_date)}
+                          {formatDate(selectedHistoryRegistration.initial_start_date)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
@@ -1071,7 +936,7 @@ export default function Registration() {
                               <ArrowPathIcon className="w-3.5 h-3.5 text-white" />
                             </div>
                             <span className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                              {language === 'uk' ? `${index + 1}. Uzatma` : `Extension #${index + 1}`}
+                              {language === 'uk' ? `Продовження №${index + 1}` : `Extension #${index + 1}`}
                             </span>
                             <span className="text-xs text-[#86868b]">
                               {formatDate(history.created_at)}
@@ -1109,15 +974,13 @@ export default function Registration() {
                             <div className="flex items-center gap-2 text-sm">
                               <CubeIcon className="w-4 h-4 text-[#86868b]" />
                               <span className="text-[#424245] dark:text-[#86868b]">
-                                {formatPackageType(history.new_package_type)}
+                                {formatLessonCount(history.new_lesson_count, language)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
                               <CalendarDaysIcon className="w-4 h-4 text-[#86868b]" />
                               <span className="text-[#424245] dark:text-[#86868b]">
-                                {history.new_start_date 
-                                  ? `${formatDate(history.new_start_date)} - ${formatDate(history.new_end_date)}`
-                                  : `${formatDate(history.previous_end_date)} - ${formatDate(history.new_end_date)}`}
+                                {language === 'uk' ? 'Початок: ' : 'Start: '}{formatDate(history.new_start_date)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">

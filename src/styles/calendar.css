@@ -950,14 +950,17 @@
   bottom: 0;
   background: rgba(0, 113, 227, 0.15);
   border-radius: 8px;
-  animation: pulse 1s infinite;
+  animation: fc-drag-pulse 1s infinite;
 }
 
 .dark .fc-event.fc-event-dragging::after {
   background: rgba(59, 130, 246, 0.25);
 }
 
-@keyframes pulse {
+/* İSİM ÖNEMLİ: "pulse" demek Tailwind'in animate-pulse yardımcısıyla
+   çakışıyordu ve uygulamadaki bütün iskelet yüklemelere mavi bir halka
+   basıyordu. Bu dosya global olarak yükleniyor, isimler ayrık olmalı. */
+@keyframes fc-drag-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.6);
   }

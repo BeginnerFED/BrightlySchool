@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { ShieldCheckIcon, AcademicCapIcon } from '@heroicons/react/24/outline'
 import SettingCard from './ui/SettingCard'
+import { TEACHER_COLOR_OPTIONS } from '../lib/teacherColors'
 import { supabase } from '../lib/supabase'
 import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
@@ -27,7 +28,7 @@ export default function TeacherManager() {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role, created_at')
+      .select('id, full_name, email, role, color, created_at')
       .order('created_at')
     if (error) console.error('Profiller alınamadı:', error.message)
     setRows(data || [])
@@ -69,10 +70,24 @@ export default function TeacherManager() {
   }
 
   if (loading) {
+    // Kartın kendi çerçevesini taklit eden sakin bir iskelet. Eskiden kocaman
+    // boş bir kutuydu; kart görünümüne hiç benzemediği için yükleme bittiğinde
+    // ekran zıplıyordu.
     return (
       <>
         {[0, 1].map(i => (
-          <div key={i} className="h-[196px] rounded-xl bg-gray-50 dark:bg-[#161b2c] animate-pulse" />
+          <div
+            key={i}
+            className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-[#2a3241]"
+          >
+            <div className="h-5 w-32 rounded-md bg-gray-100 dark:bg-[#242b3d] animate-pulse" />
+            <div className="h-4 w-44 rounded-md bg-gray-100 dark:bg-[#242b3d] animate-pulse mt-5" />
+            <div className="h-6 w-40 rounded-md bg-gray-100 dark:bg-[#242b3d] animate-pulse mt-5" />
+            <div className="flex gap-2 mt-5">
+              <div className="h-14 flex-1 rounded-lg bg-gray-100 dark:bg-[#242b3d] animate-pulse" />
+              <div className="h-14 flex-1 rounded-lg bg-gray-100 dark:bg-[#242b3d] animate-pulse" />
+            </div>
+          </div>
         ))}
       </>
     )
@@ -133,6 +148,40 @@ export default function TeacherManager() {
               <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {row.email || '—'}
               </span>
+            </div>
+
+            {/* Takvim rengi. Ders kartları, ana sayfa rozetleri ve herkese
+                açık takvim bu renkten besleniyor — yeni bir öğretmen
+                eklendiğinde rengi burada verilmezse nötr gri kalır. */}
+            <div className="flex items-center justify-between gap-3 mt-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 shrink-0">
+                {isUk ? 'Колір у розкладі' : 'Calendar color'}
+              </p>
+              <div className="flex items-center gap-1.5">
+                {TEACHER_COLOR_OPTIONS.map(color => {
+                  const active = row.color === color
+                  // Aynı rengi iki kişiye vermek karışıklık yaratır ama
+                  // engellenmiyor: sahip bilerek eşitlemek isteyebilir.
+                  const takenBy = rows.find(r => r.id !== row.id && r.color === color)
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => patch(row.id, { color })}
+                      title={takenBy ? (takenBy.full_name || takenBy.email) : ''}
+                      aria-label={color}
+                      className={`w-6 h-6 rounded-full transition-all duration-200 ${
+                        active
+                          ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white dark:ring-offset-[#1a1f2e]'
+                          : takenBy
+                            ? 'opacity-30 hover:opacity-60'
+                            : 'hover:scale-110'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  )
+                })}
+              </div>
             </div>
 
             {/* Kendi rolü kilitli: tek sahip kendini öğretmene çevirirse

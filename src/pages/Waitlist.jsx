@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { LESSON_COUNT_OPTIONS, formatLessonCount } from '../lib/lessonCounts'
 import Masonry from 'react-masonry-css'
 import { 
   UserPlusIcon,
@@ -36,7 +37,7 @@ export default function Waitlist() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [filters, setFilters] = useState({
     status: '',
-    packageType: ''
+    lessonCount: ''
   })
   const [toast, setToast] = useState({
     message: '',
@@ -64,8 +65,8 @@ export default function Waitlist() {
       }
 
       // Paket türü filtresi
-      if (filters.packageType) {
-        query = query.eq('package_type', filters.packageType)
+      if (filters.lessonCount) {
+        query = query.eq('lesson_count', filters.lessonCount)
       }
 
       const { data, error } = await query
@@ -105,19 +106,6 @@ export default function Waitlist() {
       ...prev,
       isVisible: false
     }))
-  }
-
-  // Paket türünü formatla
-  const formatPackageType = (type) => {
-    const types = {
-      'belirsiz': language === 'uk' ? 'Не визначено' : 'Uncertain',
-      'tek-seferlik': language === 'uk' ? 'Разове відвідування' : 'One Time Participation',
-      'hafta-1': language === 'uk' ? '1 день на тиждень' : '1 Day Per Week',
-      'hafta-2': language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week',
-      'hafta-3': language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week',
-      'hafta-4': language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week'
-    }
-    return types[type] || type
   }
 
   // Durumu formatla
@@ -179,7 +167,7 @@ export default function Waitlist() {
             className="h-10 sm:h-8 px-3 bg-white dark:bg-[#121621] text-[#424245] dark:text-[#86868b] text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] focus:outline-none transition-colors flex items-center justify-center gap-2 relative"
           >
             <AdjustmentsHorizontalIcon className="w-4 h-4" />
-            {(filters.status || filters.packageType) && (
+            {(filters.status || filters.lessonCount) && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0071e3] rounded-full ring-2 ring-white dark:ring-[#121621]" />
             )}
           </button>
@@ -218,59 +206,35 @@ export default function Waitlist() {
                   {/* Kart Başlığı Skeleton */}
                   <div className="flex items-start justify-between pb-4 border-b border-[#d2d2d7] dark:border-[#2a3241]">
                     <div className="space-y-2">
-                      <div className="h-[18px] w-32 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="h-[18px] w-32 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
-                        <div className="h-[16px] w-24 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
+                        <div className="w-4 h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full animate-pulse" />
+                        <div className="h-[16px] w-24 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                       </div>
                     </div>
-                    <div className="h-[28px] w-28 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-[28px] w-28 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                   </div>
 
                   {/* Kart Detayları Skeleton */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] w-40 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full animate-pulse" />
+                      <div className="h-[16px] w-40 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] w-24 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full animate-pulse" />
+                      <div className="h-[16px] w-24 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] w-36 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full animate-pulse" />
+                      <div className="h-[16px] w-36 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="h-[16px] w-32 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-[18px] h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full animate-pulse" />
+                      <div className="h-[16px] w-32 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg animate-pulse" />
                     </div>
                   </div>
                 </div>
@@ -352,7 +316,7 @@ export default function Waitlist() {
 
                       <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
                         <CubeIcon className="w-[18px] h-[18px] shrink-0" />
-                        <span>{formatPackageType(entry.package_type)}</span>
+                        <span>{formatLessonCount(entry.lesson_count, language)}</span>
                       </div>
 
                       <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
@@ -455,84 +419,30 @@ export default function Waitlist() {
               </div>
             </div>
 
-            {/* Paket Türü Filtresi */}
+            {/* Ders sayısı filtresi — seçenekler lib/lessonCounts.js'te */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
+                {language === 'uk' ? 'Кількість занять' : 'Lesson Count'}
               </h3>
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'belirsiz' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'belirsiz'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Не визначено' : 'Uncertain'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'tek-seferlik' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'tek-seferlik'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Разове відвідування' : 'One Time Participation'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-1' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-1'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '1 день на тиждень' : '1 Day Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-2' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-2'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '2 дні на тиждень' : '2 Days Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-3' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-3'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '3 дні на тиждень' : '3 Days Per Week'}
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, packageType: 'hafta-4' }))}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium transition-colors text-left
-                    ${filters.packageType === 'hafta-4'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '4 дні на тиждень' : '4 Days Per Week'}
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {LESSON_COUNT_OPTIONS.map(count => (
+                  <button
+                    key={count}
+                    onClick={() => setFilters(prev => ({
+                      ...prev,
+                      lessonCount: prev.lessonCount === count ? '' : count
+                    }))}
+                    className={`
+                      h-9 px-2 rounded-lg text-sm font-medium transition-colors
+                      ${filters.lessonCount === count
+                        ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                        : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                      }
+                    `}
+                  >
+                    {count}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -542,7 +452,7 @@ export default function Waitlist() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  setFilters({ status: '', packageType: '' })
+                  setFilters({ status: '', lessonCount: '' })
                   setIsFilterSheetOpen(false)
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none transition-colors"

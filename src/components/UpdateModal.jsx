@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { DateRange } from 'react-date-range'
+import { DateRange, Calendar } from 'react-date-range'
 import { uk } from 'date-fns/locale'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
 import Toast from './ui/Toast'
 import { useLanguage } from '../context/LanguageContext'
-import { useTeachers } from '../hooks/useTeachers'
+import { LESSON_COUNT_OPTIONS, DEFAULT_LESSON_COUNT, formatLessonCount } from '../lib/lessonCounts'
+import { resolvePeriodStart } from '../lib/dates'
 import {
   XMarkIcon,
   FaceSmileIcon,
@@ -18,7 +19,6 @@ import {
   CreditCardIcon,
   BanknotesIcon,
   CurrencyDollarIcon,
-  AcademicCapIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
@@ -47,22 +47,17 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
     parentName: '',
     phone: '',
     age: '',
-    packageType: '',
-    teacherId: '',
+    lessonCount: DEFAULT_LESSON_COUNT,
     paymentStatus: '',
     paymentMethod: '',
     amount: '',
     note: '',
     paymentDate: null // Varsayılan olarak null
   })
-  const { teachers } = useTeachers(isOpen)
 
   // Tarih aralığını mevcut kayıt verileriyle başlat
-  const [dateRange, setDateRange] = useState([{
-    startDate: new Date(),
-    endDate: new Date(),
-    key: 'selection'
-  }])
+  // Paketin bitiş tarihi yok: yalnızca başladığı gün tutuluyor.
+  const [startDate, setStartDate] = useState(() => new Date())
 
   // Kayıt verileri geldiğinde form verilerini güncelle
   useEffect(() => {
@@ -72,8 +67,7 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         parentName: registration.parent_name || '',
         phone: registration.parent_phone || '',
         age: registration.student_age || '',
-        packageType: registration.package_type || '',
-        teacherId: registration.teacher_id || '',
+        lessonCount: registration.lesson_count ?? DEFAULT_LESSON_COUNT,
         paymentStatus: registration.payment_status || '',
         paymentMethod: registration.payment_method || '',
         amount: registration.payment_amount?.toString() || '',
@@ -81,11 +75,7 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         paymentDate: registration.payment_date ? new Date(registration.payment_date) : null
       })
 
-      setDateRange([{
-        startDate: new Date(registration.package_start_date),
-        endDate: new Date(registration.package_end_date),
-        key: 'selection'
-      }])
+      setStartDate(new Date(registration.package_start_date))
     }
   }, [registration])
 
@@ -124,28 +114,21 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
     })
   }
 
-  // Ücretsiz katılım: ödeme ve paket tarihi sorulmaz
-  const isFree = formData.packageType === 'ucretsiz'
-
   const isFormValid = () => {
     const hasIdentityFields = (
       formData.studentName.trim() !== '' &&
       formData.parentName.trim() !== '' &&
       formData.phone.trim() !== '' &&
       formData.age.trim() !== '' &&
-      formData.packageType !== ''
+      Number(formData.lessonCount) > 0
     )
-
-    // Ücretsiz katılımda ödeme alanları ve tarih aralığı istenmez
-    if (isFree) {
-      return hasIdentityFields
-    }
 
     // Temel validasyon (her durumda kontrol edilecek alanlar)
     const baseValidation = (
       hasIdentityFields &&
       formData.paymentStatus !== '' &&
-      dateRange[0].startDate !== dateRange[0].endDate
+      startDate instanceof Date &&
+      !isNaN(startDate)
     )
 
     // Eğer ödeme durumu "beklemede" ise ödeme detaylarını kontrol etme
@@ -165,31 +148,6 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => {
-      // Ücretsiz katılım: ödeme alanları boşaltılır ve pasifleşir
-      // ('belirlenmedi'/0 dönüşümü kaydetme anında yapılır)
-      if (name === 'packageType' && value === 'ucretsiz') {
-        return {
-          ...prev,
-          [name]: value,
-          paymentStatus: 'ucretsiz',
-          paymentMethod: '',
-          amount: '',
-          paymentDate: null
-        }
-      }
-
-      // Ücretsizden ücretli pakete dönülürse ödeme alanları sıfırlanır
-      if (name === 'packageType' && prev.packageType === 'ucretsiz' && value !== 'ucretsiz') {
-        return {
-          ...prev,
-          [name]: value,
-          paymentStatus: '',
-          paymentMethod: '',
-          amount: '',
-          paymentDate: null
-        }
-      }
-
       // Eğer ödeme durumu "beklemede" olarak değiştirilirse, ödeme yeri ve tutarını temizle
       if (name === 'paymentStatus' && value === 'beklemede') {
         return {
@@ -226,10 +184,12 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
     setIsLoading(true)
     try {
       // Ücretsiz katılım / beklemede durumunda varsayılan değerler ata
-      const noPaymentDetails = isFree || formData.paymentStatus === 'beklemede'
+      const noPaymentDetails = formData.paymentStatus === 'beklemede'
       const paymentMethod = noPaymentDetails ? 'belirlenmedi' : formData.paymentMethod
       const paymentAmount = noPaymentDetails ? 0 : (parseFloat(formData.amount) || 0)
       const paymentDate = noPaymentDetails ? null : formData.paymentDate
+
+      const periodStart = resolvePeriodStart(startDate)
 
       // Güncellenecek ana kayıt verileri
       const updateData = {
@@ -237,22 +197,22 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         student_age: formData.age.trim(),
         parent_name: formData.parentName.trim(),
         parent_phone: formData.phone.trim(),
-        package_type: formData.packageType,
-        package_start_date: dateRange[0].startDate,
-        package_end_date: dateRange[0].endDate,
+        lesson_count: Number(formData.lessonCount),
+        // Takvim seçilen günü 00:00 döndürüyor; bugün seçildiyse o güne
+        // kadar YAPILMIŞ dersler yeni dönemde ikinci kez sayılmasın diye
+        // "şu an"a çekiliyor (bkz. src/lib/dates.js).
+        package_start_date: periodStart,
         payment_status: formData.paymentStatus,
         payment_method: paymentMethod,
         payment_amount: paymentAmount,
         payment_date: paymentDate, // Ödeme beklemede/ücretsiz ise null
-        notes: formData.note.trim() || null,
-        teacher_id: formData.teacherId || null
+        notes: formData.note.trim() || null
       }
 
       // Eğer ilk kayıt güncelleniyorsa (uzatma yoksa), initial_* alanlarını da ekle
       if (registration.extension_count === 0) {
-        updateData.initial_package_type = formData.packageType // Gerekirse ilk paket tipi de güncellenebilir
-        updateData.initial_start_date = dateRange[0].startDate
-        updateData.initial_end_date = dateRange[0].endDate
+        updateData.initial_lesson_count = Number(formData.lessonCount)
+        updateData.initial_start_date = periodStart
         updateData.initial_payment_method = paymentMethod
         updateData.initial_payment_amount = paymentAmount
         updateData.initial_notes = formData.note.trim() || null
@@ -277,12 +237,53 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
         throw updateRegError
       }
 
-      // 2. İster ilk kayıt ister uzatma olsun, ilgili finansal kaydı güncelle.
-      // Ücretsiz katılımda finansal kayda HİÇ dokunulmaz: geçmişte tahsil edilen para
-      // gerçek gelirdir, sıfırlanmamalı (ayrıca 'ucretsiz' statüsü DB kısıtını ihlal eder).
-      const { data: latestFinancialRecord, error: findLatestError } = isFree
-        ? { data: null, error: null }
-        : await supabase
+      // 2. Uzatması olan kayıtta SON uzatma satırını da hizala.
+      //
+      // Aksi halde registrations güncellenir ama extension_history eski
+      // değerde kalır: geçmiş panelinde ve gelir tablosunda o dönem için
+      // farklı ders sayısı/tutar görünür. Dahası ExtendModal düzenleme
+      // modunda formu extension_history'den beslediği için, sonradan bir
+      // uzatma düzenlenirse BAYAT değer registrations'a geri yazılır.
+      if (registration.extension_count > 0) {
+        const { data: latestExtension, error: findExtError } = await supabase
+          .from('extension_history')
+          .select('id')
+          .eq('registration_id', registration.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (findExtError) {
+          console.error('Son uzatma kaydı bulunurken hata:', findExtError)
+        } else if (latestExtension) {
+          const { error: updateExtError } = await supabase
+            .from('extension_history')
+            .update({
+              new_lesson_count: Number(formData.lessonCount),
+              new_start_date: periodStart,
+              payment_status: formData.paymentStatus,
+              payment_method: paymentMethod,
+              payment_amount: paymentAmount,
+              payment_date: paymentDate,
+              notes: formData.note.trim() || null
+            })
+            .eq('id', latestExtension.id)
+
+          if (updateExtError) {
+            console.error('Son uzatma kaydı güncellenirken hata:', updateExtError)
+            setToast({
+              visible: true,
+              message: language === 'uk'
+                ? 'Дані продовження не вдалося синхронізувати.'
+                : 'Could not sync the extension record.',
+              type: 'error'
+            })
+          }
+        }
+      }
+
+      // 3. İster ilk kayıt ister uzatma olsun, ilgili finansal kaydı güncelle.
+      const { data: latestFinancialRecord, error: findLatestError } = await supabase
             .from('financial_records')
             .select('id')
             .eq('registration_id', registration.id)
@@ -515,63 +516,23 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                 </div>
 
 
-                {/* Öğretmen ataması */}
-                <div className="relative">
-                  <div className={iconWrapperClasses}>
-                    <AcademicCapIcon className={iconClasses} />
-                  </div>
-                  <select
-                    name="teacherId"
-                    value={formData.teacherId || ''}
-                    onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.teacherId && 'text-[#86868b]'}`}
-                    autoComplete="off"
-                  >
-                    <option value="" className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Без викладача" : "No teacher"}
-                    </option>
-                    {teachers.map(teacher => (
-                      <option key={teacher.id} value={teacher.id} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {teacher.full_name || (language === 'uk' ? "Викладач" : "Teacher")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Paket Türü */}
+                {/* Ders sayısı — okul paket değil, doğrudan ders satıyor */}
                 <div className="relative">
                   <div className={iconWrapperClasses}>
                     <CubeIcon className={iconClasses} />
                   </div>
-                  <select 
-                    name="packageType"
-                    value={formData.packageType}
+                  <select
+                    name="lessonCount"
+                    value={formData.lessonCount}
                     onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.packageType && 'text-[#86868b]'}`}
-                    tabIndex={5}
+                    className={inputClasses}
                     autoComplete="off"
                   >
-                    <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Оберіть тип абонемента" : "Select Package Type"}
-                    </option>
-                    <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
-                    </option>
-                    <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
-                    </option>
-                    <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
-                    </option>
-                    <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
-                    </option>
-                    <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
-                    </option>
-                    <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Безкоштовне відвідування" : "Free Participation"}
-                    </option>
+                    {LESSON_COUNT_OPTIONS.map(count => (
+                      <option key={count} value={count} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                        {formatLessonCount(count, language)}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -585,15 +546,11 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                   </div>
                   <input
                     type="text"
-                    className={`${inputClasses} ${isFree ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer peer'}`}
-                    placeholder={language === 'uk' ? "Оберіть дату реєстрації" : "Select Registration Date"}
-                    value={isFree
-                      ? (language === 'uk' ? "Безстроково" : "Unlimited")
-                      : `${formatDate(dateRange[0].startDate)} - ${formatDate(dateRange[0].endDate)}`}
-                    onClick={() => { if (!isFree) setIsCalendarOpen(!isCalendarOpen) }}
+                    className={`${inputClasses} cursor-pointer peer`}
+                    placeholder={language === 'uk' ? "Оберіть дату початку" : "Select Start Date"}
+                    value={formatDate(startDate)}
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                     readOnly
-                    disabled={isFree}
-                    tabIndex={6}
                     autoComplete="off"
                   />
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
@@ -677,20 +634,15 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                             }
                           `}
                         </style>
-                        <DateRange
-                          onChange={item => {
-                            setDateRange([item.selection])
-                            // Eğer bitiş tarihi seçildiyse ve başlangıç tarihinden farklıysa takvimi kapat
-                            if (item.selection.endDate > item.selection.startDate) {
-                              setIsCalendarOpen(false)
-                            }
+                        {/* Aralık değil tek tarih: paketin bitişi yok */}
+                        <Calendar
+                          date={startDate}
+                          onChange={date => {
+                            setStartDate(date)
+                            setIsCalendarOpen(false)
                           }}
-                          moveRangeOnFirstSelection={false}
-                          months={1}
-                          ranges={dateRange}
-                          direction="horizontal"
                           locale={uk}
-                          rangeColors={['#007AFF']}
+                          color="#007AFF"
                         />
                       </div>
                     </div>
@@ -706,20 +658,13 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                     name="paymentStatus"
                     value={formData.paymentStatus}
                     onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.paymentStatus && 'text-[#86868b]'} ${isFree && 'opacity-50 cursor-not-allowed'}`}
+                    className={`${inputClasses} ${!formData.paymentStatus && 'text-[#86868b]'}`}
                     tabIndex={7}
                     autoComplete="off"
-                    disabled={isFree}
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
                       {language === 'uk' ? "Оберіть статус оплати" : "Select Payment Status"}
                     </option>
-                    {/* Yalnızca ücretsiz katılımda görünür (select pasif olduğu için seçilemez) */}
-                    {isFree && (
-                      <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Безкоштовно" : "Free"}
-                      </option>
-                    )}
                     <option value="odendi" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
                       {language === 'uk' ? "Оплачено" : "Paid"}
                     </option>
@@ -812,9 +757,7 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                     placeholder={language === 'uk' ? "День оплати" : "Payment Date"}
                     value={formData.paymentDate
                       ? formatDate(formData.paymentDate)
-                      : isFree
-                        ? (language === 'uk' ? "Оплата не стягується" : "No Payment")
-                        : formData.paymentStatus === 'beklemede'
+                      : formData.paymentStatus === 'beklemede'
                           ? (language === 'uk' ? "Очікує оплати" : "Payment Pending")
                           : (language === 'uk' ? "Оберіть дату оплати" : "Select Payment Date")}
                     onClick={() => formData.paymentStatus === 'odendi' && setIsPaymentDatePickerOpen(!isPaymentDatePickerOpen)}
@@ -902,7 +845,9 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
                 </div>
               </div>
 
-              {/* Notlar - Şimdi full genişlikte */}
+              {/* Not — iki kolonu birden kaplar. Öğretmen alanı sol kolondan
+                  kalkınca kolonlar 5-5 eşitlendi; notun sağ kolona sıkışmasına
+                  gerek kalmadı, tam genişlikte daha çok yazı görünüyor. */}
               <div className="md:col-span-2 relative">
                 <div className={iconWrapperClasses}>
                   <PencilSquareIcon className={iconClasses} />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
+import { LESSON_COUNT_OPTIONS, LOW_LESSON_THRESHOLD, formatLessonCount } from '../lib/lessonCounts';
 import { format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
@@ -11,7 +12,7 @@ const RemainingUsage = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [packageFilter, setPackageFilter] = useState('all');
+  const [lessonCountFilter, setLessonCountFilter] = useState('all');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailView, setShowDetailView] = useState(false);
@@ -59,12 +60,10 @@ const RemainingUsage = () => {
             registration_id: registration.id,
             student_name: registration.student_name,
             parent_name: registration.parent_name,
-            package_type: registration.package_type,
+            lesson_count: registration.lesson_count,
             package_start_date: registration.package_start_date,
-            package_end_date: registration.package_end_date,
             payment_status: registration.payment_status,
             is_active: registration.is_active,
-            is_free: usage.isFree,
             remaining_lessons: usage.remaining,
             attended_lessons: usage.attended,
             no_show_lessons: usage.noShow,
@@ -104,12 +103,10 @@ const RemainingUsage = () => {
         registration_id: registrationData.id,
         student_name: registrationData.student_name,
         parent_name: registrationData.parent_name,
-        package_type: registrationData.package_type,
+        lesson_count: registrationData.lesson_count,
         package_start_date: registrationData.package_start_date,
-        package_end_date: registrationData.package_end_date,
         payment_status: registrationData.payment_status,
         is_active: registrationData.is_active,
-        is_free: usage.isFree,
         remaining_lessons: usage.remaining,
         attended_lessons: usage.attended,
         no_show_lessons: usage.noShow,
@@ -208,6 +205,12 @@ const RemainingUsage = () => {
   };
 
   const handleDetailClick = (student) => {
+    // Onceki ogrencinin verisini TEMIZLE. Panel aninda selectedStudent ile
+    // ciziliyor ama "Використання"/"Статистика" bloklari studentDetails'ten
+    // besleniyor; sifirlanmazsa iki ag turu boyunca yeni ogrencinin adi
+    // altinda ONCEKININ kalan dersi ve odemesi goruntuleniyordu.
+    setStudentDetails(null);
+    setStudentLessons([]);
     setSelectedStudent(student);
     setShowDetailView(true);
   };
@@ -236,9 +239,9 @@ const RemainingUsage = () => {
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.parent_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPackage = packageFilter === 'all' || student.package_type === packageFilter;
+    const matchesLessonCount = lessonCountFilter === 'all' || student.lesson_count === lessonCountFilter;
     
-    return matchesSearch && matchesPackage;
+    return matchesSearch && matchesLessonCount;
   });
 
   // Format date with the correct locale
@@ -246,31 +249,12 @@ const RemainingUsage = () => {
     return format(new Date(date), formatStr || 'dd.MM.yyyy', { locale: language === 'uk' ? uk : enUS });
   };
 
-  // Translate package type
-  const translatePackageType = (type) => {
-    if (language === 'uk') {
-      return type === 'ucretsiz' ? 'Безкоштовне відвідування'
-        : type === 'hafta-1' ? '1 на тиждень'
-        : type === 'hafta-2' ? '2 на тиждень'
-        : type === 'hafta-3' ? '3 на тиждень'
-        : type === 'hafta-4' ? '4 на тиждень'
-        : 'Разове';
-    } else {
-      return type === 'ucretsiz' ? 'Free Participation'
-        : type === 'hafta-1' ? '1 Day/Week'
-        : type === 'hafta-2' ? '2 Days/Week'
-        : type === 'hafta-3' ? '3 Days/Week'
-        : type === 'hafta-4' ? '4 Days/Week'
-        : 'One Time';
-    }
-  };
-
   // Translate payment status
   const translatePaymentStatus = (status) => {
     if (language === 'uk') {
-      return status === 'ucretsiz' ? 'Безкоштовно' : status === 'odendi' ? 'Оплачено' : 'Очікує';
+      return status === 'odendi' ? 'Оплачено' : 'Очікує';
     } else {
-      return status === 'ucretsiz' ? 'Free' : status === 'odendi' ? 'Paid' : 'Pending';
+      return status === 'odendi' ? 'Paid' : 'Pending';
     }
   };
 
@@ -324,7 +308,7 @@ const RemainingUsage = () => {
             className="h-10 sm:h-8 px-3 bg-white dark:bg-[#121621] text-[#424245] dark:text-[#86868b] text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] focus:outline-none transition-colors flex items-center justify-center gap-2 relative"
           >
             <AdjustmentsHorizontalIcon className="w-4 h-4" />
-            {packageFilter !== 'all' && (
+            {lessonCountFilter !== 'all' && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0071e3] rounded-full ring-2 ring-white dark:ring-[#121621]" />
             )}
           </button>
@@ -351,17 +335,12 @@ const RemainingUsage = () => {
                   </th>
                   <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                     <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
+                      {language === 'uk' ? 'Кількість занять' : 'Lesson Count'}
                     </span>
                   </th>
                   <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                     <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
                       {language === 'uk' ? 'Дата реєстрації' : 'Start Date'}
-                    </span>
-                  </th>
-                  <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
-                    <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'uk' ? 'Дата закінчення' : 'End Date'}
                     </span>
                   </th>
                   <th className="py-4 px-6 text-center bg-[#f5f5f7]/50 dark:bg-[#161922]">
@@ -388,55 +367,36 @@ const RemainingUsage = () => {
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-2">
-                          <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                          </div>
-                          <div className="h-3 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                          </div>
+                          <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
+                          <div className="h-3 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-7 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
+                        <div className="h-7 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 animate-pulse" />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
+                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
+                        <div className="flex justify-center">
+                          <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 animate-pulse" />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex justify-center">
-                          <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 relative overflow-hidden">
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex justify-center">
-                          <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-20 relative overflow-hidden">
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                          </div>
+                          <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-20 animate-pulse" />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex justify-end">
-                          <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-16 relative overflow-hidden">
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                          </div>
+                          <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-16 animate-pulse" />
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center">
+                    <td colSpan="6" className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full flex items-center justify-center mb-3">
                           <MagnifyingGlassIcon className="w-8 h-8 text-[#6e6e73] dark:text-[#86868b]" />
@@ -445,8 +405,8 @@ const RemainingUsage = () => {
                           {language === 'uk' ? 'Записів не знайдено' : 'No Records Found'}
                         </p>
                         <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                          {searchTerm 
-                            ? (language === 'uk' ? 'За вашим запитом нічого не знайдено.' : 'No records match your search criteria.') 
+                          {searchTerm || lessonCountFilter !== 'all'
+                            ? (language === 'uk' ? 'Нічого не знайдено за вашим запитом або фільтром.' : 'No records match your search or filter.')
                             : (language === 'uk' ? 'Записів ще немає.' : 'No records have been added yet.')}
                         </p>
                       </div>
@@ -475,7 +435,7 @@ const RemainingUsage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-[#0071e3]/5 to-[#34d399]/5 dark:from-[#0071e3]/10 dark:to-[#34d399]/10 text-[#0071e3] group-hover:from-[#0071e3]/10 group-hover:to-[#34d399]/10 dark:group-hover:from-[#0071e3]/20 dark:group-hover:to-[#34d399]/20 transition-all">
-                          {translatePackageType(student.package_type)}
+                          {formatLessonCount(student.lesson_count, language)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -483,33 +443,20 @@ const RemainingUsage = () => {
                           {formatDate(student.package_start_date)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-[#424245] dark:text-[#86868b]">
-                          {student.is_free
-                            ? (language === 'uk' ? 'Безстроково' : 'Unlimited')
-                            : formatDate(student.package_end_date)}
-                        </span>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center justify-center min-w-[2rem] px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-inset ${
-                          student.is_free
-                            ? 'bg-gray-400/10 text-gray-700 ring-gray-500/20 dark:bg-gray-400/10 dark:text-gray-300 dark:ring-gray-400/20'
-                            : student.remaining_lessons <= 0
+                          student.remaining_lessons <= 0
                             ? 'bg-red-400/10 text-red-700 ring-red-500/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20'
-                            : student.remaining_lessons <= 2
+                            : student.remaining_lessons <= LOW_LESSON_THRESHOLD
                             ? 'bg-amber-400/10 text-amber-700 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
                             : 'bg-emerald-400/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
                         }`}>
-                          {student.is_free
-                            ? (language === 'uk' ? 'Безкоштовно' : 'Free')
-                            : student.remaining_lessons}
+                          {student.remaining_lessons}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-inset ${
-                          student.payment_status === 'ucretsiz'
-                            ? 'bg-gray-400/10 text-gray-700 ring-gray-500/20 dark:bg-gray-400/10 dark:text-gray-300 dark:ring-gray-400/20'
-                            : student.payment_status === 'odendi'
+                          student.payment_status === 'odendi'
                             ? 'bg-emerald-400/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
                             : 'bg-amber-400/10 text-amber-700 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
                         }`}>
@@ -554,84 +501,27 @@ const RemainingUsage = () => {
 
           {/* Sheet Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Paket Türü */}
+            {/* Ders sayısı filtresi — seçenekler lib/lessonCounts.js'te */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
+                {language === 'uk' ? 'Кількість занять' : 'Lesson Count'}
               </h3>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setPackageFilter('hafta-1')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium
-                    ${packageFilter === 'hafta-1'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '1 на тиждень' : '1 Day/Week'}
-                </button>
-                <button
-                  onClick={() => setPackageFilter('hafta-2')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium
-                    ${packageFilter === 'hafta-2'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '2 на тиждень' : '2 Days/Week'}
-                </button>
-                <button
-                  onClick={() => setPackageFilter('hafta-3')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium 
-                    ${packageFilter === 'hafta-3'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '3 на тиждень' : '3 Days/Week'}
-                </button>
-                <button
-                  onClick={() => setPackageFilter('hafta-4')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium 
-                    ${packageFilter === 'hafta-4'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? '4 на тиждень' : '4 Days/Week'}
-                </button>
-                <button
-                  onClick={() => setPackageFilter('tek-seferlik')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium 
-                    ${packageFilter === 'tek-seferlik'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Разове' : 'One Time'}
-                </button>
-                <button
-                  onClick={() => setPackageFilter('ucretsiz')}
-                  className={`
-                    h-9 px-4 rounded-lg text-sm font-medium
-                    ${packageFilter === 'ucretsiz'
-                      ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                      : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                    }
-                  `}
-                >
-                  {language === 'uk' ? 'Безкоштовно' : 'Free'}
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {LESSON_COUNT_OPTIONS.map(count => (
+                  <button
+                    key={count}
+                    onClick={() => setLessonCountFilter(lessonCountFilter === count ? 'all' : count)}
+                    className={`
+                      h-9 px-2 rounded-lg text-sm font-medium
+                      ${lessonCountFilter === count
+                        ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                        : 'bg-white dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                      }
+                    `}
+                  >
+                    {count}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -641,7 +531,7 @@ const RemainingUsage = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  setPackageFilter('all');
+                  setLessonCountFilter('all');
                   setIsFilterSheetOpen(false);
                 }}
                 className="flex-1 h-10 bg-gray-100 dark:bg-[#1d1d1f] text-[#1d1d1f] dark:text-white font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3241] focus:outline-none"
@@ -730,10 +620,10 @@ const RemainingUsage = () => {
                   <div className="grid grid-cols-1 gap-4 bg-[#f5f5f7] dark:bg-[#161922] p-4 rounded-xl">
                     <div>
                       <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
-                        {language === 'uk' ? 'Тип абонемента' : 'Package Type'}
+                        {language === 'uk' ? 'Кількість занять' : 'Lesson Count'}
                       </label>
                       <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-[#0071e3]/5 to-[#34d399]/5 dark:from-[#0071e3]/10 dark:to-[#34d399]/10 text-[#0071e3]">
-                        {translatePackageType(selectedStudent.package_type)}
+                        {formatLessonCount(selectedStudent.lesson_count, language)}
                       </span>
                     </div>
                     <div>
@@ -742,16 +632,6 @@ const RemainingUsage = () => {
                       </label>
                       <span className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
                         {formatDate(selectedStudent.package_start_date)}
-                      </span>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
-                        {language === 'uk' ? 'Дата закінчення' : 'End Date'}
-                      </label>
-                      <span className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                        {selectedStudent.is_free
-                          ? (language === 'uk' ? 'Безстроково' : 'Unlimited')
-                          : formatDate(selectedStudent.package_end_date)}
                       </span>
                     </div>
                   </div>
@@ -772,16 +652,10 @@ const RemainingUsage = () => {
                         <div key={index} className="bg-[#f5f5f7] dark:bg-[#161922] p-4 rounded-xl">
                       <div className="flex items-center justify-between">
                             <div className="space-y-1 w-1/2">
-                              <div className="h-4 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                              </div>
-                              <div className="h-3 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                              </div>
+                              <div className="h-4 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
+                              <div className="h-3 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
                             </div>
-                            <div className="h-7 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-lg w-20 relative overflow-hidden">
-                              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                            </div>
+                            <div className="h-7 bg-[#e5e5ea] dark:bg-[#2a3241] rounded-lg w-20 animate-pulse" />
                           </div>
                         </div>
                       ))}
@@ -804,11 +678,8 @@ const RemainingUsage = () => {
                       <div className="flex items-center justify-between">
                               <div className="flex-1">
                           <span className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                                  {lesson.events.event_type === 'ingilizce' 
-                                    ? language === 'uk' ? 'Ігрове заняття з англійської' : 'English Game Class'
-                                    : lesson.events.event_type === 'duyusal' 
-                                    ? language === 'uk' ? 'Заняття із сенсорного розвитку' : 'Sensory Development Class'
-                                    : lesson.events.custom_description || (language === 'uk' ? 'Індивідуальне заняття' : 'Custom Class')}
+                                  {/* Ders tipi kalktı: okul yalnızca İngilizce ders veriyor */}
+                                  {language === 'uk' ? 'Ігрове заняття з англійської' : 'English Game Class'}
                                   {lesson.is_makeup && (language === 'uk' ? ' (Відпрацювання)' : ' (Makeup)')}
                                 </span>
                                 <span className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
@@ -853,8 +724,10 @@ const RemainingUsage = () => {
                           {/* Border */}
                           <hr className="border-[#d2d2d7] dark:border-[#2a3241]" />
                           
-                          {/* Alt kısım - Butonlar (Her zaman göster) */}
-                          <div className="p-3 bg-[#f5f5f7]/50 dark:bg-[#161922]/70 flex items-center justify-between gap-2">
+                          {/* Alt kısım - Butonlar. Ukraynaca etiketler
+                              ("Не зʼявився", "Відпрацювання") tek satıra
+                              sığmadığı için 2-2 ızgara. */}
+                          <div className="p-3 bg-[#f5f5f7]/50 dark:bg-[#161922]/70 grid grid-cols-2 gap-2">
                             <button
                               onClick={() => updateLessonStatus(lesson.id, 'attended')}
                               disabled={statusUpdateLoading}
@@ -935,17 +808,13 @@ const RemainingUsage = () => {
                         {language === 'uk' ? 'Залишок занять' : 'Remaining Lessons'}
                       </label>
                       <span className={`font-medium ${
-                          studentDetails?.is_free
-                          ? 'text-base text-gray-700 dark:text-gray-300'
-                            : studentDetails?.remaining_lessons <= 0
+                          studentDetails?.remaining_lessons <= 0
                           ? 'text-2xl text-red-700 dark:text-red-400'
-                            : studentDetails?.remaining_lessons <= 2
+                            : studentDetails?.remaining_lessons <= LOW_LESSON_THRESHOLD
                           ? 'text-2xl text-amber-700 dark:text-amber-400'
                           : 'text-2xl text-emerald-700 dark:text-emerald-400'
                       }`}>
-                          {studentDetails?.is_free
-                            ? (language === 'uk' ? 'Безкоштовно' : 'Free')
-                            : studentDetails?.remaining_lessons}
+                          {studentDetails?.remaining_lessons}
                       </span>
                     </div>
                     </div>
@@ -955,9 +824,7 @@ const RemainingUsage = () => {
                             {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
                           </label>
                         <span className={`inline-flex w-auto items-center px-3 py-1.5 rounded-lg text-xs font-medium ${
-                          studentDetails?.payment_status === 'ucretsiz'
-                              ? 'bg-gray-400/10 text-gray-700 ring-1 ring-gray-500/20 dark:bg-gray-400/10 dark:text-gray-300 dark:ring-gray-400/20'
-                              : studentDetails?.payment_status === 'odendi'
+                          studentDetails?.payment_status === 'odendi'
                               ? 'bg-emerald-400/10 text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
                               : 'bg-amber-400/10 text-amber-700 ring-1 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
                           }`}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -22,7 +22,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ActionNotification from '../components/ActionNotification';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { useTeachers } from '../hooks/useTeachers';
+import { useTeachers, buildTeacherMap } from '../hooks/useTeachers';
+import { getTeacherDetails } from '../lib/teacherColors';
 
 // Takvim ızgarası. Tek yerde duruyor çünkü hem FullCalendar'a veriliyor hem de
 // hover vurgusunun hesabında kullanılıyor — ayrışırlarsa vurgu, tıklamanın
@@ -62,7 +63,9 @@ const useWindowSize = () => {
 const Calendar = () => {
   const { language } = useLanguage();
   const { isOwner, user } = useAuth();
-  const { teachers } = useTeachers(isOwner);
+  // Herkes icin acik: ogretmen kendi dersinin rengini kendi profilinden
+  // cozer. RLS ona yalnizca kendi satirini dondurur.
+  const { teachers } = useTeachers();
   // Sahip tüm dersleri görür; bu filtre kimin takvimine baktığını seçmesini sağlar.
   // '' = herkes. Öğretmende hiç gösterilmez (zaten yalnızca kendi derslerini görür).
   const [teacherFilter, setTeacherFilter] = useState('');
@@ -75,7 +78,6 @@ const Calendar = () => {
     minute: '00'
   });
   const [events, setEvents] = useState([]);
-  const [groupedEvents, setGroupedEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({
     message: '',
@@ -113,27 +115,9 @@ const Calendar = () => {
   // Get screen width
   const { width } = useWindowSize();
 
-  // Helper function to format age group text
-  const formatAgeGroup = (ageGroup) => {
-    // If screen width is less than 1700px or zoomed
-    if (width < 1700) {
-      // Remove "міс." or "р." units for Ukrainian, "Month" or "Year" for English
-      if (language === 'uk') {
-        return ageGroup
-          .replace('міс.', '')
-          .replace('р.', '')
-          .trim();
-      } else {
-        return ageGroup
-          .replace('Month', '')
-          .replace('Year', '')
-          .trim();
-      }
-    }
-
-    // Normal view
-    return ageGroup;
-  };
+  // Gruplar artık sınıf ('1 клас'), dar ekranda kısaltmaya gerek yok:
+  // eski kod aylık etiketlerden ('12-18 міс.') birimi siliyordu.
+  const formatAgeGroup = (ageGroup) => ageGroup;
 
   // Format date with the correct locale
   const formatDate = (date, formatStr) => {
@@ -141,34 +125,10 @@ const Calendar = () => {
   };
 
   // Determine color and icon based on event type
-  const getEventTypeDetails = (type) => {
-    switch (type) {
-      case 'ingilizce':
-        return {
-          color: '#8b5cf6', // Violet color (Tailwind violet-500)
-          icon: '🇬🇧',
-          label: language === 'uk' ? 'Англійська' : 'English'
-        };
-      case 'duyusal':
-        return {
-          color: '#f97316', // Orange color (Tailwind orange-500)
-          icon: '🎨',
-          label: language === 'uk' ? 'Сенсорика' : 'Sensory'
-        };
-      case 'ozel':
-        return {
-          color: '#059669',
-          icon: '⭐',
-          label: language === 'uk' ? 'Індивідуальне' : 'Special'
-        };
-      default:
-        return {
-          color: '#6b7280',
-          icon: '📅',
-          label: type
-        };
-    }
-  };
+  // Renk ve etiket artık dersi VEREN KİŞİDEN geliyor, ders tipinden değil
+  // (bkz. src/lib/teacherColors.js). Okul yalnızca İngilizce ders verdiği
+  // için tip ayrımı anlamını yitirdi.
+  const teacherById = useMemo(() => buildTeacherMap(teachers), [teachers]);
 
   // Fetch events
   const fetchEvents = async (start, end) => {
@@ -218,27 +178,25 @@ const Calendar = () => {
       }
 
       // Convert events to FullCalendar format
+      // Renk BURADA GÖMÜLMÜYOR. Öğretmen listesi derslerden sonra gelirse
+      // kartlar varsayılan gride takılı kalıyordu: renk fetch anındaki
+      // teacherById'den okunuyor ve etkinlik nesnesine yazılıyordu.
+      // Artık renk çizim anında (coloredEvents) hesaplanıyor.
       const formattedEvents = eventsData.map(event => {
-        const typeDetails = getEventTypeDetails(event.event_type);
         const students = event.event_participants
           .map(participant => studentMap[participant.registration_id])
           .filter(Boolean);
 
         return {
           id: event.id,
-          title: event.event_type,
           start: event.event_date,
           end: new Date(new Date(event.event_date).getTime() + 60 * 60 * 1000),
-          backgroundColor: typeDetails.color,
-          borderColor: typeDetails.color,
           extendedProps: {
             ageGroup: event.age_group,
             description: event.custom_description,
-            eventType: event.event_type,
             currentCapacity: students.length,
             maxCapacity: event.max_capacity,
             teacherId: event.teacher_id,
-            typeDetails,
             students,
             originalEvent: event // Store original event data for copying
           }
@@ -246,9 +204,6 @@ const Calendar = () => {
       });
 
       setEvents(formattedEvents);
-
-      // Group events by day and type
-      groupEventsByDayAndType(formattedEvents);
     } catch (error) {
       console.error(language === 'uk' ? 'Помилка завантаження занять:' : 'Error fetching events:', error);
     } finally {
@@ -288,22 +243,25 @@ const Calendar = () => {
     }
   };
 
-  // Group events by day and type
+  // Ay görünümünde dersleri gün + ÖĞRETMEN kırılımında toplar.
+  // Eskiden kırılım ders tipiydi; tip kalkınca aynı günün tüm dersleri tek
+  // baloncukta toplanır, hangi öğretmene ait olduğu kaybolurdu.
   const groupEventsByDayAndType = (events) => {
-    // Group events by day and type
     const groupedByDayAndType = {};
 
     events.forEach(event => {
       const date = new Date(event.start);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      const eventType = event.extendedProps.eventType;
+      // teacher_id boş olamaz (NOT NULL) ama nesne anahtarı olarak
+      // undefined'a düşmesin diye yine de sabitleniyor.
+      const groupKey = event.extendedProps.teacherId || 'unassigned';
 
       if (!groupedByDayAndType[dateKey]) {
         groupedByDayAndType[dateKey] = {};
       }
 
-      if (!groupedByDayAndType[dateKey][eventType]) {
-        groupedByDayAndType[dateKey][eventType] = {
+      if (!groupedByDayAndType[dateKey][groupKey]) {
+        groupedByDayAndType[dateKey][groupKey] = {
           count: 0,
           events: [],
           typeDetails: event.extendedProps.typeDetails,
@@ -311,8 +269,8 @@ const Calendar = () => {
         };
       }
 
-      groupedByDayAndType[dateKey][eventType].count += 1;
-      groupedByDayAndType[dateKey][eventType].events.push(event);
+      groupedByDayAndType[dateKey][groupKey].count += 1;
+      groupedByDayAndType[dateKey][groupKey].events.push(event);
     });
 
     // Convert groups to FullCalendar format
@@ -321,14 +279,12 @@ const Calendar = () => {
     Object.keys(groupedByDayAndType).forEach(dateKey => {
       const [year, month, day] = dateKey.split('-').map(Number);
 
-      Object.keys(groupedByDayAndType[dateKey]).forEach(eventType => {
-        const group = groupedByDayAndType[dateKey][eventType];
-
-        // Group all event types (even if count is 1)
+      Object.keys(groupedByDayAndType[dateKey]).forEach(groupKey => {
+        const group = groupedByDayAndType[dateKey][groupKey];
         const date = new Date(year, month, day);
 
         groupedEvents.push({
-          id: `group-${dateKey}-${eventType}`,
+          id: `group-${dateKey}-${groupKey}`,
           title: `${group.count} ${group.typeDetails.label}`,
           start: date,
           backgroundColor: group.color,
@@ -337,7 +293,7 @@ const Calendar = () => {
           extendedProps: {
             isGrouped: true,
             count: group.count,
-            eventType,
+            teacherId: groupKey === 'unassigned' ? null : groupKey,
             typeDetails: group.typeDetails,
             originalEvents: group.events
           }
@@ -345,18 +301,41 @@ const Calendar = () => {
       });
     });
 
-    setGroupedEvents(groupedEvents);
+    return groupedEvents;
   };
+
+  // Renk ve etiket çizim anında, güncel öğretmen listesinden hesaplanıyor.
+  // Böylece profiller derslerden sonra gelse bile kartlar kendiliğinden
+  // doğru renge geçiyor — yeniden veri çekmeye gerek kalmıyor.
+  const coloredEvents = useMemo(() => events.map(event => {
+    const typeDetails = getTeacherDetails(event.extendedProps.teacherId, teacherById, language);
+    return {
+      ...event,
+      // Kart içeriğini renderEventContent çiziyor; title yine de öğretmenin
+      // adı olsun ki ham 'ingilizce' değeri sızmasın.
+      title: typeDetails.label,
+      backgroundColor: typeDetails.color,
+      borderColor: typeDetails.color,
+      extendedProps: { ...event.extendedProps, typeDetails }
+    };
+  }), [events, teacherById, language]);
+
+  const groupedEvents = useMemo(
+    () => groupEventsByDayAndType(coloredEvents),
+    [coloredEvents]
+  );
+
 
   // Load events when component mounts and when new events are added
   // Filtre değişince görünürdeki aralığı yeniden çek. datesSet ilk yüklemeyi
   // zaten yapıyor, o yüzden ilk render atlanıyor.
+  //
   const filterMountedRef = useRef(false);
   useEffect(() => {
     if (!filterMountedRef.current) { filterMountedRef.current = true; return; }
     const api = calendarRef.current?.getApi();
     if (!api) return;
-    fetchEvents(api.view.currentStart, api.view.currentEnd);
+    fetchEvents(api.view.activeStart, api.view.activeEnd);
   }, [teacherFilter]);
 
   // İmlecin üzerinde olduğu saat kutusunu vurgula.
@@ -366,6 +345,10 @@ const Calendar = () => {
   useEffect(() => {
     const root = calendarWrapRef.current;
     if (!root) return;
+    // Vurgu, "buraya tıklayınca ders açılır" önizlemesi. Öğretmen ders
+    // açamadığı için ona gösterilmesi yanlış vaat oluyordu: takvim
+    // düzenlenebilir görünüyor ama tıklama hiçbir şey yapmıyordu.
+    if (!isOwner) return;
 
     // Vurgu doğrudan sarmalayıcıya konuluyor (sarmalayıcı zaten position:relative).
     // Sütunun kendi katmanlarına yerleştirmek onların konumlanmasına ve
@@ -433,25 +416,17 @@ const Calendar = () => {
       window.removeEventListener('scroll', hide, true);
       if (highlight.parentNode) highlight.parentNode.removeChild(highlight);
     };
-  }, [currentViewType]);
+  }, [currentViewType, isOwner]);
 
   // useEffect removed because datesSet in FullCalendar will handle initial fetch
 
   // Render event content
   // Öğretmen adı: sahip başkasının dersine bakarken kimin dersi olduğu görünsün.
   // Kendi derslerinde etiket çıkmaz — her karta ad basmak gereksiz kalabalık olurdu.
-  const teacherNameById = Object.fromEntries(
-    teachers.map(teacher => [
-      teacher.id,
-      teacher.full_name || (language === 'uk' ? 'Викладач' : 'Teacher')
-    ])
-  );
-
   const renderEventContent = (eventInfo) => {
-    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, isGrouped, count, teacherId } = eventInfo.event.extendedProps;
-    const otherTeacherName = isOwner && teacherId && teacherId !== user?.id
-      ? teacherNameById[teacherId]
-      : null;
+    // Dikey başlık artık öğretmenin adı — kartın rengi de aynı kişiden geldiği
+    // için ayrıca "başka öğretmenin dersi" rozeti gösterilmiyordu, kalktı.
+    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, isGrouped, count } = eventInfo.event.extendedProps;
 
     // Ay görünümünde ve gruplandırılmış etkinlik ise
     if (eventInfo.view.type === 'dayGridMonth' && isGrouped) {
@@ -474,14 +449,6 @@ const Calendar = () => {
         <div className="event-content">
           {/* Bilgiler */}
           <div className="flex flex-col gap-1.5 text-xs">
-            {/* Başka bir öğretmenin dersi olduğunu belirten etiket */}
-            {otherTeacherName && (
-              <div className="flex items-center gap-1 bg-white/25 px-2.5 py-1 rounded-md w-fit">
-                <AcademicCapIcon className="w-3 h-3 text-white/80" />
-                <span className="font-medium truncate">{otherTeacherName}</span>
-              </div>
-            )}
-
             {/* Saat */}
             <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
               <ClockIcon className="w-3 h-3 text-white/70" />
@@ -502,7 +469,10 @@ const Calendar = () => {
             {/* Kapasite */}
             <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
               <UserGroupIcon className="w-3 h-3 text-white/70" />
-              <span className="font-medium">{currentCapacity}/6</span>
+              {/* Payda dersin KENDI max_capacity'si. Sabit 6 yaziyordu ama
+                  dersler max_capacity=10 ile aciliyordu; 7. ogrenciden sonra
+                  "7/6" gibi imkansiz bir deger goruntuleniyordu. */}
+              <span className="font-medium">{currentCapacity}/{maxCapacity}</span>
             </div>
           </div>
 
@@ -602,8 +572,12 @@ const Calendar = () => {
       // Aynı saatte başka etkinlik var mı kontrol et
       const { data: existingEvents, error: checkError } = await supabase
         .from('events')
-        .select('id, event_date')
-        .eq('is_active', true);
+        .select('id, event_date, teacher_id')
+        .eq('is_active', true)
+        // Çakışma AYNI ÖĞRETMEN için geçerli. Öğretmen ataması derse
+        // taşındığından iki öğretmen aynı saatte paralel ders verebilir;
+        // teacher_id'ye bakmayan eski kontrol bunu engelliyordu.
+        .eq('teacher_id', formData.teacherId);
 
       if (checkError) throw checkError;
 
@@ -622,8 +596,8 @@ const Calendar = () => {
       if (conflictingEvent) {
         throw new Error(
           language === 'uk'
-            ? 'На цю дату й час уже є інше заняття. Оберіть інший час.'
-            : 'There is already another event at this date and time. Please select a different time.'
+            ? 'У цього викладача вже є заняття в цей час. Оберіть інший час.'
+            : 'This teacher already has a lesson at this time. Please select a different time.'
         );
       }
 
@@ -631,14 +605,20 @@ const Calendar = () => {
       const eventData = {
         event_date: eventDateTime.toISOString(),
         age_group: formData.ageGroup || '',
-        event_type: formData.eventType || '',
-        custom_description: formData.eventType === 'ozel' ? formData.customDescription : null,
+        // Tür arayüzde seçilmiyor; okul yalnızca İngilizce ders veriyor.
+        // Kolon NOT NULL ve CHECK'li olduğu için sabit yazılıyor.
+        event_type: 'ingilizce',
+        custom_description: null,
+        // Dersi kimin verdiği artık derste tutuluyor (öğrencide değil).
+        // Kolonun DEFAULT'u auth.uid(); açıkça yazmazsak ders her zaman
+        // formu açan kişiye yazılırdı.
+        teacher_id: formData.teacherId,
         max_capacity: 10,
         current_capacity: 0 // Başlangıçta 0 olmalı, trigger katılımcılar eklendiğinde bu değeri arttıracak
       };
 
       // Zorunlu alanları kontrol et
-      if (!eventData.age_group || !eventData.event_type) {
+      if (!eventData.age_group || !eventData.teacher_id) {
         throw new Error(language === 'uk' ? 'Не заповнені обовʼязкові поля' : 'Required fields are missing');
       }
 
@@ -678,7 +658,7 @@ const Calendar = () => {
       // Etkinlikleri yeniden yükle - mevcut görünüm aralığında
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
-        await fetchEvents(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+        await fetchEvents(calendarApi.view.activeStart, calendarApi.view.activeEnd);
       }
       handleCloseModal();
     } catch (error) {
@@ -712,17 +692,12 @@ const Calendar = () => {
     // Mevcut görünümün başlangıç tarihini sakla (hafta kopyalama için)
     setCurrentWeekRange(viewInfo.view.currentStart);
 
-    // Ay görünümünde gruplandırılmış etkinlikleri göster ve sürüklemeyi devre dışı bırak
-    if (viewInfo.view.type === 'dayGridMonth') {
-      calendar.removeAllEventSources();
-      calendar.addEventSource(groupedEvents);
-      calendar.setOption('editable', false);
-    } else {
-      // Diğer görünümlerde normal etkinlikleri göster ve sürüklemeyi etkinleştir
-      calendar.removeAllEventSources();
-      calendar.addEventSource(events);
-      calendar.setOption('editable', true);
-    }
+    // Hangi etkinlik kümesinin çizileceğini artık `events` prop'u belirliyor
+    // (aşağıda currentViewType'a göre seçiliyor). Burada kaynakları elle
+    // değiştirmek işe yaramıyordu: prop her değiştiğinde FullCalendar
+    // kaynakları kendi prop'undan yeniden kuruyor ve ay görünümündeki
+    // gruplama sessizce eziliyordu.
+    calendar.setOption('editable', viewInfo.view.type === 'dayGridMonth' ? false : isOwner);
 
     // Mevcut görünümdeki etkinlikleri sakla (hafta kopyalama için)
     if (viewInfo.view.type === 'timeGridWeek') {
@@ -768,7 +743,7 @@ const Calendar = () => {
       // Reload events - mevcut görünüm aralığında
       if (calendarRef.current) {
         const calendarApi = calendarRef.current.getApi();
-        await fetchEvents(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+        await fetchEvents(calendarApi.view.activeStart, calendarApi.view.activeEnd);
       }
     } catch (error) {
       console.error(
@@ -830,14 +805,16 @@ const Calendar = () => {
 
       const usageMap = await fetchLessonUsageMap(registrations || []);
 
+      // visible: RPC'nin döndürmediği kayıt = çağıranın görme hakkı yok.
+      // O durumda sayaçlar sıfırdır ve "kalan = tam kota" görünür; kotası
+      // bitmiş sanıp listeye almamak için ayrıca kontrol ediliyor.
       const exhausted = (registrations || [])
-        // isFree kontrolü eşikten ÖNCE: ücretsizde remaining null ve null <= 0 true döner
         .filter(registration => {
           const usage = usageMap[registration.id];
-          return usage && !usage.isFree && usage.remaining === 0;
+          return usage && usage.visible && usage.remaining === 0;
         })
         .map(registration => ({ ...registration, usage: usageMap[registration.id] }))
-        .sort((a, b) => new Date(a.package_end_date) - new Date(b.package_end_date));
+        .sort((a, b) => a.student_name.localeCompare(b.student_name, 'uk'));
 
       setPrecheckStudents(exhausted);
     } catch (error) {
@@ -853,16 +830,6 @@ const Calendar = () => {
   // Liste my_students görünümünden geldiği için ödeme kolonları yok;
   // uzatma için tam kaydı burada ayrıca çekiyoruz.
   const handleExtendFromPrecheck = async (student) => {
-    if (student.package_type === 'ucretsiz') {
-      showToast(
-        language === 'uk'
-          ? 'Безкоштовні відвідування не продовжуються'
-          : 'Package extension is not available for free participation',
-        'error'
-      );
-      return;
-    }
-
     const { data: registration, error } = await supabase
       .from('registrations')
       .select('*')
@@ -956,7 +923,7 @@ const Calendar = () => {
       if (updatedCurrentWeekEvents.length === 0 && events.length > 0) {
         console.log('Neden etkinlik bulunamadı? Tüm etkinlik tarihleri:');
         events.forEach((event, index) => {
-          console.log(`Etkinlik ${index}: ${new Date(event.start).toISOString()} (${event.extendedProps.eventType})`);
+          console.log(`Etkinlik ${index}: ${new Date(event.start).toISOString()} (${event.extendedProps.typeDetails?.label})`);
         });
 
         console.log(`Aranan tarih aralığı: ${start.toISOString()} - ${end.toISOString()}`);
@@ -1031,7 +998,8 @@ const Calendar = () => {
               // Hedef haftadaki mevcut etkinlikleri getir
               const { data: existingEventsInTargetWeek, error: existingEventsError } = await supabase
                 .from('events')
-                .select('event_date')
+                // Çakışma aynı öğretmen için geçerli (bkz. ders oluşturma)
+                .select('event_date, teacher_id')
                 .eq('is_active', true)
                 .gte('event_date', targetWeekStart.toISOString())
                 .lt('event_date', targetWeekEnd.toISOString());
@@ -1055,6 +1023,7 @@ const Calendar = () => {
                 const hasConflict = existingEventsInTargetWeek.some(existingEvent => {
                   const existingEventDate = new Date(existingEvent.event_date);
                   return (
+                    existingEvent.teacher_id === event.extendedProps.teacherId &&
                     existingEventDate.getFullYear() === newEventDate.getFullYear() &&
                     existingEventDate.getMonth() === newEventDate.getMonth() &&
                     existingEventDate.getDate() === newEventDate.getDate() &&
@@ -1172,7 +1141,8 @@ const Calendar = () => {
       // Hedef haftadaki mevcut etkinlikleri getir
       const { data: existingEventsInTargetWeek, error: existingEventsError } = await supabase
         .from('events')
-        .select('event_date')
+        // Çakışma aynı öğretmen için geçerli (bkz. ders oluşturma)
+        .select('event_date, teacher_id')
         .eq('is_active', true)
         .gte('event_date', targetWeekStart.toISOString())
         .lt('event_date', targetWeekEnd.toISOString());
@@ -1196,6 +1166,7 @@ const Calendar = () => {
         const hasConflict = existingEventsInTargetWeek.some(existingEvent => {
           const existingEventDate = new Date(existingEvent.event_date);
           return (
+            existingEvent.teacher_id === event.extendedProps.teacherId &&
             existingEventDate.getFullYear() === newEventDate.getFullYear() &&
             existingEventDate.getMonth() === newEventDate.getMonth() &&
             existingEventDate.getDate() === newEventDate.getDate() &&
@@ -1276,7 +1247,7 @@ const Calendar = () => {
         // Etkinlikleri yeniden yükle - mevcut görünüm aralığında
         if (calendarRef.current) {
           const calendarApi = calendarRef.current.getApi();
-          await fetchEvents(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+          await fetchEvents(calendarApi.view.activeStart, calendarApi.view.activeEnd);
         }
 
         // Takvim görünümünü kopyalanan haftaya çevirme işlemi yerine bildirim göster
@@ -1300,7 +1271,7 @@ const Calendar = () => {
       console.error('Hafta kopyalanırken hata:', error);
       setCopyWeekLoading(false);
       setIsCopyWeekModalOpen(false);
-      showToast('Hafta kopyalanırken bir hata oluştu: ' + error.message, 'error');
+      showToast('Помилка під час копіювання тижня: ' + error.message, 'error');
     }
   };
 
@@ -1316,6 +1287,8 @@ const Calendar = () => {
   useEffect(() => {
     const addCopyWeekButton = () => {
       if (!calendarRef.current) return;
+      // Hafta kopyalama ders YARATIR; ogretmen icin hic eklenmemeli.
+      if (!isOwner) return;
 
       // Takvim başlığını içeren elementi bul
       const titleElement = document.querySelector('.fc-toolbar-title');
@@ -1386,8 +1359,9 @@ const Calendar = () => {
     return () => {
       window.removeEventListener('resize', handleViewChange);
       document.removeEventListener('visibilitychange', handleViewChange);
+      document.getElementById('copy-week-icon')?.remove();
     };
-  }, []);
+  }, [isOwner]);
 
   // Görünen haftanın konusu (banner sadece hafta ve gün görünümlerinde gösterilir)
   const activeWeekKey = currentWeekRange
@@ -1413,8 +1387,12 @@ const Calendar = () => {
               onChange={(e) => setTeacherFilter(e.target.value)}
               className="h-8 pl-3 pr-8 bg-white dark:bg-[#1a1f2e] text-[#1d1d1f] dark:text-white text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#6e6e73] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all duration-200 cursor-pointer"
             >
+              {/* "Мої заняття" seçeneği kalktı: sahip zaten listede kendi
+                  adıyla duruyordu, aynı kişi iki kez görünüyordu. Üstelik
+                  değeri user henüz yüklenmeden '' oluyor ve "Усі викладачі"
+                  ile çakışıyordu — tarayıcı son eşleşeni seçtiği için filtre
+                  boşken bile "Мої заняття" yazıyordu. */}
               <option value="">{language === 'uk' ? 'Усі викладачі' : 'All teachers'}</option>
-              <option value={user?.id || ''}>{language === 'uk' ? 'Мої заняття' : 'My lessons'}</option>
               {teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.full_name || (language === 'uk' ? 'Викладач' : 'Teacher')}
@@ -1446,7 +1424,9 @@ const Calendar = () => {
             <BookOpenIcon className="w-3.5 h-3.5" />
             <span>{language === 'uk' ? 'Теми тижнів' : 'Weekly Themes'}</span>
           </button>}
-          <button
+          {/* Ders acma yalnizca sahipte — ogretmene basildiginda akis
+              veritabaninda ham RLS hatasiyla oluyordu */}
+          {isOwner && <button
             onClick={() => {
               setSelectedTime({
                 hour: '',
@@ -1458,7 +1438,7 @@ const Calendar = () => {
           >
             <PlusIcon className="w-4 h-4" />
             <span>{language === 'uk' ? 'Нове заняття' : 'New Event'}</span>
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -1524,13 +1504,18 @@ const Calendar = () => {
           }}
           buttonClassNames="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
           locale={language === 'uk' ? ukLocale : enLocale}
-          selectable={true}
+          // Ders açma ve sürükleme yalnızca sahipte; öğretmen kendi takvimini
+          // görür ve yoklama alır. Veritabanı da aynı kuralı uyguluyor
+          // (events_insert_owner / events_update_owner).
+          selectable={isOwner}
           select={handleDateSelect}
-          events={events}
+          // Ay görünümünde gün+öğretmen kırılımında toplanmış kartlar,
+          // diğer görünümlerde tek tek dersler
+          events={currentViewType === 'dayGridMonth' ? groupedEvents : coloredEvents}
           eventClick={handleEventClick}
           eventContent={renderEventContent}
           viewDidMount={handleViewDidMount}
-          editable={true} // Required for drag-and-drop
+          editable={isOwner} // sürükle-bırak yalnızca sahipte
           eventDrop={handleEventDrop} // Drag-and-drop handler
           dragScroll={true} // Auto-scroll during dragging
           snapDuration={toDuration(SNAP_MINUTES)} // tıklamanın oturduğu ızgara
@@ -1543,7 +1528,8 @@ const Calendar = () => {
           aspectRatio={1.8}
           firstDay={1}
           slotMinTime="09:00:00"
-          slotMaxTime="19:00:00"
+          // 23:00 üst sınır: 22:00'de başlayan ders de takvimde görünsün
+          slotMaxTime="23:00:00"
           expandRows={true}
           stickyHeaderDates={true}
           dayMaxEvents={3}
@@ -1586,7 +1572,7 @@ const Calendar = () => {
           });
           if (calendarRef.current) {
             const calendarApi = calendarRef.current.getApi();
-            fetchEvents(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+            fetchEvents(calendarApi.view.activeStart, calendarApi.view.activeEnd);
           }
         }}
         eventId={selectedEvent}

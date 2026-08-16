@@ -313,8 +313,8 @@ export default function CopyWeekModal({
                             {isExcluded
                               ? (isUk ? 'Не буде додано до цього тижня' : 'Will not be added to this week')
                               : isUk
-                                ? `Залишок 0 · абонемент до ${formatDate(student.package_end_date)}`
-                                : `0 lessons left · package ended ${formatDate(student.package_end_date)}`}
+                                ? `Залишок 0 · період з ${formatDate(student.package_start_date)}`
+                                : `0 lessons left · period from ${formatDate(student.package_start_date)}`}
                           </div>
                         </div>
 

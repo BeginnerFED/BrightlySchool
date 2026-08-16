@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { useTeachers } from '../hooks/useTeachers'
+import { GRADE_OPTIONS } from '../lib/ageGroups'
 import { supabase } from '../lib/supabase'
 import { 
   XMarkIcon,
@@ -8,7 +10,6 @@ import {
   UserGroupIcon,
   UsersIcon,
   ChartBarIcon,
-  AcademicCapIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import DatePicker, { registerLocale } from 'react-datepicker'
@@ -30,29 +31,39 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
       minute: selectedTime?.minute || ''
     },
     ageGroup: '',
-    students: [],
-    eventType: '',
-    customDescription: ''
+    teacherId: '',
+    students: []
   })
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStudents, setSelectedStudents] = useState([])
   const dropdownRef = useRef(null)
 
-  // Yaş grupları - Aylık gruplar üstte, yaş grupları altta
-  const monthlyGroups = ['12-18 міс.', '18-24 міс.', '24-36 міс.']
-  const yearlyGroups = ['3+ р.', '4+ р.', '5+ р.']
+  // Dersi verecek kişi burada seçiliyor: öğretmen ataması artık öğrencide
+  // değil, DERSTE. Liste sahibi de içeriyor (Yulia da ders veriyor).
+  const { teachers } = useTeachers(isOpen)
+
+  // Öğretmen alanı boş açılmasın; ilk sıradaki (sahip) varsayılan olsun.
+  // useTeachers'tan SONRA gelmeli: bağımlılık dizisi render sırasında
+  // değerlendiriliyor, önce yazılırsa teachers henüz tanımlı olmuyor.
+  useEffect(() => {
+    if (!isOpen || formData.teacherId || teachers.length === 0) return
+    setFormData(prev => ({ ...prev, teacherId: teachers[0].id }))
+  }, [isOpen, teachers, formData.teacherId])
 
   // Saat ve dakika seçenekleri
-  const hours = ['09', '10', '11', '12', '13', '14', '15', '16', '17', '18']
+  // 09-22 arasi 14 saat: 7 sutunlu izgarada tam iki satir.
+  // Takvim 09:00-23:00 gosteriyor ki 22:00'de baslayan ders de gorunsun
+  // (bkz. Calendar.jsx slotMinTime/slotMaxTime).
+  const hours = ['09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22']
   const minutes = ['00', '15', '30', '45']
 
   // Aktif öğrencileri getir
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        // my_students görünümü: sahip herkesi, öğretmen yalnızca kendisine
-        // atanmış öğrencileri görür. Ödeme bilgisi bu görünümde hiç yok.
+        // my_students görünümü: sahip herkesi, öğretmen yalnızca KENDİ
+        // derslerine katılan öğrencileri görür. Ödeme bilgisi burada yok.
         const { data, error } = await supabase
           .from('my_students')
           .select('id, student_name, student_age, parent_name')
@@ -154,7 +165,13 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                   e.stopPropagation()
                   e.preventDefault()
                 }}
-                onKeyDown={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  // Enter tarayıcının örtük form gönderimini tetikliyordu:
+                  // arama yazarken Enter'a basmak dersi anında oluşturuyordu.
+                  // stopPropagation React olayını durdurur, tarayıcıyı değil.
+                  if (e.key === 'Enter') e.preventDefault()
+                  e.stopPropagation()
+                }}
                 onFocus={(e) => e.stopPropagation()}
                 autoFocus
                 placeholder={language === 'uk' ? 'Пошук...' : 'Search...'}
@@ -225,9 +242,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
           minute: ''
         },
         ageGroup: '',
-        students: [],
-        eventType: '',
-        customDescription: ''
+        teacherId: '',
+        students: []
       })
       setSelectedStudents([]) // Seçili öğrencileri sıfırla
       setSearchTerm('') // Arama terimini de sıfırla
@@ -259,8 +275,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
           minute: formData.time.minute
         },
         ageGroup: formData.ageGroup,
-        eventType: formData.eventType,
-        customDescription: formData.eventType === 'ozel' ? formData.customDescription : null,
+        teacherId: formData.teacherId,
         students: selectedStudents
       };
 
@@ -280,15 +295,14 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
 
   // Form validasyonu
   const isFormValid = () => {
-    if (!formData.date || 
-        !formData.time.hour || 
-        !formData.time.minute || 
-        !formData.ageGroup || 
-        !formData.eventType) {
-      return false
-    }
-
-    if (formData.eventType === 'ozel' && !formData.customDescription?.trim()) {
+    // Saat/dakika yalnızca "boş değil" diye değil, GERÇEKTEN seçilebilir
+    // değerlerden biri mi diye kontrol ediliyor. Ay görünümünden gelen
+    // tarih-only değer 09-18 dışında bir saat üretebiliyordu.
+    if (!formData.date ||
+        !hours.includes(formData.time.hour) ||
+        !minutes.includes(formData.time.minute) ||
+        !formData.ageGroup ||
+        !formData.teacherId) {
       return false
     }
 
@@ -389,14 +403,15 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                     </label>
                     <div className="flex gap-4">
                       {/* Saat Seçimi */}
-                      <div className="flex-[2] space-y-2">
+                      <div className="flex-[7] space-y-2">
                         <div className="flex items-center gap-2">
-                          <ClockIcon className="w-5 h-5 text-[#6e6e73] dark:text-[#86868b]" />
                           <span className="text-sm text-[#6e6e73] dark:text-[#86868b]">
                             {language === 'uk' ? 'Час' : 'Hour'}
                           </span>
                         </div>
-                        <div className="grid grid-cols-5 gap-1">
+                        {/* 7 sutun: 13 saat iki satira siger (09-15 / 16-21).
+                            5 sutunda uc satir oluyor ve modal gereksiz uzuyordu. */}
+                        <div className="grid grid-cols-7 gap-1">
                           {hours.map((hour) => (
                             <button
                               key={hour}
@@ -420,7 +435,10 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                       </div>
 
                       {/* Dakika Seçimi */}
-                      <div className="flex-1 space-y-2">
+                      {/* 7'ye 2: saat ızgarası 7, dakika ızgarası 2 sütun.
+                          Oranlar sütun sayısıyla aynı olunca iki taraftaki
+                          butonlar da aynı genişlikte çıkıyor. */}
+                      <div className="flex-[2] space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[#6e6e73] dark:text-[#86868b]">
                             {language === 'uk' ? 'Хвилин' : 'Minute'}
@@ -463,115 +481,65 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                     </div>
                   </div>
 
-                  {/* Yaş Grubu */}
+                  {/* Sınıf */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'uk' ? 'Вікова група' : 'Age Group'}
-                    </label>
-                    <div className="space-y-2">
-                      {/* Aylık gruplar */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {monthlyGroups.map((age) => (
-                          <button
-                            key={age}
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, ageGroup: age }))}
-                            className={`
-                              h-9 rounded-lg text-sm font-medium transition-colors
-                              ${formData.ageGroup === age
-                                ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                                : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                              }
-                            `}
-                          >
-                            {age}
-                          </button>
-                        ))}
-                      </div>
-                      {/* Yaş grupları */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {yearlyGroups.map((age) => (
-                          <button
-                            key={age}
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, ageGroup: age }))}
-                            className={`
-                              h-9 rounded-lg text-sm font-medium transition-colors
-                              ${formData.ageGroup === age
-                                ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                                : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                              }
-                            `}
-                          >
-                            {age}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Etkinlik Türü */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                      {language === 'uk' ? 'Тип заняття' : 'Event Type'}
+                      {language === 'uk' ? 'Клас' : 'Grade'}
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, eventType: 'ingilizce' }))}
-                        className={`
-                          h-9 rounded-lg text-sm font-medium transition-colors
-                          ${formData.eventType === 'ingilizce'
-                            ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                            : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                          }
-                        `}
-                      >
-                        {language === 'uk' ? 'Англійська' : 'English'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, eventType: 'duyusal' }))}
-                        className={`
-                          h-9 rounded-lg text-sm font-medium transition-colors
-                          ${formData.eventType === 'duyusal'
-                            ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                            : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                          }
-                        `}
-                      >
-                        {language === 'uk' ? 'Сенсорика' : 'Sensory'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, eventType: 'ozel' }))}
-                        className={`
-                          h-9 rounded-lg text-sm font-medium transition-colors
-                          ${formData.eventType === 'ozel'
-                            ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
-                            : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
-                          }
-                        `}
-                      >
-                        {language === 'uk' ? 'Індивідуальне' : 'Special'}
-                      </button>
+                      {GRADE_OPTIONS.map((grade) => (
+                        <button
+                          key={grade}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, ageGroup: grade }))}
+                          className={`
+                            h-9 rounded-lg text-sm font-medium transition-colors
+                            ${formData.ageGroup === grade
+                              ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                              : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                            }
+                          `}
+                        >
+                          {grade}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Özel Etkinlik Açıklaması */}
-                  {formData.eventType === 'ozel' && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                        {language === 'uk' ? 'Опис заняття' : 'Event Description'}
-                      </label>
-                      <textarea
-                        value={formData.customDescription}
-                        onChange={(e) => setFormData(prev => ({ ...prev, customDescription: e.target.value }))}
-                        className="w-full h-11 px-4 py-2 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all resize-none text-sm sm:text-base"
-                        placeholder={language === 'uk' ? 'Опис заняття...' : 'Event description...'}
-                      />
+                  {/* Dersi veren öğretmen — ders tipi seçicisinin yerini aldı.
+                      Kart rengi de bu kişiden geliyor. */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
+                      {language === 'uk' ? 'Викладач' : 'Teacher'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {teachers.map((teacher) => {
+                        const active = formData.teacherId === teacher.id
+                        return (
+                          <button
+                            key={teacher.id}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, teacherId: teacher.id }))}
+                            className={`
+                              h-9 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 truncate
+                              ${active
+                                ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                                : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                              }
+                            `}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: teacher.color }}
+                            />
+                            <span className="truncate">{teacher.full_name || teacher.email}</span>
+                          </button>
+                        )
+                      })}
                     </div>
-                  )}
+                  </div>
+
+
               </div>
             </div>
 

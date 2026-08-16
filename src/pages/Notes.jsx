@@ -328,28 +328,18 @@ export default function Notes() {
               >
                 <div className="space-y-4">
                   {/* Başlık Skeleton */}
-                  <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-3/4 relative overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                  </div>
+                  <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-3/4 animate-pulse" />
 
                   {/* İçerik Skeleton */}
                   <div className="space-y-2">
-                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-full relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
-                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-2/3 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-full animate-pulse" />
+                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-2/3 animate-pulse" />
                   </div>
 
                   {/* Alt Bilgi Skeleton */}
                   <div className="flex items-center justify-between pt-4 border-t border-[#d2d2d7] dark:border-[#2a3241]">
-                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
-                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-8 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
+                    <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-8 animate-pulse" />
                   </div>
                 </div>
               </div>

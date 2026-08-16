@@ -54,7 +54,7 @@ export default function AttendanceList({ eventId }) {
       let nameById = {}
 
       if (ids.length > 0) {
-        // my_students: öğretmen kendi öğrencilerini, sahip herkesi görür
+        // my_students: öğretmen kendi derslerine katılanları, sahip herkesi görür
         const { data: students, error: studentsError } = await supabase
           .from('my_students')
           .select('id, student_name')
@@ -97,9 +97,13 @@ export default function AttendanceList({ eventId }) {
   }
 
   if (loading) {
+    // Panelin geri kalanıyla aynı dil: düz "Yükleniyor..." yazısı yerine
+    // satırların yerini tutan sakin iskelet.
     return (
-      <div className="text-sm text-[#6e6e73] dark:text-[#86868b] py-2">
-        {language === 'uk' ? 'Завантаження...' : 'Loading...'}
+      <div className="space-y-2">
+        {[0, 1].map(i => (
+          <div key={i} className="h-11 w-full rounded-lg bg-gray-100 dark:bg-[#242b3d] animate-pulse" />
+        ))}
       </div>
     )
   }

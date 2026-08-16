@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { formatLessonCount } from '../lib/lessonCounts'
 import { EXPENSE_TYPES, getExpenseLabel, getExpenseColor, getExpenseCard } from '../lib/expenseTypes'
+import { getPaymentMethodLabel } from '../lib/paymentMethods'
 import { 
   BanknotesIcon,
   ArrowTrendingUpIcon,
@@ -392,6 +394,14 @@ export default function IncomeExpense() {
   // Pie chart verisi için state
   const [expenseDistribution, setExpenseDistribution] = useState([])
 
+  // Pasta grafiği, dilim renkleri ve legend AYNI sıralı diziden beslenmeli.
+  // Recharts <Cell>'i indekse göre eşliyor; sıralı data + sırasız Cell
+  // kombinasyonu dilimleri yanlış renklerle boyuyordu.
+  const sortedExpenseDistribution = useMemo(
+    () => [...expenseDistribution].sort((a, b) => b.value - a.value),
+    [expenseDistribution]
+  )
+
   // Tablo verileri için state
   const [incomeTableData, setIncomeTableData] = useState([])
   const [expenseTableData, setExpenseTableData] = useState([])
@@ -476,11 +486,7 @@ export default function IncomeExpense() {
           amount,
           payment_status,
           transaction_type,
-          payment_date,
-          registrations (
-            package_start_date,
-            package_end_date
-          )
+          payment_date
         `)
         .in('transaction_type', ['initial_payment', 'extension_payment'])
         .eq('payment_status', 'odendi')
@@ -508,11 +514,7 @@ export default function IncomeExpense() {
         .select(`
           id,
           payment_status,
-          payment_date,
-          registrations (
-            package_start_date,
-            package_end_date
-          )
+          payment_date
         `)
         .eq('payment_status', 'beklemede')
 
@@ -576,13 +578,11 @@ export default function IncomeExpense() {
           registrations (
             student_name,
             parent_name,
-            package_type,
+            lesson_count,
             package_start_date,
-            package_end_date,
             is_active,
             initial_start_date,
-            initial_end_date,
-            initial_package_type
+            initial_lesson_count
           )
         `)
         .in('transaction_type', ['initial_payment', 'extension_payment'])
@@ -600,47 +600,33 @@ export default function IncomeExpense() {
 
       // 3. Verilerimizi işleyelim
       const formattedData = await Promise.all(data.map(async (record) => {
-        let displayStartDate, displayEndDate, displayPackageType;
+        let displayStartDate, displayLessonCount;
 
         if (record.transaction_type === 'initial_payment') {
-          // İlk kayıt için kaydedilen ilk tarihleri kullan (UpdateModal sonrası doğru olmalı)
+          // İlk kayıt için kaydedilen ilk değerleri kullan (UpdateModal sonrası doğru olmalı)
           displayStartDate = record.registrations.initial_start_date || record.registrations.package_start_date;
-          displayEndDate = record.registrations.initial_end_date || record.registrations.package_end_date; 
-          displayPackageType = record.registrations.initial_package_type || record.registrations.package_type;
+          displayLessonCount = record.registrations.initial_lesson_count ?? record.registrations.lesson_count;
         } else { // extension_payment
-          // Öncelik: FK üzerinden direkt eşleşme; yoksa fuzzy fallback.
-          const directMatch = record.extension_history_id
+          // Eşleşme YALNIZCA yabancı anahtar üzerinden.
+          //
+          // Eskiden bir de "bulanık" yedek yol vardı: tutar/yöntem/tarih
+          // yakınlığına ve paket tipinin eşitliğine bakıyordu. Paket tipi
+          // kalkınca o karşılaştırmanın iki tarafı da undefined olur,
+          // undefined === undefined true döner ve HER ödeme satırına EN SON
+          // uzatma eşlenirdi — geçmiş gelirlere yanlış tarih yazardı.
+          const extensionRecord = record.extension_history_id
             ? extensionData.find(ext => ext.id === record.extension_history_id)
             : null;
 
-          const potentialMatches = extensionData
-            .filter(ext => ext.registration_id === record.registration_id)
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-          const fuzzyMatch = potentialMatches.find(ext =>
-            (record.payment_status === 'beklemede' ||
-             (ext.payment_amount === record.amount &&
-              ext.payment_method === record.payment_method &&
-              (!record.payment_date || !ext.payment_date || Math.abs(new Date(record.payment_date) - new Date(ext.payment_date)) < 60000)
-             )
-            ) &&
-            ext.new_package_type === record.registrations.package_type
-          );
-
-          const extensionRecord = directMatch || fuzzyMatch;
-
           if (extensionRecord && extensionRecord.new_start_date) {
-            // Uzatma kaydı bulunduysa ve new_start_date varsa onu kullan
-            displayStartDate = extensionRecord.new_start_date; // *** Düzeltildi: new_start_date kullanılıyor ***
-            displayEndDate = extensionRecord.new_end_date;
-            displayPackageType = extensionRecord.new_package_type;
+            displayStartDate = extensionRecord.new_start_date;
+            displayLessonCount = extensionRecord.new_lesson_count;
           } else {
-            // Güvenilir bir eşleşme bulunamadıysa veya new_start_date yoksa,
-            // en iyi tahmin olarak mevcut paket tarihlerini kullan (bu durum ideal değil)
-            console.warn(`Extension history eşleşmesi bulunamadı veya new_start_date eksik: financial_record.id=${record.id}, registration_id=${record.registration_id}`);
+            // Eşleşme yoksa kaydın güncel değerleri en iyi tahmin. Eski
+            // kayıtlarda extension_history_id boş olabilir.
+            console.warn(`Extension history eşleşmesi bulunamadı: financial_record.id=${record.id}, registration_id=${record.registration_id}`);
             displayStartDate = record.registrations.package_start_date;
-            displayEndDate = record.registrations.package_end_date;
-            displayPackageType = record.registrations.package_type;
+            displayLessonCount = record.registrations.lesson_count;
           }
         }
 
@@ -648,9 +634,8 @@ export default function IncomeExpense() {
           id: record.id,
           student: record.registrations.student_name,
           parent: record.registrations.parent_name,
-          package: displayPackageType,
+          lessonCount: displayLessonCount,
           date: displayStartDate,
-          end_date: displayEndDate,
           is_active: record.registrations.is_active,
           amount: record.amount,
           method: record.payment_method,
@@ -1477,17 +1462,9 @@ export default function IncomeExpense() {
                       {language === 'uk' ? 'Дохід' : 'Income'}
                       {incomeFilters.paymentMethod.length > 0 && (
                         <span className="ml-1 text-xs">
-                          ({language === 'uk' ? 
-                            (incomeFilters.paymentMethod.map(method => 
-                              method === 'nakit' ? 'Готівка' : 
-                              method === 'banka' ? 'Банк' : 
-                              method === 'kart' ? 'Картка' : ''
-                            ).join(', ')) : 
-                            (incomeFilters.paymentMethod.map(method => 
-                              method === 'nakit' ? 'Cash' : 
-                              method === 'banka' ? 'Bank' : 
-                              method === 'kart' ? 'Credit Card' : ''
-                            ).join(', '))})
+                          ({incomeFilters.paymentMethod
+                            .map(method => getPaymentMethodLabel(method, language))
+                            .join(', ')})
                         </span>
                       )}
                     </p>
@@ -1517,13 +1494,7 @@ export default function IncomeExpense() {
                       {language === 'uk' ? 'Витрати' : 'Expense'}
                       {expenseFilters.paymentMethod && (
                         <span className="ml-1 text-xs">
-                          ({language === 'uk' ? 
-                            (expenseFilters.paymentMethod === 'nakit' ? 'Готівка' : 
-                             expenseFilters.paymentMethod === 'banka' ? 'Банк' : 
-                             expenseFilters.paymentMethod === 'kart' ? 'Картка' : '') : 
-                            (expenseFilters.paymentMethod === 'nakit' ? 'Cash' : 
-                             expenseFilters.paymentMethod === 'banka' ? 'Bank' : 
-                             expenseFilters.paymentMethod === 'kart' ? 'Credit Card' : '')})
+                          ({getPaymentMethodLabel(expenseFilters.paymentMethod, language)})
                         </span>
                       )}
                       {expenseFilters.expenseType && (
@@ -1686,12 +1657,12 @@ export default function IncomeExpense() {
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'uk' ? 'Абонемент' : 'Package'}
+                          {language === 'uk' ? 'Заняття' : 'Lessons'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
                         <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                          {language === 'uk' ? 'Початок-Кінець' : 'Start-End'}
+                          {language === 'uk' ? 'Початок' : 'Start'}
                         </span>
                       </th>
                       <th className="py-4 px-6 text-left bg-[#f5f5f7]/50 dark:bg-[#161922]">
@@ -1747,18 +1718,13 @@ export default function IncomeExpense() {
                         </td>
                         <td className="py-4 px-6">
                           <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-[#0071e3]/5 to-[#34d399]/5 dark:from-[#0071e3]/10 dark:to-[#34d399]/10 text-[#0071e3] group-hover:from-[#0071e3]/10 group-hover:to-[#34d399]/10 dark:group-hover:from-[#0071e3]/20 dark:group-hover:to-[#34d399]/20 transition-all">
-                            {item.package === 'ucretsiz' ? 'Безкоштовно'
-                              : item.package === 'hafta-1' ? '1 на тиждень'
-                              : item.package === 'hafta-2' ? '2 на тиждень'
-                              : item.package === 'hafta-3' ? '3 на тиждень'
-                              : item.package === 'hafta-4' ? '4 на тиждень'
-                              : 'Разове'}
+                            {formatLessonCount(item.lessonCount, language)}
                           </span>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
                             <span className="text-sm text-[#424245] dark:text-[#86868b]">
-                              {new Date(item.date).toLocaleDateString('uk-UA')} - {item.end_date ? new Date(item.end_date).toLocaleDateString('uk-UA') : new Date(item.date).toLocaleDateString('uk-UA')}
+                              {new Date(item.date).toLocaleDateString('uk-UA')}
                             </span>
                           </div>
                         </td>
@@ -1799,7 +1765,7 @@ export default function IncomeExpense() {
                         </td>
                         <td className="py-4 px-6">
                           <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f5f5f7] dark:bg-[#1d1d1f] text-[#424245] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] group-hover:bg-white dark:group-hover:bg-[#121621] transition-colors">
-                            {item.method.charAt(0).toUpperCase() + item.method.slice(1)}
+                            {getPaymentMethodLabel(item.method, language)}
                           </span>
                         </td>
                         <td className="py-4 px-6">
@@ -1960,7 +1926,7 @@ export default function IncomeExpense() {
                             </td>
                             <td className="py-4 px-6">
                               <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r ${color.bg} dark:from-opacity-10 dark:to-opacity-10 ${color.text} transition-all`}>
-                                {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                                {getExpenseLabel(item.category, language)}
                               </span>
                             </td>
                             <td className="py-4 px-6">
@@ -1975,7 +1941,7 @@ export default function IncomeExpense() {
                             </td>
                             <td className="py-4 px-6">
                               <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f5f5f7] dark:bg-[#1d1d1f] text-[#424245] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] group-hover:bg-white dark:group-hover:bg-[#121621] transition-colors">
-                                {item.method.charAt(0).toUpperCase() + item.method.slice(1)}
+                                {getPaymentMethodLabel(item.method, language)}
                               </span>
                             </td>
                             <td className="py-4 px-6">
@@ -2079,7 +2045,7 @@ export default function IncomeExpense() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={[...expenseDistribution].sort((a, b) => b.value - a.value)}
+                        data={sortedExpenseDistribution}
                         cx="50%"
                         cy="50%"
                         innerRadius={70}
@@ -2090,7 +2056,7 @@ export default function IncomeExpense() {
                         startAngle={90}
                         endAngle={-270}
                       >
-                        {expenseDistribution.map((entry, index) => (
+                        {sortedExpenseDistribution.map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
                             fill={entry.color}
@@ -2136,8 +2102,7 @@ export default function IncomeExpense() {
               {/* Legend */}
               {expenseDistribution.length > 0 && (
                 <div className="mt-6 space-y-2">
-                  {[...expenseDistribution]
-                    .sort((a, b) => b.value - a.value)
+                  {sortedExpenseDistribution
                     .map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

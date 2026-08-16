@@ -3,17 +3,22 @@ import { supabase } from '../lib/supabase';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays, eachDayOfInterval } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { ChevronLeftIcon, ChevronRightIcon, AdjustmentsHorizontalIcon, MoonIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { DEFAULT_TEACHER_COLOR } from '../lib/teacherColors';
+import { GRADE_OPTIONS } from '../lib/ageGroups';
 
 // Kart gölgesi (tek yerden yönetilsin)
 const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(23,19,31,0.04),0_8px_24px_-8px_rgba(23,19,31,0.1)]';
 
 // Filtrede gösterilen yaş grupları (5+ Yaş bilinçli olarak filtre dışı)
-const AGE_GROUPS = ['12-18 міс.', '18-24 міс.', '24-36 міс.', '3+ р.', '4+ р.'];
-const EVENT_TYPES = [
-  { value: 'ingilizce', label: 'Англійська', color: '#8b5cf6' },
-  { value: 'duyusal', label: 'Сенсорика', color: '#f97316' },
-  { value: 'ozel', label: 'Індивідуальне', color: '#059669' }
-];
+// Sınıf listesi tek kaynaktan (src/lib/ageGroups.js) geliyor: eskiden burada
+// ayrı bir kopya duruyordu ve '5+ р.' bilinçli olarak dışarıda bırakılmıştı,
+// bu yüzden panelde açılabilen bir grup herkese açık filtrede hiç görünmüyordu.
+const AGE_GROUPS = GRADE_OPTIONS;
+
+// Okul yalnızca İngilizce ders veriyor; ders tipi ayrımı ve ona bağlı filtre
+// kalktı. Renk artık dersi veren öğretmenden geliyor — public_events görünümü
+// teacher_name ve teacher_color döndürüyor, teacher_id dışarı çıkmıyor.
+const LESSON_LABEL = 'Англійська';
 
 const PublicCalendar = () => {
   const [events, setEvents] = useState([]);
@@ -25,11 +30,13 @@ const PublicCalendar = () => {
   const [themeWeekLoaded, setThemeWeekLoaded] = useState(null); // weekTheme'in ait olduğu haftanın anahtarı
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [filters, setFilters] = useState({
-    ageGroup: '',
-    eventType: ''
+    ageGroup: ''
   });
 
   const latestThemeWeekRef = useRef(null); // Geç gelen konu yanıtının günceli ezmemesi için
+  // Ders listesi için de aynı koruma: hafta/filtre hızlı değiştirilince
+  // önceki isteğin geç gelen yanıtı günceli eziyor ve gün boş görünüyordu.
+  const latestEventsRequestRef = useRef(0);
 
   // Bottom sheet'i sürükleyerek kapatma (Apple usulü: sheet'in her yerinden).
   // 8px'lik dikey hareketten sonra sürükleme devralınır — düz dokunuşlar tıklama olarak kalır.
@@ -132,16 +139,24 @@ const PublicCalendar = () => {
   };
 
   // Etkinlik türüne göre renk ve etiket (admin takvimiyle aynı renkler)
-  const getEventTypeDetails = (type) => {
-    const found = EVENT_TYPES.find(t => t.value === type);
-    return found || { value: type, label: type, color: '#6b7280' };
-  };
+  // Kartın rengi ve altındaki ad dersi veren kişiden geliyor.
+  // Öğretmen silinmişse (LEFT JOIN -> NULL) renk nötre düşer, kart boş kalmaz.
+  const getLessonDetails = (event) => ({
+    color: event.teacher_color || DEFAULT_TEACHER_COLOR,
+    teacherName: event.teacher_name || null,
+    label: LESSON_LABEL
+  });
 
   useEffect(() => {
     fetchEvents();
   }, [currentWeek, filters]);
 
   const fetchEvents = async () => {
+    // Bu isteğin sıra numarası. Yanıt döndüğünde hâlâ EN SON istek miyiz
+    // diye bakılıyor; değilsek yazmıyoruz. Konu sorgusunda aynı koruma
+    // zaten vardı, ders listesinde yoktu.
+    const requestId = ++latestEventsRequestRef.current;
+
     try {
       setLoading(true);
       setError(null);
@@ -182,9 +197,6 @@ const PublicCalendar = () => {
       if (filters.ageGroup) {
         query = query.eq('age_group', filters.ageGroup);
       }
-      if (filters.eventType) {
-        query = query.eq('event_type', filters.eventType);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -213,6 +225,7 @@ const PublicCalendar = () => {
         active_capacity: capacityByEvent[event.id] || 0
       }));
 
+      if (requestId !== latestEventsRequestRef.current) return; // geç gelen yanıt
       setEvents(eventsWithActiveCapacity);
 
       // Konu yanıtını işle (yalnızca hâlâ görüntülenen haftaya aitse)
@@ -228,9 +241,11 @@ const PublicCalendar = () => {
       }
     } catch (err) {
       console.error('Error fetching events:', err);
-      setError(err.message);
+      if (requestId === latestEventsRequestRef.current) setError(err.message);
     } finally {
-      setLoading(false);
+      // Eski bir isteğin bitişi, hâlâ süren yeni isteğin yükleniyor
+      // durumunu kapatmasın — aksi halde boş liste "sonuç yok" gibi görünür.
+      if (requestId === latestEventsRequestRef.current) setLoading(false);
     }
   };
 
@@ -270,8 +285,8 @@ const PublicCalendar = () => {
   // sorgu bile atılmıyor) — bu yüzden iskelet de sadece o haftada anlamlı
   const viewedWeekKey = format(weekDays[0], 'yyyy-MM-dd');
   const isViewingCurrentWeek = viewedWeekKey === format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-  const hasActiveFilters = Boolean(filters.ageGroup || filters.eventType);
-  const activeFilterCount = (filters.ageGroup ? 1 : 0) + (filters.eventType ? 1 : 0);
+  const hasActiveFilters = Boolean(filters.ageGroup);
+  const activeFilterCount = filters.ageGroup ? 1 : 0;
 
   // Hafta iki aya yayılıyorsa "Ağu – Eylül 2026" gibi göster
   const monthLabel =
@@ -596,9 +611,12 @@ const PublicCalendar = () => {
               // Etkinlik kartları (gün değişince yumuşak giriş)
               <div key={selectedDay} className="space-y-3">
                 {selectedDayEvents.map((event, index) => {
-                  const typeDetails = getEventTypeDetails(event.event_type);
+                  const typeDetails = getLessonDetails(event);
                   // Aktif katılımcı sayısına göre kalan kontenjanı hesapla
-                  const availableSpots = 6 - event.active_capacity;
+                  // Kontenjan dersin KENDI max_capacity'sinden; sabit 6
+                  // yaziliyordu ve dersler 10 ile acildigi icin dolu bir
+                  // derste eksi bos yer cikabiliyordu.
+                  const availableSpots = (event.max_capacity ?? 0) - event.active_capacity;
                   const hasSpots = availableSpots > 0;
 
                   return (
@@ -621,6 +639,17 @@ const PublicCalendar = () => {
                         <div className="text-[16px] font-semibold tracking-tight leading-tight truncate">
                           {typeDetails.label}
                         </div>
+                        {typeDetails.teacherName && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: typeDetails.color }}
+                            />
+                            <span className="text-[13px] font-medium text-zinc-500 truncate">
+                              {typeDetails.teacherName}
+                            </span>
+                          </div>
+                        )}
                         <div className="text-[13px] font-medium text-zinc-600 mt-1">
                           {event.age_group}
                         </div>
@@ -676,11 +705,11 @@ const PublicCalendar = () => {
           <div className="px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             {/* Başlık */}
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[19px] font-semibold tracking-tight">Filtreler</h3>
+              <h3 className="text-[19px] font-semibold tracking-tight">Фільтри</h3>
               <div className="flex items-center gap-3">
                 {hasActiveFilters && (
                   <button
-                    onClick={() => setFilters({ ageGroup: '', eventType: '' })}
+                    onClick={() => setFilters({ ageGroup: '' })}
                     className="text-[13px] font-semibold text-sky-600 hover:text-sky-700 transition-colors"
                   >
                     Скинути
@@ -688,7 +717,7 @@ const PublicCalendar = () => {
                 )}
                 <button
                   onClick={() => setIsFiltersVisible(false)}
-                  aria-label="Filtreleri kapat"
+                  aria-label="Закрити фільтри"
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 transition-all"
                 >
                   <XMarkIcon className="w-4 h-4" />
@@ -698,7 +727,7 @@ const PublicCalendar = () => {
 
             {/* Yaş Grubu */}
             <div className="mb-6">
-              <div className="text-[13px] font-semibold text-zinc-900 mb-2.5">Вікова група</div>
+              <div className="text-[13px] font-semibold text-zinc-900 mb-2.5">Клас</div>
               <div className="flex flex-wrap gap-2">
                 {['', ...AGE_GROUPS].map(group => (
                   <button
@@ -711,40 +740,6 @@ const PublicCalendar = () => {
                     }`}
                   >
                     {group || 'Усі'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Etkinlik Tipi */}
-            <div className="mb-7">
-              <div className="text-[13px] font-semibold text-zinc-900 mb-2.5">Etkinlik Tipi</div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, eventType: '' }))}
-                  className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all active:scale-95 ${
-                    filters.eventType === ''
-                      ? 'bg-sky-600 text-white'
-                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                  }`}
-                >
-                  Усі
-                </button>
-                {EVENT_TYPES.filter(type => type.value !== 'ozel').map(type => (
-                  <button
-                    key={type.value}
-                    onClick={() => setFilters(prev => ({ ...prev, eventType: type.value }))}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium transition-all active:scale-95 ${
-                      filters.eventType === type.value
-                        ? 'bg-sky-600 text-white'
-                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                    }`}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: type.color }}
-                    ></span>
-                    {type.label}
                   </button>
                 ))}
               </div>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { DateRange } from 'react-date-range'
+import { DateRange, Calendar } from 'react-date-range'
 import { uk } from 'date-fns/locale'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import { createClient } from '@supabase/supabase-js'
 import Toast from './ui/Toast'
 import { useLanguage } from '../context/LanguageContext'
-import { useTeachers } from '../hooks/useTeachers'
+import { LESSON_COUNT_OPTIONS, DEFAULT_LESSON_COUNT, formatLessonCount } from '../lib/lessonCounts'
+import { resolvePeriodStart } from '../lib/dates'
 import {
   XMarkIcon,
   FaceSmileIcon,
@@ -18,7 +19,6 @@ import {
   CreditCardIcon,
   BanknotesIcon,
   CurrencyDollarIcon,
-  AcademicCapIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
@@ -34,20 +34,13 @@ const initialFormData = {
   parentName: '',
   phone: '',
   age: '',
-  packageType: '',
-  teacherId: '',
+  lessonCount: DEFAULT_LESSON_COUNT,
   paymentStatus: '',
   paymentMethod: '',
   amount: '',
   note: '',
   paymentDate: null // Varsayılan olarak null (tarih seçilmemiş)
 }
-
-const initialDateRange = [{
-  startDate: new Date(),
-  endDate: new Date(),
-  key: 'selection'
-}]
 
 export default function RegisterModal({ isOpen, onClose, onSuccess }) {
   const { language } = useLanguage()
@@ -60,15 +53,15 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
     type: 'success'
   })
   const [formData, setFormData] = useState(initialFormData)
-  const { teachers } = useTeachers(isOpen)
-  const [dateRange, setDateRange] = useState(initialDateRange)
+  // Paketin bitiş tarihi yok: yalnızca başladığı gün seçiliyor.
+  const [startDate, setStartDate] = useState(() => new Date())
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isPaymentDatePickerOpen, setIsPaymentDatePickerOpen] = useState(false)
 
   // Form verilerini sıfırlama fonksiyonu
   const resetForm = () => {
     setFormData(initialFormData)
-    setDateRange(initialDateRange)
+    setStartDate(new Date())
     setIsCalendarOpen(false)
     setIsPaymentDatePickerOpen(false)
   }
@@ -108,28 +101,23 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
     })
   }
 
-  // Ücretsiz katılım: ödeme ve paket tarihi sorulmaz
-  const isFree = formData.packageType === 'ucretsiz'
-
   const isFormValid = () => {
     const hasIdentityFields = (
       formData.studentName.trim() !== '' &&
       formData.parentName.trim() !== '' &&
       formData.phone.trim() !== '' &&
       formData.age.trim() !== '' &&
-      formData.packageType !== ''
+      Number(formData.lessonCount) > 0
     )
 
-    // Ücretsiz katılımda ödeme alanları ve tarih aralığı istenmez
-    if (isFree) {
-      return hasIdentityFields
-    }
-
-    // Temel validasyon (her durumda kontrol edilecek alanlar)
+    // Not: burada eskiden "startDate !== endDate" diye bir kontrol vardı ama
+    // iki ayrı Date NESNESİNİ karşılaştırdığı için her zaman doğru dönüyordu —
+    // koruma görünümlü ölü koddu. Tarih aralığı kalktığı için tamamen silindi.
     const baseValidation = (
       hasIdentityFields &&
       formData.paymentStatus !== '' &&
-      dateRange[0].startDate !== dateRange[0].endDate
+      startDate instanceof Date &&
+      !isNaN(startDate)
     )
 
     // Eğer ödeme durumu "beklemede" ise ödeme detaylarını kontrol etme
@@ -149,40 +137,7 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target
 
-    // Ücretsiz katılıma geçilirse tarih aralığını bugüne sabitle
-    // (iki ayrı Date nesnesi - aynı referans form geçerliliğini kilitler)
-    if (name === 'packageType' && value === 'ucretsiz') {
-      setDateRange([{ startDate: new Date(), endDate: new Date(), key: 'selection' }])
-      setIsCalendarOpen(false)
-    }
-
     setFormData(prev => {
-      // Ücretsiz katılım: ödeme alanları boşaltılır ve pasifleşir
-      // ('belirlenmedi'/0 dönüşümü kaydetme anında yapılır)
-      if (name === 'packageType' && value === 'ucretsiz') {
-        return {
-          ...prev,
-          [name]: value,
-          paymentStatus: 'ucretsiz',
-          paymentMethod: '',
-          amount: '',
-          paymentDate: null
-        }
-      }
-
-      // Ücretsizden ücretli pakete dönülürse ödeme alanları sıfırlanır
-      // (kullanıcı gerçek bir ödeme seçimi yapmak zorunda kalsın)
-      if (name === 'packageType' && prev.packageType === 'ucretsiz' && value !== 'ucretsiz') {
-        return {
-          ...prev,
-          [name]: value,
-          paymentStatus: '',
-          paymentMethod: '',
-          amount: '',
-          paymentDate: null
-        }
-      }
-
       // Eğer ödeme durumu "beklemede" olarak değiştirilirse, ödeme yeri ve tutarını temizle
       if (name === 'paymentStatus' && value === 'beklemede') {
         return {
@@ -218,20 +173,11 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
 
     setIsLoading(true)
     try {
-      // Ücretsiz katılım / beklemede durumunda varsayılan değerler ata
-      const noPaymentDetails = isFree || formData.paymentStatus === 'beklemede'
+      // Ödeme beklemedeyse tutar ve yöntem sorulmaz
+      const noPaymentDetails = formData.paymentStatus === 'beklemede'
       const paymentMethod = noPaymentDetails ? 'belirlenmedi' : formData.paymentMethod
       const paymentAmount = noPaymentDetails ? 0 : (parseFloat(formData.amount) || 0)
-
-      // Ücretsizde paket tarihi anlamsız: kayıt gününü tam gün olarak sakla
-      let packageStartDate = dateRange[0].startDate
-      let packageEndDate = dateRange[0].endDate
-      if (isFree) {
-        packageStartDate = new Date()
-        packageStartDate.setHours(0, 0, 0, 0)
-        packageEndDate = new Date()
-        packageEndDate.setHours(23, 59, 59, 999)
-      }
+      const lessonCount = Number(formData.lessonCount)
 
       // 1. Yeni kayıt oluştur
       const { data, error } = await supabase
@@ -242,10 +188,11 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
             student_age: formData.age.trim(),
             parent_name: formData.parentName.trim(),
             parent_phone: formData.phone.trim(),
-            package_type: formData.packageType,
-            teacher_id: formData.teacherId || null,
-            package_start_date: packageStartDate,
-            package_end_date: packageEndDate,
+            lesson_count: lessonCount,
+            // Dönem başlangıcı diğer modallarla aynı kuralla normalleşiyor
+            // (bkz. src/lib/dates.js) — takvimden gelen 00:00 ile formun
+            // varsayılanı olan "şu an" arasındaki fark sayımı etkiliyordu.
+            package_start_date: resolvePeriodStart(startDate),
             payment_status: formData.paymentStatus,
             payment_method: paymentMethod,
             payment_amount: paymentAmount,
@@ -253,9 +200,8 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
             notes: formData.note.trim() || null,
             is_active: true,
             // İlk kayıt bilgileri (trigger tarafından da kaydedilecek)
-            initial_package_type: formData.packageType,
-            initial_start_date: packageStartDate,
-            initial_end_date: packageEndDate,
+            initial_lesson_count: lessonCount,
+            initial_start_date: resolvePeriodStart(startDate),
             initial_payment_method: paymentMethod,
             initial_payment_amount: paymentAmount,
             initial_notes: formData.note.trim() || null
@@ -273,8 +219,8 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
         throw error
       }
 
-      // 2. Finansal kayıt oluştur (ücretsiz katılımda ödeme kaydı oluşturulmaz)
-      if (!isFree && data && data[0]) {
+      // 2. Finansal kayıt oluştur
+      if (data && data[0]) {
         const { error: financialError } = await supabase
           .from('financial_records')
           .insert({
@@ -516,64 +462,24 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                 </div>
 
 
-                {/* Öğretmen ataması — öğretmen yalnızca kendisine atanmış
-                    öğrencileri görür. Boş bırakılırsa öğrenci yalnızca sahibindir. */}
-                <div className="relative">
-                  <div className={iconWrapperClasses}>
-                    <AcademicCapIcon className={iconClasses} />
-                  </div>
-                  <select
-                    name="teacherId"
-                    value={formData.teacherId || ''}
-                    onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.teacherId && 'text-[#86868b]'}`}
-                    autoComplete="off"
-                  >
-                    <option value="" className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Без викладача" : "No teacher"}
-                    </option>
-                    {teachers.map(teacher => (
-                      <option key={teacher.id} value={teacher.id} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {teacher.full_name || (language === 'uk' ? "Викладач" : "Teacher")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Paket Türü */}
+                {/* Ders sayısı — okul paket değil, doğrudan ders satıyor */}
                 <div className="relative">
                   <div className={iconWrapperClasses}>
                     <CubeIcon className={iconClasses} />
                   </div>
-                  <select 
-                    name="packageType"
-                    value={formData.packageType}
+                  <select
+                    name="lessonCount"
+                    value={formData.lessonCount}
                     onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.packageType && 'text-[#86868b]'}`}
+                    className={inputClasses}
                     tabIndex={5}
                     autoComplete="off"
                   >
-                    <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Оберіть тип абонемента" : "Select Package Type"}
-                    </option>
-                    <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
-                    </option>
-                    <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
-                    </option>
-                    <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
-                    </option>
-                    <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
-                    </option>
-                    <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
-                    </option>
-                    <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                      {language === 'uk' ? "Безкоштовне відвідування" : "Free Participation"}
-                    </option>
+                    {LESSON_COUNT_OPTIONS.map(count => (
+                      <option key={count} value={count} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
+                        {formatLessonCount(count, language)}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -587,19 +493,16 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                   </div>
                   <input
                     type="text"
-                    className={`${inputClasses} ${isFree ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer peer'}`}
-                    placeholder={language === 'uk' ? "Оберіть дату реєстрації" : "Select Registration Date"}
-                    value={isFree
-                      ? (language === 'uk' ? "Безстроково" : "Unlimited")
-                      : `${formatDate(dateRange[0].startDate)} - ${formatDate(dateRange[0].endDate)}`}
-                    onClick={() => { if (!isFree) setIsCalendarOpen(!isCalendarOpen) }}
+                    className={`${inputClasses} cursor-pointer peer`}
+                    placeholder={language === 'uk' ? "Оберіть дату початку" : "Select Start Date"}
+                    value={formatDate(startDate)}
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                     readOnly
-                    disabled={isFree}
                     tabIndex={6}
                     autoComplete="off"
                   />
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-[#007AFF] text-white text-sm rounded-md opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 whitespace-nowrap shadow-lg dark:shadow-[#007AFF]/20">
-                    {language === 'uk' ? "Дата початку та закінчення" : "Registration Start and End Date"}
+                    {language === 'uk' ? "Дата початку занять" : "Lessons Start Date"}
                   </div>
                   {isCalendarOpen && (
                     <div className="absolute z-50 mt-2">
@@ -671,28 +574,17 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                             .dark .rdrDateDisplayItem::after {
                               background-color: #4a4a4a;
                             }
-                            .rdrDateDisplayItem:first-child::after {
-                              content: "Дата початку";
-                            }
-                            .rdrDateDisplayItem:last-child::after {
-                              content: "Дата закінчення";
-                            }
                           `}
                         </style>
-                        <DateRange
-                          onChange={item => {
-                            setDateRange([item.selection])
-                            // Eğer bitiş tarihi seçildiyse ve başlangıç tarihinden farklıysa takvimi kapat
-                            if (item.selection.endDate > item.selection.startDate) {
-                              setIsCalendarOpen(false)
-                            }
+                        {/* Aralık değil tek tarih: paketin bitişi yok */}
+                        <Calendar
+                          date={startDate}
+                          onChange={date => {
+                            setStartDate(date)
+                            setIsCalendarOpen(false)
                           }}
-                          moveRangeOnFirstSelection={false}
-                          months={1}
-                          ranges={dateRange}
-                          direction="horizontal"
                           locale={uk}
-                          rangeColors={['#007AFF']}
+                          color="#007AFF"
                         />
                       </div>
                     </div>
@@ -708,20 +600,13 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     name="paymentStatus"
                     value={formData.paymentStatus}
                     onChange={handleInputChange}
-                    className={`${inputClasses} ${!formData.paymentStatus && 'text-[#86868b]'} ${isFree && 'opacity-50 cursor-not-allowed'}`}
+                    className={`${inputClasses} ${!formData.paymentStatus && 'text-[#86868b]'}`}
                     tabIndex={7}
                     autoComplete="off"
-                    disabled={isFree}
                   >
                     <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#1d1d1f]">
                       {language === 'uk' ? "Оберіть статус оплати" : "Select Payment Status"}
                     </option>
-                    {/* Yalnızca ücretsiz katılımda görünür (select pasif olduğu için seçilemez) */}
-                    {isFree && (
-                      <option value="ucretsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
-                        {language === 'uk' ? "Безкоштовно" : "Free"}
-                      </option>
-                    )}
                     <option value="odendi" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#1d1d1f]">
                       {language === 'uk' ? "Оплачено" : "Paid"}
                     </option>
@@ -814,11 +699,9 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     placeholder={language === 'uk' ? "День оплати" : "Payment Date"}
                     value={formData.paymentDate
                       ? formatDate(formData.paymentDate)
-                      : isFree
-                        ? (language === 'uk' ? "Оплата не стягується" : "No Payment")
-                        : formData.paymentStatus === 'beklemede'
-                          ? (language === 'uk' ? "Очікує оплати" : "Payment Pending")
-                          : (language === 'uk' ? "Оберіть дату оплати" : "Select Payment Date")}
+                      : formData.paymentStatus === 'beklemede'
+                        ? (language === 'uk' ? "Очікує оплати" : "Payment Pending")
+                        : (language === 'uk' ? "Оберіть дату оплати" : "Select Payment Date")}
                     onClick={() => formData.paymentStatus === 'odendi' && setIsPaymentDatePickerOpen(!isPaymentDatePickerOpen)}
                     readOnly
                     tabIndex={10}
@@ -902,29 +785,31 @@ export default function RegisterModal({ isOpen, onClose, onSuccess }) {
                     </div>
                   )}
                 </div>
-                {/* Not — sağ kolonun son alanı. Öğretmen seçimi sola eklenince
-                    sol 6, sağ 5 alan kalıyordu; not buraya taşınınca 6-6 oldu. */}
-                <div className="relative">
-                  <div className={iconWrapperClasses}>
-                    <PencilSquareIcon className={iconClasses} />
-                  </div>
-                  <input
-                    type="text"
-                    name="note"
-                    value={formData.note}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setFormData(prev => ({
-                        ...prev,
-                        note: value.charAt(0).toUpperCase() + value.slice(1)
-                      }))
-                    }}
-                    className={inputClasses}
-                    placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
-                    tabIndex={11}
-                    autoComplete="off"
-                  />
+              </div>
+
+              {/* Not — iki kolonu birden kaplar. Öğretmen alanı sol kolondan
+                  kalkınca kolonlar 5-5 eşitlendi; notun sağ kolona sıkışmasına
+                  gerek kalmadı, tam genişlikte daha çok yazı görünüyor. */}
+              <div className="md:col-span-2 relative">
+                <div className={iconWrapperClasses}>
+                  <PencilSquareIcon className={iconClasses} />
                 </div>
+                <input
+                  type="text"
+                  name="note"
+                  value={formData.note}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setFormData(prev => ({
+                      ...prev,
+                      note: value.charAt(0).toUpperCase() + value.slice(1)
+                    }))
+                  }}
+                  className={inputClasses}
+                  placeholder={language === 'uk' ? "Додати нотатку..." : "Add note..."}
+                  tabIndex={11}
+                  autoComplete="off"
+                />
               </div>
 
               {/* Buttons */}

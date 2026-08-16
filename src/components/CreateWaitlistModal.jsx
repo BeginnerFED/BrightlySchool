@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { toDateOnly } from '../lib/dates'
+import { LESSON_COUNT_OPTIONS, DEFAULT_LESSON_COUNT, formatLessonCount } from '../lib/lessonCounts'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { uk } from 'date-fns/locale'
 import "react-datepicker/dist/react-datepicker.css"
@@ -32,7 +34,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
     parent_phone: '',
     student_name: '',
     student_age: '',
-    package_type: '',
+    lesson_count: DEFAULT_LESSON_COUNT,
     contact_date: new Date(),
     status: '',
     notes: ''
@@ -48,7 +50,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
       formData.parent_phone.trim() !== '' &&
       formData.student_name.trim() !== '' &&
       formData.student_age.trim() !== '' &&
-      formData.package_type !== '' &&
+      Number(formData.lesson_count) > 0 &&
       formData.contact_date !== null &&
       formData.status !== ''
 
@@ -69,7 +71,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
         .from('waitlist')
         .insert([{
           ...formData,
-          contact_date: formData.contact_date.toISOString().split('T')[0]
+          contact_date: toDateOnly(formData.contact_date)
         }])
 
       if (error) throw error
@@ -85,7 +87,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
         parent_phone: '',
         student_name: '',
         student_age: '',
-        package_type: '',
+        lesson_count: DEFAULT_LESSON_COUNT,
         contact_date: new Date(),
         status: '',
         notes: ''
@@ -443,39 +445,26 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                   <div className={iconWrapperClasses}>
                     <CubeIcon className={iconClasses} />
                   </div>
-                  <select 
+                  {/* Ders sayısı — seçenekler lib/lessonCounts.js'te */}
+                  <select
                     required
-                    value={formData.package_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, package_type: e.target.value }))}
-                    className={`${inputClasses} ${!formData.package_type && 'text-[#86868b]'}`}
+                    value={formData.lesson_count}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lesson_count: Number(e.target.value) }))}
+                    className={inputClasses}
                     tabIndex={5}
                     autoComplete="off"
                   >
-                    <option value="" disabled className="text-[#86868b] dark:text-[#86868b] bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "Бажаний абонемент" : "Interested Package Type"}
-                    </option>
-                    <option value="belirsiz" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "Не визначено" : "Uncertain"}
-                    </option>
-                    <option value="tek-seferlik" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "Разове відвідування" : "One Time Participation"}
-                    </option>
-                    <option value="hafta-1" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "1 день на тиждень" : "1 Day Per Week"}
-                    </option>
-                    <option value="hafta-2" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "2 дні на тиждень" : "2 Days Per Week"}
-                    </option>
-                    <option value="hafta-3" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "3 дні на тиждень" : "3 Days Per Week"}
-                    </option>
-                    <option value="hafta-4" className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
-                      {language === 'uk' ? "4 дні на тиждень" : "4 Days Per Week"}
-                    </option>
+                    {LESSON_COUNT_OPTIONS.map(count => (
+                      <option key={count} value={count} className="text-[#1d1d1f] dark:text-white bg-white dark:bg-[#121621]">
+                        {formatLessonCount(count, language)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* Aranılan Tarih */}
+                {/* Aranılan Tarih. Üst sınır BUGÜN: eskiden sabit
+                    '2025-12-31' yazıyordu, o tarih geçtiği için takvimdeki
+                    bütün günler pasifti — tıklamalar sessizce yok sayılıyordu. */}
                 <DatePicker
                   portalId="root"
                   selected={formData.contact_date}
@@ -483,8 +472,7 @@ export default function CreateWaitlistModal({ isOpen, onClose, onSuccess }) {
                   dateFormat="dd.MM.yyyy"
                   locale={language === 'uk' ? 'uk' : 'en'}
                   customInput={<CustomInput />}
-                  minDate={new Date('2024-01-01')}
-                  maxDate={new Date('2025-12-31')}
+                  maxDate={new Date()}
                   showPopperArrow={false}
                   required
                 />

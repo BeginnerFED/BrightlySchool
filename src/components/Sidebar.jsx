@@ -19,29 +19,32 @@ import { supabase } from '../lib/supabase';
 
 const Sidebar = ({ onClose }) => {
   const { t } = useLanguage();
-  const { isOwner } = useAuth();
+  const { isOwner, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState('');
-  const [userInitials, setUserInitials] = useState('');
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserEmail(user.email);
-        // Email adresinden baş harfleri al
-        const initials = user.email
-          .split('@')[0] // @ işaretinden önceki kısmı al
-          .match(/\b\w/g) // Kelimelerin ilk harflerini al
-          .join('') // Harfleri birleştir
-          .toUpperCase(); // Büyük harfe çevir
-        setUserInitials(initials);
-      }
+      if (user) setUserEmail(user.email);
     };
-    
+
     getUser();
   }, []);
+
+  // Görünen ad profilden gelir. Eskiden e-postadan türetiliyordu
+  // ("test.teacher@..." → "Test Teacher"), bu yüzden Ayarlar > Öğretmenler
+  // ekranından verilen ad yan menüde hiç görünmüyordu.
+  const displayName = profile?.full_name?.trim()
+    || (userEmail
+        ? userEmail.split('@')[0]
+            .split(/[._-]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
+        : '');
+
+  const userInitials = (displayName.match(/\b\w/g) || []).join('').slice(0, 2).toUpperCase();
 
   // ownerOnly: öğretmene gösterilmez. Bu yalnızca görsel katman —
   // asıl koruma rota sarmalayıcısında ve veritabanı politikalarında.
@@ -126,12 +129,7 @@ const Sidebar = ({ onClose }) => {
                   {userInitials || 'U'}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">
-                    {userEmail.split('@')[0]
-                      .split(/[._-]/) // nokta, alt çizgi veya tire ile ayır
-                      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                      .join(' ')}
-                  </span>
+                  <span className="text-sm font-medium truncate">{displayName}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 truncate">{userEmail}</span>
                 </div>
               </div>

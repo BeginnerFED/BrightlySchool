@@ -4,6 +4,10 @@ import { FaWhatsapp, FaHryvnia, FaCheck } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
+import { LOW_LESSON_THRESHOLD, formatLessonCount } from '../lib/lessonCounts';
+import { toWhatsAppNumber } from '../lib/phone';
+import { useTeachers, buildTeacherMap } from '../hooks/useTeachers';
+import { getTeacherDetails } from '../lib/teacherColors';
 import { format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import Masonry from 'react-masonry-css';
@@ -25,14 +29,20 @@ const Home = () => {
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
   const [todayEvents, setTodayEvents] = useState([]);
   const [pendingPayments, setPendingPayments] = useState([]);
-  const [expiringSoonPackages, setExpiringSoonPackages] = useState([]);
+  const [lowLessonStudents, setLowLessonStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingToday, setIsLoadingToday] = useState(true);
   const [isLoadingPayments, setIsLoadingPayments] = useState(true);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
+  // Sorgu patlarsa boş liste göstermek YETMEZ: boş liste "sorun yok" diye
+  // okunuyor. Hata ayrı tutuluyor ki kart "bilinmiyor" diyebilsin.
+  const [paymentsError, setPaymentsError] = useState(false);
+  const [packagesError, setPackagesError] = useState(false);
   const [sentMessages, setSentMessages] = useState({});
   const [updatingLessonId, setUpdatingLessonId] = useState(null);
   const [lessonUsage, setLessonUsage] = useState({}); // registration_id -> kalan ders bilgisi
+  // Ders rozetinin rengi ve adı öğretmenin profilinden geliyor
+  const { teachers } = useTeachers();
 
   // LocalStorage'dan verileri yükle ve eski tarihleri temizle
   const cleanupOldData = () => {
@@ -159,7 +169,7 @@ const Home = () => {
         // 3. Bu registration_id'ler için registrations tablosundan bilgileri çek
         const { data: registrations, error: registrationsError } = await supabase
           .from('registrations')
-          .select('id, student_name, student_age, parent_name, parent_phone, package_type, package_start_date')
+          .select('id, student_name, student_age, parent_name, parent_phone, lesson_count, package_start_date')
           .in('id', registrationIds);
 
         if (registrationsError) throw registrationsError;
@@ -238,7 +248,7 @@ const Home = () => {
         // 3. Bu registration_id'ler için registrations tablosundan bilgileri çek
         const { data: registrations, error: registrationsError } = await supabase
           .from('registrations')
-          .select('id, student_name, student_age, parent_name, parent_phone, package_type, package_start_date')
+          .select('id, student_name, student_age, parent_name, parent_phone, lesson_count, package_start_date')
           .in('id', registrationIds);
 
         if (registrationsError) throw registrationsError;
@@ -270,14 +280,18 @@ const Home = () => {
   // Ödemesi bekleyen kayıtları çeken fonksiyon
   const fetchPendingPayments = async () => {
     setIsLoadingPayments(true);
+    setPaymentsError(false);
 
     try {
       // Ödemesi beklemede olan kayıtları çek
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
+        // Arşivlenmiş kayıt ödeme beklemez. Arşivleme yalnızca is_active'i
+        // false yapıyor, payment_status'a dokunmuyor; bu filtre olmadan
+        // okuldan ayrılmış öğrenciler listede kalıyordu.
+        .eq('is_active', true)
         .eq('payment_status', 'beklemede')
-        .neq('package_type', 'ucretsiz') // Ücretsiz katılımlarda ödeme beklenmez
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -285,34 +299,47 @@ const Home = () => {
       setPendingPayments(data || []);
     } catch (error) {
       console.error('Bekleyen ödemeler çekilirken hata oluştu:', error);
+      // Bayat listeyi de temizle: eski veriyi güncelmiş gibi göstermek,
+      // hiç göstermemekten daha yanıltıcı.
+      setPendingPayments([]);
+      setPaymentsError(true);
     } finally {
       setIsLoadingPayments(false);
     }
   };
 
-  // Yakında sona erecek paketleri çeken fonksiyon
-  const fetchExpiringSoonPackages = async () => {
+  // Ders hakkı bitmek üzere olan öğrencileri çeken fonksiyon.
+  //
+  // Kalan ders hesaplanan bir değer, kolon değil — sorguyla süzülemiyor.
+  // Bu yüzden önce aktif kayıtlar çekilip sonra kalanına göre süzülüyor.
+  // Eşiğe 0 da dahil: kotası bitmiş öğrenci listeden kaybolmamalı.
+  const fetchLowLessonStudents = async () => {
     setIsLoadingPackages(true);
+    setPackagesError(false);
 
     try {
-      // Bitiş tarihine 7 gün kalan paketleri çek
-      const today = new Date();
-      const cutoffDate = new Date(today);
-      cutoffDate.setDate(today.getDate() + 7); // Önümüzdeki 7 gün içinde bitecek olanlar
-
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
-        .lte('package_end_date', cutoffDate.toISOString())
-        .gte('package_end_date', today.toISOString()) // Bugün ve sonrası (zaten bitmiş olanları gösterme)
-        .neq('package_type', 'ucretsiz') // Ücretsiz katılımda paket bitiş tarihi uygulanmaz
-        .order('package_end_date', { ascending: true });
+        .eq('is_active', true);
 
       if (error) throw error;
 
-      setExpiringSoonPackages(data || []);
+      const usageMap = await fetchLessonUsageMap(data || []);
+
+      const lowOnes = (data || [])
+        .map(registration => ({
+          ...registration,
+          remaining: usageMap[registration.id]?.remaining ?? 0
+        }))
+        .filter(registration => registration.remaining <= LOW_LESSON_THRESHOLD)
+        .sort((a, b) => a.remaining - b.remaining);
+
+      setLowLessonStudents(lowOnes);
     } catch (error) {
-      console.error('Bitiş tarihi yaklaşan paketler çekilirken hata oluştu:', error);
+      console.error('Ders hakkı azalan öğrenciler çekilirken hata oluştu:', error);
+      setLowLessonStudents([]);
+      setPackagesError(true);
     } finally {
       setIsLoadingPackages(false);
     }
@@ -348,26 +375,17 @@ const Home = () => {
     const usage = lessonUsage[participant.registration_id];
     if (!usage) return null;
 
-    // Ücretsiz katılımda kota yok — eşik kontrollerinden ÖNCE (null <= 0 true döner)
-    if (usage.isFree) {
-      return (
-        <span className="inline-flex items-center w-fit mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium ring-1 ring-inset bg-gray-400/10 text-gray-700 ring-gray-500/20 dark:bg-gray-400/10 dark:text-gray-300 dark:ring-gray-400/20">
-          {language === 'en' ? 'Free' : 'Безкоштовно'}
-        </span>
-      );
-    }
-
     const colorClass = usage.remaining <= 0
       ? 'bg-red-400/10 text-red-700 ring-red-500/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20'
-      : usage.remaining <= 2
+      : usage.remaining <= LOW_LESSON_THRESHOLD
         ? 'bg-amber-400/10 text-amber-700 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
         : 'bg-emerald-400/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20';
 
     return (
       <span className={`inline-flex items-center w-fit mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium ring-1 ring-inset ${colorClass}`}>
         {language === 'en'
-          ? `${usage.remaining} lessons left`
-          : `Залишилось занять: ${usage.remaining}`}
+          ? `${formatLessonCount(usage.remaining, 'en')} left`
+          : `Залишилось: ${formatLessonCount(usage.remaining, 'uk')}`}
       </span>
     );
   };
@@ -425,7 +443,7 @@ const Home = () => {
     fetchTomorrowEvents();
     fetchTodayEvents();
     fetchPendingPayments();
-    fetchExpiringSoonPackages();
+    fetchLowLessonStudents();
   }, []);
 
   // Format date based on selected language
@@ -433,25 +451,21 @@ const Home = () => {
     return format(date, formatStr, { locale: language === 'uk' ? uk : enUS });
   };
 
-  // Etkinlik türüne göre renkler
-  const eventTypeColors = {
-    'ingilizce': 'bg-[#0071e3]/10 text-[#0071e3] ring-1 ring-[#0071e3]/20',
-    'duyusal': 'bg-[#ac39ff]/10 text-[#ac39ff] ring-1 ring-[#ac39ff]/20',
-    'ozel': 'bg-[#ff9500]/10 text-[#ff9500] ring-1 ring-[#ff9500]/20'
-  };
+  // Ders rozeti artık türü değil, dersi VEREN KİŞİYİ gösteriyor: okul
+  // yalnızca İngilizce ders verdiği için tür rozeti bilgi taşımıyordu.
+  const teacherById = buildTeacherMap(teachers);
 
-  // Event type labels with translations
-  const eventTypeLabels = {
-    'ingilizce': language === 'en' ? 'English' : 'Англійська',
-    'duyusal': language === 'en' ? 'Sensory' : 'Сенсорика',
-    'ozel': language === 'en' ? 'Special Event' : 'Індивідуальне заняття'
-  };
-
-  // Etkinlik türüne göre ikonlar
-  const eventTypeIcons = {
-    'ingilizce': <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>,
-    'duyusal': <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
-    'ozel': <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+  const renderTeacherBadge = (event) => {
+    const { color, label } = getTeacherDetails(event.teacher_id, teacherById, language);
+    return (
+      <div
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium ring-1"
+        style={{ backgroundColor: `${color}1a`, color, borderColor: color, '--tw-ring-color': `${color}33` }}
+      >
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+        <span className="truncate max-w-[120px]">{label}</span>
+      </div>
+    );
   };
 
   // Yarın için tarih formatını hazırla
@@ -551,28 +565,18 @@ const Home = () => {
                 {/* Kart Başlığı */}
                 <div className="flex items-start justify-between pb-4 border-b border-[#d2d2d7] dark:border-[#2a3241]">
                   <div>
-                    <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
-                    <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
+                    <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 animate-pulse" />
                   </div>
-                  <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 relative overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                  </div>
+                  <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 animate-pulse" />
                 </div>
 
                 {/* Placeholder İçerik */}
                 <div className="mt-4 space-y-3">
                   {[...Array(3)].map((_, i) => (
                     <div key={i} className="flex gap-2">
-                      <div className="w-5 h-5 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="flex-1 h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-5 h-5 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] animate-pulse" />
+                      <div className="flex-1 h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md animate-pulse" />
                     </div>
                   ))}
                 </div>
@@ -615,12 +619,10 @@ const Home = () => {
                       </h3>
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] mt-0.5">
                         {language === 'en' ? 'Capacity: ' : 'Місць: '}
-                        {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/6
+                        {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/{event.max_capacity}
                       </p>
                     </div>
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium ${eventTypeColors[event.event_type]}`}>
-                      {eventTypeIcons[event.event_type]}
-                    </div>
+                    {renderTeacherBadge(event)}
                   </div>
 
                   {/* Açıklama (varsa) */}
@@ -682,11 +684,11 @@ const Home = () => {
                                 {/* WhatsApp butonu - sadece scheduled durumdaki öğrenciler için gösterilsin */}
                                 {participant.status === 'scheduled' && (
                                   <a
-                                    href={`https://wa.me/380${participant.registrations.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${participant.registrations.parent_name}!
+                                    href={`https://wa.me/${toWhatsAppNumber(participant.registrations.parent_phone)}?text=${encodeURIComponent(`Доброго дня, ${participant.registrations.parent_name}!
 Ми дуже раді, що ваша дитина приєднається до нашого заняття. Ось деталі запису:
 * Дата заняття: ${format(new Date(event.event_date), 'd MMMM yyyy', { locale: uk })} (завтра)
 * Час: ${format(new Date(event.event_date), 'HH:mm', { locale: uk })}
-* Заняття: ${eventTypeLabels[event.event_type]}
+* Заняття: Англійська
 * Місце: ${STUDIO_ADDRESS}
 * Карта: ${STUDIO_MAP_URL}
 * Тривалість: ${LESSON_DURATION}
@@ -762,28 +764,18 @@ ${STUDIO_NAME}`)}`}
                 {/* Kart Başlığı */}
                 <div className="flex items-start justify-between pb-4 border-b border-[#d2d2d7] dark:border-[#2a3241]">
                   <div>
-                    <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
-                    <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 relative overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                    </div>
+                    <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-32 animate-pulse" />
+                    <div className="h-[16px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-20 mt-1.5 animate-pulse" />
                   </div>
-                  <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 relative overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                  </div>
+                  <div className="h-[26px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-24 animate-pulse" />
                 </div>
 
                 {/* Placeholder İçerik */}
                 <div className="mt-4 space-y-3">
                   {[...Array(3)].map((_, i) => (
                     <div key={i} className="flex gap-2">
-                      <div className="w-5 h-5 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
-                      <div className="flex-1 h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-5 h-5 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] animate-pulse" />
+                      <div className="flex-1 h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md animate-pulse" />
                     </div>
                   ))}
                 </div>
@@ -826,12 +818,10 @@ ${STUDIO_NAME}`)}`}
                       </h3>
                       <p className="text-[13px] text-[#6e6e73] dark:text-[#86868b] mt-0.5">
                         {language === 'en' ? 'Capacity: ' : 'Місць: '}
-                        {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/6
+                        {event.participants.filter(p => p.status === 'scheduled' || p.status === 'makeup' || p.status === 'attended').length}/{event.max_capacity}
                       </p>
                     </div>
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium ${eventTypeColors[event.event_type]}`}>
-                      {eventTypeIcons[event.event_type]}
-                    </div>
+                    {renderTeacherBadge(event)}
                   </div>
 
                   {/* Açıklama (varsa) */}
@@ -891,8 +881,10 @@ ${STUDIO_NAME}`)}`}
                                 </span>
                               </div>
 
-                              {/* Statü Butonları - Planlandı butonu kaldırıldı */}
-                              <div className="grid grid-cols-2 sm:flex sm:flex-row items-center justify-center gap-2 mt-1 w-full">
+                              {/* Statü Butonları. sm üstünde tek satıra
+                                  dönüyordu ama Ukraynaca etiketler sığmıyor;
+                                  her boyutta 2-2 kalıyor. */}
+                              <div className="grid grid-cols-2 gap-2 mt-1 w-full">
                                 <button
                                   onClick={() => updateLessonStatus(participant, 'attended')}
                                   disabled={updatingLessonId === participant.id}
@@ -972,33 +964,43 @@ ${STUDIO_NAME}`)}`}
               // Loading State
               <div className="bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
                 <div className="p-5 border-b border-[#d2d2d7] dark:border-[#2a3241]">
-                  <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-48 relative overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                  </div>
+                  <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-48 animate-pulse" />
                 </div>
 
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="p-5 flex items-center justify-between border-b border-[#d2d2d7] dark:border-[#2a3241] last:border-b-0">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-10 h-10 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] animate-pulse" />
                       <div>
-                        <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 mb-1.5 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
-                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
+                        <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 mb-1.5 animate-pulse" />
+                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 animate-pulse" />
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : paymentsError ? (
+              // Hata durumu — boş listeyle KARIŞTIRILMAMALI
+              <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#ff3b30]/30">
+                <FiInfo className="w-12 h-12 mx-auto text-[#ff3b30] mb-4" />
+                <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
+                  {language === 'en' ? 'Could not load' : 'Не вдалося завантажити'}
+                </h3>
+                <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
+                  {language === 'en'
+                    ? 'This list is unknown right now — do not read it as empty.'
+                    : 'Цей список зараз невідомий — не вважайте його порожнім.'}
+                </p>
+                <button
+                  onClick={fetchPendingPayments}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#0071e3] hover:underline"
+                >
+                  <ArrowPathIcon className="h-4 w-4" />
+                  <span>{language === 'en' ? 'Try again' : 'Спробувати ще раз'}</span>
+                </button>
               </div>
             ) : pendingPayments.length === 0 ? (
               // Boş State
@@ -1044,7 +1046,7 @@ ${STUDIO_NAME}`)}`}
                       </div>
                       <div className="flex items-center gap-2">
                         <a
-                          href={`https://wa.me/380${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${registration.parent_name}! Нагадуємо, що очікуємо оплату за ${registration.student_name}. Дякуємо!`)}`}
+                          href={`https://wa.me/${toWhatsAppNumber(registration.parent_phone)}?text=${encodeURIComponent(`Доброго дня, ${registration.parent_name}! Нагадуємо, що очікуємо оплату за ${registration.student_name}. Дякуємо!`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] hover:bg-[#e5e5e5] dark:hover:bg-[#3a4251] flex items-center justify-center text-[#34c759] border border-[#d2d2d7] dark:border-[#2a3241] transition-colors"
@@ -1060,7 +1062,7 @@ ${STUDIO_NAME}`)}`}
             )}
           </div>
 
-          {/* Paket Süresi Bitmeye Yaklaşanlar Bölümü */}
+          {/* Ders Hakkı Bitmek Üzere Olanlar Bölümü */}
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -1068,11 +1070,11 @@ ${STUDIO_NAME}`)}`}
                   <FiPackage className="h-4 w-4 text-[#ac39ff]" />
                 </div>
                 <h2 className="text-lg font-semibold text-[#1d1d1f] dark:text-white">
-                  {language === 'en' ? 'Packages Expiring Soon' : 'Абонементи, що завершуються'}
+                  {language === 'en' ? 'Running Out of Lessons' : 'Заняття добігають кінця'}
                 </h2>
               </div>
               <button
-                onClick={fetchExpiringSoonPackages}
+                onClick={fetchLowLessonStudents}
                 className="flex items-center gap-1.5 text-[#ac39ff] hover:text-[#b54aff] text-sm font-medium"
               >
                 <ArrowPathIcon className="h-4 w-4" />
@@ -1084,71 +1086,74 @@ ${STUDIO_NAME}`)}`}
               // Loading State
               <div className="bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
                 <div className="p-5 border-b border-[#d2d2d7] dark:border-[#2a3241]">
-                  <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-48 relative overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                  </div>
+                  <div className="h-[18px] bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-48 animate-pulse" />
                 </div>
 
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="p-5 flex items-center justify-between border-b border-[#d2d2d7] dark:border-[#2a3241] last:border-b-0">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="w-10 h-10 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] animate-pulse" />
                       <div>
-                        <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 mb-1.5 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
-                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 relative overflow-hidden">
-                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                        </div>
+                        <div className="h-5 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-40 mb-1.5 animate-pulse" />
+                        <div className="h-4 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-md w-24 animate-pulse" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 relative overflow-hidden">
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent" />
-                      </div>
+                      <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 animate-pulse" />
                     </div>
                   </div>
                 ))}
               </div>
-            ) : expiringSoonPackages.length === 0 ? (
+            ) : packagesError ? (
+              // Hata durumu — boş listeyle KARIŞTIRILMAMALI
+              <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#ff3b30]/30">
+                <FiInfo className="w-12 h-12 mx-auto text-[#ff3b30] mb-4" />
+                <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
+                  {language === 'en' ? 'Could not load' : 'Не вдалося завантажити'}
+                </h3>
+                <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
+                  {language === 'en'
+                    ? 'This list is unknown right now — do not read it as empty.'
+                    : 'Цей список зараз невідомий — не вважайте його порожнім.'}
+                </p>
+                <button
+                  onClick={fetchLowLessonStudents}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#0071e3] hover:underline"
+                >
+                  <ArrowPathIcon className="h-4 w-4" />
+                  <span>{language === 'en' ? 'Try again' : 'Спробувати ще раз'}</span>
+                </button>
+              </div>
+            ) : lowLessonStudents.length === 0 ? (
               // Boş State
               <div className="text-center py-12 bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241]">
                 <FiPackage className="w-12 h-12 mx-auto text-[#86868b] mb-4" />
                 <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-white mb-1">
-                  {language === 'en' ? 'No packages expiring in the next 7 days' : 'Немає абонементів, що завершуються протягом 7 днів'}
+                  {language === 'en' ? 'Everyone has lessons left' : 'У всіх ще є заняття'}
                 </h3>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-md mx-auto">
-                  {language === 'en' ? 'There are no packages expiring in the next 7 days.' : 'Немає абонементів, що завершуються протягом 7 днів.'}
+                  {language === 'en'
+                    ? `No student has ${LOW_LESSON_THRESHOLD} or fewer lessons left.`
+                    : `Немає учнів, у яких залишилось ${LOW_LESSON_THRESHOLD} або менше занять.`}
                 </p>
               </div>
             ) : (
-              // Yakında Bitecek Paketler Listesi
+              // Ders hakkı azalanlar listesi
               <div className="bg-white dark:bg-[#121621] rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] overflow-hidden">
                 <div className="p-4 sm:px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] bg-[#f5f5f7] dark:bg-[#1c1c1e]/40">
                   <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white">
                     {language === 'en'
-                      ? `Total ${expiringSoonPackages.length} upcoming package expiration${expiringSoonPackages.length !== 1 ? 's' : ''}`
-                      : `Всього абонементів, що завершуються: ${expiringSoonPackages.length}`}
+                      ? `Total ${lowLessonStudents.length} student${lowLessonStudents.length !== 1 ? 's' : ''} running out of lessons`
+                      : `Всього учнів: ${lowLessonStudents.length}`}
                   </h3>
                 </div>
 
                 <div className="max-h-[350px] overflow-y-auto">
-                  {expiringSoonPackages.map((registration) => {
-                    // Kalan gün sayısını hesapla
-                    const endDate = new Date(registration.package_end_date);
-                    const today = new Date();
-                    const diffTime = Math.abs(endDate - today);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    // Aciliyet seviyesine göre renk belirle
-                    let urgencyColor = "text-[#34c759]"; // Yeşil (daha çok zaman var)
-                    if (diffDays <= 3) {
-                      urgencyColor = "text-[#ff3b30]"; // Kırmızı (çok az zaman kaldı)
-                    } else if (diffDays <= 7) {
-                      urgencyColor = "text-[#ff9500]"; // Turuncu (az zaman kaldı)
-                    }
+                  {lowLessonStudents.map((registration) => {
+                    // Kotası bitmiş olan kırmızı, kalanı olan turuncu
+                    const urgencyColor = registration.remaining <= 0
+                      ? "text-[#ff3b30]"
+                      : "text-[#ff9500]";
 
                     return (
                       <div
@@ -1166,23 +1171,26 @@ ${STUDIO_NAME}`)}`}
                                 ({registration.student_age})
                               </span>
                             </p>
-                            <div className="flex items-center gap-2">
-                              <p className={`text-[13px] ${urgencyColor} font-medium`}>
-                                {language === 'en' ? `${diffDays} day${diffDays !== 1 ? 's' : ''} left` : `Залишилось днів: ${diffDays}`}
-                              </p>
-                              <span className="text-[11px] text-[#6e6e73] dark:text-[#86868b]">
-                                ({formatDate(endDate, 'd MMMM yyyy')})
-                              </span>
-                            </div>
+                            <p className={`text-[13px] ${urgencyColor} font-medium`}>
+                              {registration.remaining <= 0
+                                ? (language === 'en' ? 'No lessons left' : 'Заняття закінчились')
+                                : (language === 'en'
+                                    ? `${formatLessonCount(registration.remaining, 'en')} left`
+                                    : `Залишилось: ${formatLessonCount(registration.remaining, 'uk')}`)}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <a
-                            href={`https://wa.me/380${registration.parent_phone.replace(/\D/g, '').replace(/^0+/, '')}?text=${encodeURIComponent(`Доброго дня, ${registration.parent_name}! Нагадуємо, що абонемент для ${registration.student_name} завершується ${format(endDate, 'd MMMM yyyy', { locale: uk })}. Дякуємо!`)}`}
+                            href={`https://wa.me/${toWhatsAppNumber(registration.parent_phone)}?text=${encodeURIComponent(
+                              registration.remaining <= 0
+                                ? `Доброго дня, ${registration.parent_name}! Нагадуємо, що у ${registration.student_name} закінчились оплачені заняття. Будемо раді продовжити навчання!`
+                                : `Доброго дня, ${registration.parent_name}! Нагадуємо, що у ${registration.student_name} залишилось занять: ${registration.remaining}. Дякуємо!`
+                            )}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2a3241] hover:bg-[#e5e5e5] dark:hover:bg-[#3a4251] flex items-center justify-center text-[#34c759] border border-[#d2d2d7] dark:border-[#2a3241] transition-colors"
-                            title={language === 'en' ? 'Send Package Expiration Info via WhatsApp' : 'Надіслати інформацію про завершення абонемента у WhatsApp'}
+                            title={language === 'en' ? 'Send Lesson Balance Reminder via WhatsApp' : 'Надіслати нагадування про залишок занять у WhatsApp'}
                           >
                             <FaWhatsapp className="w-4 h-4" />
                           </a>

@@ -94,14 +94,14 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
                 <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
                   <span>{language === 'uk' ? 'Продовження:' : 'Extension:'}</span>
                   <span className="font-medium text-[#1d1d1f] dark:text-white">
-                    {language === 'uk' ? `${extensionIndex + 1}. Uzatma` : `Extension #${extensionIndex + 1}`}
+                    {language === 'uk' ? `Продовження №${extensionIndex + 1}` : `Extension #${extensionIndex + 1}`}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
-                <span>{language === 'uk' ? 'Період:' : 'Date Range:'}</span>
+                <span>{language === 'uk' ? 'Початок:' : 'Start Date:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">
-                  {formatDate(extension?.new_start_date || extension?.previous_end_date)} - {formatDate(extension?.new_end_date)}
+                  {formatDate(extension?.new_start_date)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
