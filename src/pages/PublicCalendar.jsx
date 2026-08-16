@@ -404,7 +404,7 @@ const PublicCalendar = () => {
       {!isEmbedded && (
         <div className="flex justify-center pt-6 pb-3" role="banner">
           <span className="text-[22px] font-semibold tracking-tight text-zinc-900">
-            Yulia School
+            Brightly School
           </span>
         </div>
       )}

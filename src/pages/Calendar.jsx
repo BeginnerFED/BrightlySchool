@@ -1425,7 +1425,7 @@ const Calendar = () => {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
           <a
-            href="/YuliaSchool/#/rozklad"
+            href="/BrightlySchool/#/rozklad"
             target="_blank"
             rel="noopener noreferrer"
             className="h-10 sm:h-8 px-3 bg-purple-100 dark:bg-purple-800/20 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/30 focus:outline-none transition-all duration-200 flex items-center justify-center gap-1.5 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"

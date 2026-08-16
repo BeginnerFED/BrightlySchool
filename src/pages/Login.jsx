@@ -71,7 +71,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-[32px] font-semibold text-[#1d1d1f] dark:text-white mb-3 tracking-tight">
-            Yulia School
+            Brightly School
           </h1>
           <p className="text-[17px] text-[#6e6e73] dark:text-[#86868b]">
             Ласкаво просимо до панелі управління
@@ -172,7 +172,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-center text-[13px] text-[#86868b]">
-          Yulia School Панель управління © {new Date().getFullYear()}
+          Brightly School Панель управління © {new Date().getFullYear()}
         </div>
       </div>
     </div>

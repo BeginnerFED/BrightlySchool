@@ -15,7 +15,7 @@ import {
 // Velilere giden WhatsApp mesajlarında kullanılan stüdyo bilgileri.
 // TEK YER: mesaj metinlerinin içine gömmek yerine buradan besleniyor.
 // Müşteriden gerçek değerler alınınca burası doldurulacak.
-const STUDIO_NAME = 'Yulia School';
+const STUDIO_NAME = 'Brightly School';
 const STUDIO_ADDRESS = '[адреса студії]';
 const STUDIO_MAP_URL = '[посилання на карту]';
 const LESSON_DURATION = '45-60 хв';
