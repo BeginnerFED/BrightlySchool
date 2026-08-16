@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { FaChild } from 'react-icons/fa'
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
 // Hata mesajlarını Ukraynacaya çeviren fonksiyon
@@ -66,13 +65,17 @@ export default function Login() {
         {/* Logo ve Başlık */}
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-[28px] bg-white dark:bg-[#2a2a2a] shadow-lg transition-all duration-300 transform hover:scale-105">
-              <FaChild className="w-14 h-14 text-[#007AFF] dark:text-[#0A84FF]" />
+            {/* Zemin koyu temada da beyaz kalıyor: logodaki yazı lacivert,
+                koyu arka planda okunmuyor. Ad logonun içinde geçtiği için
+                ayrıca başlık yazılmıyor. */}
+            <div className="px-6 py-5 rounded-[28px] bg-white border border-[#e5e5e7]">
+              <img
+                src={`${import.meta.env.BASE_URL}logo-full.webp`}
+                alt="Brightly School — Learn, grow, shine"
+                className="w-64 h-auto object-contain"
+              />
             </div>
           </div>
-          <h1 className="text-[32px] font-semibold text-[#1d1d1f] dark:text-white mb-3 tracking-tight">
-            Brightly School
-          </h1>
           <p className="text-[17px] text-[#6e6e73] dark:text-[#86868b]">
             Ласкаво просимо до панелі управління
           </p>

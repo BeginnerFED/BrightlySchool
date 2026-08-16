@@ -13,7 +13,6 @@ import {
   XMarkIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
-import { FaChild } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -79,16 +78,13 @@ const Sidebar = ({ onClose }) => {
 
       <div className="p-4 flex flex-col h-full">
         {/* Logo */}
-        <div className="mb-8 min-h-[48px] flex-shrink-0">
-          <div className="flex items-center space-x-2">
-            <div className={`p-2 rounded-xl bg-indigo-100 dark:bg-indigo-600/20 transition-colors duration-300`}>
-              <FaChild className={`w-6 h-6 text-indigo-600 dark:text-indigo-400 transition-colors duration-300`} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className={`text-xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors duration-300 truncate`}>Brightly School</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 truncate">{t('managementPanel')}</span>
-            </div>
-          </div>
+        {/* Ayraç, alttaki kullanıcı bölümündeki çizgiyle aynı renkte */}
+        <div className="mb-6 pb-4 border-b border-[#d2d2d7]/60 dark:border-[#424245] flex-shrink-0">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-dashboard.webp`}
+            alt="Brightly School"
+            className="w-full max-w-[200px] h-auto object-contain"
+          />
         </div>
 
         {/* Main Menu */}

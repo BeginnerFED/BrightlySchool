@@ -403,9 +403,14 @@ const PublicCalendar = () => {
       {/* Logo (iframe'de gizli, site zaten markayı gösteriyor) */}
       {!isEmbedded && (
         <div className="flex justify-center pt-6 pb-3" role="banner">
-          <span className="text-[22px] font-semibold tracking-tight text-zinc-900">
-            Brightly School
-          </span>
+          {/* Bu sayfa yalnızca açık temada çalışıyor, o yüzden yazılı ve
+              sloganlı tam logo kullanılabiliyor — velilerin gördüğü tek
+              yüzey burası. */}
+          <img
+            src={`${import.meta.env.BASE_URL}logo-full.webp`}
+            alt="Brightly School — Learn, grow, shine"
+            className="h-24 w-auto object-contain"
+          />
         </div>
       )}
 
