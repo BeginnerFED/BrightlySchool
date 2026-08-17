@@ -443,9 +443,6 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         const newEventData = {
           event_date: eventDateTime.toISOString(),
           age_group: formData.ageGroup,
-          // Tür artık arayüzde seçilmiyor; kopyada kaynağınki korunuyor
-          event_type: eventData.event_type,
-          custom_description: eventData.custom_description,
           max_capacity: formData.maxCapacity,
           topic: formData.topic?.trim() || null,
           // Kopyada da formda seçili öğretmen geçerli
@@ -534,8 +531,6 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         }
 
         // 6. Ana etkinlik bilgilerini güncelle
-        // event_type ve custom_description bilerek yazılmıyor: tür artık
-        // arayüzde seçilmiyor, dokunulmayan kolon olduğu gibi kalır.
         const updatedEventData = {
           event_date: eventDateTime.toISOString(),
           age_group: formData.ageGroup,

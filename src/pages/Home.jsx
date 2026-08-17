@@ -625,16 +625,6 @@ const Home = () => {
                     {renderTeacherBadge(event)}
                   </div>
 
-                  {/* Açıklama (varsa) */}
-                  {event.custom_description && (
-                    <div className="mt-4 mb-4 text-[13px] text-[#424245] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#1c1c1e]/40 p-3 rounded-lg">
-                      <div className="flex gap-2">
-                        <FiInfo className="w-[18px] h-[18px] shrink-0 text-[#0071e3]" />
-                        <p>{event.custom_description}</p>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Katılımcılar */}
                   <div className="mt-4">
                     <h4 className="text-[13px] font-medium text-[#1d1d1f] dark:text-white flex items-center gap-1.5 mb-3">
@@ -823,16 +813,6 @@ ${STUDIO_NAME}`)}`}
                     </div>
                     {renderTeacherBadge(event)}
                   </div>
-
-                  {/* Açıklama (varsa) */}
-                  {event.custom_description && (
-                    <div className="mt-4 mb-4 text-[13px] text-[#424245] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#1c1c1e]/40 p-3 rounded-lg">
-                      <div className="flex gap-2">
-                        <FiInfo className="w-[18px] h-[18px] shrink-0 text-[#ff9500]" />
-                        <p>{event.custom_description}</p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Katılımcılar */}
                   <div className="mt-4">

@@ -197,7 +197,6 @@ const Calendar = () => {
           end: new Date(new Date(event.event_date).getTime() + 60 * 60 * 1000),
           extendedProps: {
             ageGroup: event.age_group,
-            description: event.custom_description,
             currentCapacity: students.length,
             maxCapacity: event.max_capacity,
             topic: event.topic,
@@ -431,7 +430,7 @@ const Calendar = () => {
   const renderEventContent = (eventInfo) => {
     // Dikey başlık artık öğretmenin adı — kartın rengi de aynı kişiden geldiği
     // için ayrıca "başka öğretmenin dersi" rozeti gösterilmiyordu, kalktı.
-    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, topic, isGrouped, count } = eventInfo.event.extendedProps;
+    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, topic, isGrouped, count } = eventInfo.event.extendedProps;
 
     // Ay görünümünde ve gruplandırılmış etkinlik ise
     if (eventInfo.view.type === 'dayGridMonth' && isGrouped) {
@@ -521,13 +520,6 @@ const Calendar = () => {
               </div>
             )}
           </div>
-
-          {/* Açıklama (Özel etkinlik için) */}
-          {description && (
-            <div className="mt-1 text-xs italic opacity-90 line-clamp-1">
-              {description}
-            </div>
-          )}
 
           {/* Öğrenci Listesi - Hover durumunda görünecek */}
           {students && students.length > 0 && (
@@ -651,10 +643,6 @@ const Calendar = () => {
       const eventData = {
         event_date: eventDateTime.toISOString(),
         age_group: formData.ageGroup || '',
-        // Tür arayüzde seçilmiyor; okul yalnızca İngilizce ders veriyor.
-        // Kolon NOT NULL ve CHECK'li olduğu için sabit yazılıyor.
-        event_type: 'ingilizce',
-        custom_description: null,
         // Dersi kimin verdiği artık derste tutuluyor (öğrencide değil).
         // Kolonun DEFAULT'u auth.uid(); açıkça yazmazsak ders her zaman
         // formu açan kişiye yazılırdı.
@@ -1095,8 +1083,6 @@ const Calendar = () => {
                   event_date: newEventDate.toISOString(),
                   age_group: originalEvent.age_group,
                   topic: originalEvent.topic,
-                  event_type: originalEvent.event_type,
-                  custom_description: originalEvent.custom_description,
                   max_capacity: originalEvent.max_capacity,
                   // Sahiplik kaynaktan taşınır: aksi halde teacher_id'nin
                   // DEFAULT auth.uid() değeri devreye girer ve Yulia bir
@@ -1239,8 +1225,6 @@ const Calendar = () => {
           event_date: newEventDate.toISOString(),
           age_group: originalEvent.age_group,
           topic: originalEvent.topic,
-          event_type: originalEvent.event_type,
-          custom_description: originalEvent.custom_description,
           max_capacity: originalEvent.max_capacity,
           // Sahiplik kaynaktan taşınır (yukarıdaki kurtarma yolundaki gibi)
           teacher_id: originalEvent.teacher_id,
