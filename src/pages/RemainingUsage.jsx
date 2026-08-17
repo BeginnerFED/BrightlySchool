@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
 import { LESSON_COUNT_OPTIONS, LOW_LESSON_THRESHOLD, formatLessonCount } from '../lib/lessonCounts';
@@ -9,6 +10,9 @@ import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, XMarkIcon, ChevronLeftI
 
 const RemainingUsage = () => {
   const { language } = useLanguage();
+  // Öğretmen bu sayfayı görür ama YALNIZCA kendi derslerine katılan
+  // öğrencileri; finansal kolonlar ona hiç gösterilmez.
+  const { isOwner } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,10 +42,17 @@ const RemainingUsage = () => {
     try {
       setLoading(true);
       
-      // First, fetch registrations that are active
+      // Sahip taban tablodan okur (ödeme kolonları lazım). Öğretmen
+      // my_students görünümünden okur: kapsam "benim dersime katılan
+      // öğrenci", veli adı maskeli, ödeme kolonları hiç yok.
+      const source = isOwner ? 'registrations' : 'my_students';
+      const columns = isOwner
+        ? '*'
+        : 'id, student_name, parent_name, lesson_count, package_start_date, is_active';
+
       const { data: registrationsData, error: registrationsError } = await supabase
-        .from('registrations')
-        .select('*')
+        .from(source)
+        .select(columns)
         .eq('is_active', true)
         .order('student_name');
 
@@ -87,8 +98,10 @@ const RemainingUsage = () => {
     try {
       // First get registration details
       const { data: registrationData, error: registrationError } = await supabase
-        .from('registrations')
-        .select('*')
+        .from(isOwner ? 'registrations' : 'my_students')
+        .select(isOwner
+          ? '*'
+          : 'id, student_name, parent_name, lesson_count, package_start_date, is_active')
         .eq('id', registrationId)
         .single();
       
@@ -238,7 +251,7 @@ const RemainingUsage = () => {
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.parent_name.toLowerCase().includes(searchTerm.toLowerCase());
+                         (student.parent_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLessonCount = lessonCountFilter === 'all' || student.lesson_count === lessonCountFilter;
     
     return matchesSearch && matchesLessonCount;
@@ -348,11 +361,13 @@ const RemainingUsage = () => {
                       {language === 'uk' ? 'Залишок занять' : 'Remaining'}
                     </span>
                   </th>
-                  <th className="py-4 px-6 text-center bg-[#f5f5f7]/50 dark:bg-[#161922]">
-                    <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
-                      {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
-                    </span>
-                  </th>
+                  {isOwner && (
+                    <th className="py-4 px-6 text-center bg-[#f5f5f7]/50 dark:bg-[#161922]">
+                      <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
+                        {language === 'uk' ? 'Статус оплати' : 'Payment Status'}
+                      </span>
+                    </th>
+                  )}
                   <th className="py-4 px-6 text-right bg-[#f5f5f7]/50 dark:bg-[#161922] w-[100px]">
                     <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
                       {language === 'uk' ? 'Дії' : 'Actions'}
@@ -382,11 +397,13 @@ const RemainingUsage = () => {
                           <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-8 animate-pulse" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex justify-center">
-                          <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-20 animate-pulse" />
-                        </div>
-                      </td>
+                      {isOwner && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex justify-center">
+                            <div className="h-6 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full w-20 animate-pulse" />
+                          </div>
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex justify-end">
                           <div className="h-8 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-lg w-16 animate-pulse" />
@@ -396,7 +413,7 @@ const RemainingUsage = () => {
                   ))
                 ) : filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center">
+                    <td colSpan={isOwner ? 6 : 5} className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-[#f5f5f7] dark:bg-[#2a3241] rounded-full flex items-center justify-center mb-3">
                           <MagnifyingGlassIcon className="w-8 h-8 text-[#6e6e73] dark:text-[#86868b]" />
@@ -428,9 +445,11 @@ const RemainingUsage = () => {
                           <span className="text-sm font-medium text-[#1d1d1f] dark:text-white">
                             {student.student_name}
                           </span>
-                          <span className="text-xs text-[#6e6e73] dark:text-[#86868b]">
-                            {student.parent_name}
-                          </span>
+                          {student.parent_name && (
+                            <span className="text-xs text-[#6e6e73] dark:text-[#86868b]">
+                              {student.parent_name}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -454,15 +473,17 @@ const RemainingUsage = () => {
                           {student.remaining_lessons}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-inset ${
-                          student.payment_status === 'odendi'
-                            ? 'bg-emerald-400/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
-                            : 'bg-amber-400/10 text-amber-700 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
-                        }`}>
-                          {translatePaymentStatus(student.payment_status)}
-                        </span>
-                      </td>
+                      {isOwner && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium ring-1 ring-inset ${
+                            student.payment_status === 'odendi'
+                              ? 'bg-emerald-400/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
+                              : 'bg-amber-400/10 text-amber-700 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20'
+                          }`}>
+                            {translatePaymentStatus(student.payment_status)}
+                          </span>
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => handleDetailClick(student)}
@@ -601,14 +622,16 @@ const RemainingUsage = () => {
                         {selectedStudent.student_name}
                       </span>
                     </div>
-                    <div>
-                      <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
-                        {language === 'uk' ? 'Імʼя батьків' : 'Parent Name'}
-                      </label>
-                      <span className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
-                        {selectedStudent.parent_name}
-                      </span>
-                    </div>
+                    {selectedStudent.parent_name && (
+                      <div>
+                        <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
+                          {language === 'uk' ? 'Імʼя батьків' : 'Parent Name'}
+                        </label>
+                        <span className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
+                          {selectedStudent.parent_name}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -643,6 +666,11 @@ const RemainingUsage = () => {
                     <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white uppercase tracking-wider">
                       {language === 'uk' ? 'Заняття' : 'Lessons'}
                     </h3>
+                    {!isOwner && (
+                      <span className="text-xs text-[#6e6e73] dark:text-[#86868b]">
+                        {language === 'uk' ? 'Лише ваші заняття' : 'Your lessons only'}
+                      </span>
+                    )}
                   </div>
                   
                   {loadingLessons ? (
@@ -733,9 +761,9 @@ const RemainingUsage = () => {
                               disabled={statusUpdateLoading}
                               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg ${
                                 lesson.status === 'attended' 
-                                  ? 'bg-emerald-400/10 text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20 hover:bg-emerald-400/30 dark:hover:bg-emerald-400/30'
-                                  : 'bg-emerald-400/5 text-emerald-700/30 ring-1 ring-emerald-500/10 dark:bg-emerald-400/5 dark:text-emerald-300/30 dark:ring-emerald-400/10 hover:bg-emerald-400/20 dark:hover:bg-emerald-400/20 hover:text-emerald-700 dark:hover:text-emerald-300'
-                              } transition-colors`}
+                                  ? 'bg-emerald-400/25 text-emerald-800 ring-1 ring-emerald-500/50 dark:bg-emerald-400/20 dark:text-emerald-200 dark:ring-emerald-400/50 hover:bg-emerald-400/40 hover:ring-emerald-500/70 dark:hover:bg-emerald-400/30 dark:hover:ring-emerald-400/70'
+                                  : 'bg-emerald-400/5 text-emerald-700/40 ring-1 ring-emerald-500/30 dark:bg-emerald-400/5 dark:text-emerald-300/40 dark:ring-emerald-400/30 hover:bg-emerald-400/20 hover:ring-emerald-500/60 dark:hover:bg-emerald-400/20 dark:hover:ring-emerald-400/60 hover:text-emerald-700 dark:hover:text-emerald-300'
+                              } transition-all duration-200`}
                             >
                               {language === 'uk' ? 'Відвідав' : 'Joined'}
                             </button>
@@ -744,9 +772,9 @@ const RemainingUsage = () => {
                               disabled={statusUpdateLoading}
                               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg ${
                                 lesson.status === 'no_show' 
-                                  ? 'bg-red-400/10 text-red-700 ring-1 ring-red-500/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20 hover:bg-red-400/30 dark:hover:bg-red-400/30'
-                                  : 'bg-red-400/5 text-red-700/30 ring-1 ring-red-500/10 dark:bg-red-400/5 dark:text-red-300/30 dark:ring-red-400/10 hover:bg-red-400/20 dark:hover:bg-red-400/20 hover:text-red-700 dark:hover:text-red-300'
-                              } transition-colors`}
+                                  ? 'bg-red-400/25 text-red-800 ring-1 ring-red-500/50 dark:bg-red-400/20 dark:text-red-200 dark:ring-red-400/50 hover:bg-red-400/40 hover:ring-red-500/70 dark:hover:bg-red-400/30 dark:hover:ring-red-400/70'
+                                  : 'bg-red-400/5 text-red-700/40 ring-1 ring-red-500/30 dark:bg-red-400/5 dark:text-red-300/40 dark:ring-red-400/30 hover:bg-red-400/20 hover:ring-red-500/60 dark:hover:bg-red-400/20 dark:hover:ring-red-400/60 hover:text-red-700 dark:hover:text-red-300'
+                              } transition-all duration-200`}
                             >
                               {language === 'uk' ? 'Не зʼявився' : 'Absent'}
                             </button>
@@ -755,9 +783,9 @@ const RemainingUsage = () => {
                               disabled={statusUpdateLoading}
                               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg ${
                                 lesson.status === 'postponed' 
-                                  ? 'bg-amber-400/10 text-amber-700 ring-1 ring-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20 hover:bg-amber-400/30 dark:hover:bg-amber-400/30'
-                                  : 'bg-amber-400/5 text-amber-700/30 ring-1 ring-amber-500/10 dark:bg-amber-400/5 dark:text-amber-300/30 dark:ring-amber-400/10 hover:bg-amber-400/20 dark:hover:bg-amber-400/20 hover:text-amber-700 dark:hover:text-amber-300'
-                              } transition-colors`}
+                                  ? 'bg-amber-400/25 text-amber-800 ring-1 ring-amber-500/50 dark:bg-amber-400/20 dark:text-amber-200 dark:ring-amber-400/50 hover:bg-amber-400/40 hover:ring-amber-500/70 dark:hover:bg-amber-400/30 dark:hover:ring-amber-400/70'
+                                  : 'bg-amber-400/5 text-amber-700/40 ring-1 ring-amber-500/30 dark:bg-amber-400/5 dark:text-amber-300/40 dark:ring-amber-400/30 hover:bg-amber-400/20 hover:ring-amber-500/60 dark:hover:bg-amber-400/20 dark:hover:ring-amber-400/60 hover:text-amber-700 dark:hover:text-amber-300'
+                              } transition-all duration-200`}
                             >
                               {language === 'uk' ? 'Перенесено' : 'Delayed'}
                             </button>
@@ -766,9 +794,9 @@ const RemainingUsage = () => {
                               disabled={statusUpdateLoading}
                               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg ${
                                 lesson.status === 'makeup' 
-                                  ? 'bg-blue-400/10 text-blue-700 ring-1 ring-blue-500/20 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20 hover:bg-blue-400/30 dark:hover:bg-blue-400/30'
-                                  : 'bg-blue-400/5 text-blue-700/30 ring-1 ring-blue-500/10 dark:bg-blue-400/5 dark:text-blue-300/30 dark:ring-blue-400/10 hover:bg-blue-400/20 dark:hover:bg-blue-400/20 hover:text-blue-700 dark:hover:text-blue-300'
-                              } transition-colors`}
+                                  ? 'bg-blue-400/25 text-blue-800 ring-1 ring-blue-500/50 dark:bg-blue-400/20 dark:text-blue-200 dark:ring-blue-400/50 hover:bg-blue-400/40 hover:ring-blue-500/70 dark:hover:bg-blue-400/30 dark:hover:ring-blue-400/70'
+                                  : 'bg-blue-400/5 text-blue-700/40 ring-1 ring-blue-500/30 dark:bg-blue-400/5 dark:text-blue-300/40 dark:ring-blue-400/30 hover:bg-blue-400/20 hover:ring-blue-500/60 dark:hover:bg-blue-400/20 dark:hover:ring-blue-400/60 hover:text-blue-700 dark:hover:text-blue-300'
+                              } transition-all duration-200`}
                             >
                               {language === 'uk' ? 'Відпрацювання' : 'Makeup'}
                             </button>
@@ -801,7 +829,7 @@ const RemainingUsage = () => {
                   <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-white uppercase tracking-wider">
                     {language === 'uk' ? 'Використання' : 'Usage Status'}
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className={`grid ${isOwner ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
                     <div className="bg-[#f5f5f7] dark:bg-[#161922] p-4 rounded-xl flex items-center">
                       <div>
                       <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
@@ -818,6 +846,7 @@ const RemainingUsage = () => {
                       </span>
                     </div>
                     </div>
+                    {isOwner && (
                     <div className="bg-[#f5f5f7] dark:bg-[#161922] p-4 rounded-xl flex items-center">
                       <div>
                           <label className="block text-xs text-[#6e6e73] dark:text-[#86868b] uppercase tracking-wider mb-1">
@@ -832,6 +861,7 @@ const RemainingUsage = () => {
                           </span>
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
 

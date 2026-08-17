@@ -52,7 +52,7 @@ const Sidebar = ({ onClose }) => {
     { icon: HomeIcon, text: 'home', path: '/', ownerOnly: true },
     { icon: CalendarDaysIcon, text: 'calendar', path: '/calendar' },
     { icon: UserPlusIcon, text: 'registration', path: '/registration', ownerOnly: true },
-    { icon: ChartBarIcon, text: 'remainingUsage', path: '/remaining-usage', ownerOnly: true },
+    { icon: ChartBarIcon, text: 'remainingUsage', path: '/remaining-usage' },
     { icon: BanknotesIcon, text: 'incomeExpense', path: '/income-expense', ownerOnly: true },
     { icon: QueueListIcon, text: 'waitlist', path: '/waitlist', ownerOnly: true },
     { icon: DocumentTextIcon, text: 'notes', path: '/notes', ownerOnly: true },

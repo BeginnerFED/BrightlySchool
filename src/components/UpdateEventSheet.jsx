@@ -5,6 +5,7 @@ import AttendanceList from './AttendanceList'
 import { useTeachers } from '../hooks/useTeachers'
 import { useAuth } from '../context/AuthContext'
 import { GRADE_OPTIONS } from '../lib/ageGroups'
+import { CAPACITY_OPTIONS, DEFAULT_CAPACITY, formatCapacity } from '../lib/capacity'
 import { 
   XMarkIcon,
   CalendarDaysIcon,
@@ -43,6 +44,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
     },
     ageGroup: '',
     teacherId: '',
+    maxCapacity: DEFAULT_CAPACITY,
+    topic: '',
     students: []
   })
   const [isCopyMode, setIsCopyMode] = useState(false)
@@ -121,6 +124,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
             },
             ageGroup: event.age_group,
             teacherId: event.teacher_id,
+            maxCapacity: event.max_capacity,
+            topic: event.topic || '',
             students: []
           });
           
@@ -156,6 +161,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           },
           ageGroup: event.age_group,
           teacherId: event.teacher_id,
+          maxCapacity: event.max_capacity,
+          topic: event.topic || '',
           students: eventStudents
         });
 
@@ -349,6 +356,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         },
         ageGroup: '',
         teacherId: '',
+        maxCapacity: DEFAULT_CAPACITY,
+        topic: '',
         students: []
       });
       setSelectedStudents([]); // Seçili öğrencileri sıfırla
@@ -437,7 +446,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           // Tür artık arayüzde seçilmiyor; kopyada kaynağınki korunuyor
           event_type: eventData.event_type,
           custom_description: eventData.custom_description,
-          max_capacity: eventData.max_capacity,
+          max_capacity: formData.maxCapacity,
+          topic: formData.topic?.trim() || null,
           // Kopyada da formda seçili öğretmen geçerli
           teacher_id: formData.teacherId,
           current_capacity: 0 // Başlangıçta katılımcı olmayacak, katılımcılar ayrıca eklenecek
@@ -530,6 +540,8 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           event_date: eventDateTime.toISOString(),
           age_group: formData.ageGroup,
           teacher_id: formData.teacherId,
+          max_capacity: formData.maxCapacity,
+          topic: formData.topic?.trim() || null,
           updated_at: new Date().toISOString()
           // Not: current_capacity trigger tarafından otomatik güncelleniyor
         };
@@ -780,6 +792,48 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                   </div>
                 </div>
 
+                {/* Ders konusu — haftanın konusundan ayrı, derse özel */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
+                    {language === 'uk' ? 'Тема заняття' : 'Lesson Topic'}
+                  </label>
+                  <input
+                    type="text"
+                    name="topic"
+                    value={formData.topic}
+                    onChange={handleInputChange}
+                    maxLength={200}
+                    placeholder={language === 'uk' ? 'Напр.: Present Simple, сімʼя' : 'e.g. Present Simple, family'}
+                    className="w-full h-[45px] sm:h-[50px] px-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm sm:text-base"
+                  />
+                </div>
+
+                {/* Kapasite — seçenekler lib/capacity.js'te */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
+                    {language === 'uk' ? 'Кількість місць' : 'Capacity'}
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CAPACITY_OPTIONS.map(capacity => {
+                      const active = formData.maxCapacity === capacity
+                      return (
+                        <button
+                          key={capacity}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, maxCapacity: capacity }))}
+                          className={`h-[45px] px-3 rounded-xl text-sm font-medium transition-colors ${
+                            active
+                              ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                              : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                          }`}
+                        >
+                          {formatCapacity(capacity, language)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 {/* Dersi veren öğretmen — kart rengi de bu kişiden geliyor */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
@@ -916,6 +970,23 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
                 )}
 
                 </>)}
+
+                {/* Öğretmen düzenleme alanlarını görmüyor; konuyu burada
+                    salt okunur gösteriyoruz — sorunun asıl muhatabı o. */}
+                {!isOwner && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#424245] dark:text-[#86868b] mb-2">
+                      {language === 'uk' ? 'Тема заняття' : 'Lesson Topic'}
+                    </label>
+                    <div className="px-4 py-3 rounded-xl bg-[#f5f5f7] dark:bg-[#1a1f2e] text-[#1d1d1f] dark:text-white text-sm sm:text-base">
+                      {formData.topic
+                        ? formData.topic
+                        : <span className="text-[#6e6e73] dark:text-[#86868b]">
+                            {language === 'uk' ? 'Тему не вказано' : 'No topic set'}
+                          </span>}
+                    </div>
+                  </div>
+                )}
 
                 {/* Yoklama — öğretmenin ders hakkı sayacını işletebilmesi için
                     tek yeri burası. Statü güncellemesi RLS ile kendi dersleriyle

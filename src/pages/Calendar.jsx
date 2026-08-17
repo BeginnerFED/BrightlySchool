@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ukLocale from '@fullcalendar/core/locales/uk';
 import enLocale from '@fullcalendar/core/locales/en-gb';
-import { PlusIcon, UserGroupIcon, ClockIcon, AcademicCapIcon, DocumentDuplicateIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, UserGroupIcon, UsersIcon, UserIcon, ClockIcon, AcademicCapIcon, DocumentDuplicateIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import CreateEvent from '../components/CreateEvent';
 import UpdateEventSheet from '../components/UpdateEventSheet';
 import CopyWeekModal from '../components/CopyWeekModal';
@@ -23,7 +23,7 @@ import ActionNotification from '../components/ActionNotification';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTeachers, buildTeacherMap } from '../hooks/useTeachers';
-import { getTeacherDetails } from '../lib/teacherColors';
+import { getTeacherDetails, readableOnWhite } from '../lib/teacherColors';
 
 // Takvim ızgarası. Tek yerde duruyor çünkü hem FullCalendar'a veriliyor hem de
 // hover vurgusunun hesabında kullanılıyor — ayrışırlarsa vurgu, tıklamanın
@@ -139,7 +139,7 @@ const Calendar = () => {
 
       let eventsQuery = supabase
         .from('events')
-        .select('*, event_participants(registration_id)')
+        .select('*, event_participants(registration_id, status)')
         .eq('is_active', true)
         .gte('event_date', start.toISOString())
         .lt('event_date', end.toISOString())
@@ -183,7 +183,11 @@ const Calendar = () => {
       // teacherById'den okunuyor ve etkinlik nesnesine yazılıyordu.
       // Artık renk çizim anında (coloredEvents) hesaplanıyor.
       const formattedEvents = eventsData.map(event => {
-        const students = event.event_participants
+        // İptal edilen ve ertelenen katılımcılar koltuk işgal etmez —
+        // herkese açık takvimdeki public_event_capacity görünümüyle aynı küme.
+        const activeParticipants = event.event_participants
+          .filter(p => ['scheduled', 'makeup', 'attended'].includes(p.status));
+        const students = activeParticipants
           .map(participant => studentMap[participant.registration_id])
           .filter(Boolean);
 
@@ -196,6 +200,7 @@ const Calendar = () => {
             description: event.custom_description,
             currentCapacity: students.length,
             maxCapacity: event.max_capacity,
+            topic: event.topic,
             teacherId: event.teacher_id,
             students,
             originalEvent: event // Store original event data for copying
@@ -426,7 +431,7 @@ const Calendar = () => {
   const renderEventContent = (eventInfo) => {
     // Dikey başlık artık öğretmenin adı — kartın rengi de aynı kişiden geldiği
     // için ayrıca "başka öğretmenin dersi" rozeti gösterilmiyordu, kalktı.
-    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, isGrouped, count } = eventInfo.event.extendedProps;
+    const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, description, topic, isGrouped, count } = eventInfo.event.extendedProps;
 
     // Ay görünümünde ve gruplandırılmış etkinlik ise
     if (eventInfo.view.type === 'dayGridMonth' && isGrouped) {
@@ -466,14 +471,55 @@ const Calendar = () => {
               <span className="font-medium">{formatAgeGroup(ageGroup)}</span>
             </div>
 
-            {/* Kapasite */}
-            <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
-              <UserGroupIcon className="w-3 h-3 text-white/70" />
-              {/* Payda dersin KENDI max_capacity'si. Sabit 6 yaziyordu ama
-                  dersler max_capacity=10 ile aciliyordu; 7. ogrenciden sonra
-                  "7/6" gibi imkansiz bir deger goruntuleniyordu. */}
-              <span className="font-medium">{currentCapacity}/{maxCapacity}</span>
-            </div>
+            {/* Kapasite — aynı zamanda DERS TÜRÜNÜ anlatır.
+                Kartın rengi "kimin dersi" demek; türü de renkle anlatsaydık
+                kart iki renkli olur, bakan kişi hangisinin ne olduğunu
+                ezberlemek zorunda kalırdı. Bu yüzden tür renkle değil
+                İKON + PARLAKLIK ile belirtiliyor.
+                4'lü grup normal durum, olduğu gibi bırakılıyor; yalnızca
+                istisnalar (özel ders, ikili) öne çıkıyor.
+                Payda dersin KENDİ max_capacity'si — sabit sayı yazmak
+                "7/6" gibi imkansız değerler üretiyordu. */}
+            {maxCapacity <= 2 ? (
+              // ÖZEL / İKİLİ DERS: rozet ters çevriliyor — beyaz zemin,
+              // kartın kendi rengiyle yazı. Renk SABİT DEĞİL, kartınkinden
+              // türetiliyor: Yulia paletten başka bir renk seçse de rozet
+              // otomatik uyar, hiçbir zaman uyumsuz düşemez.
+              <div
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md shadow-sm w-fit bg-white"
+                // Ham kart rengi beyaz uzerinde okunmuyordu (turuncu 2.80,
+                // yesil 2.22). Karttan turetilip kontrast yetene kadar
+                // koyulastiriliyor.
+                style={{ color: readableOnWhite(typeDetails.color) }}
+              >
+                {maxCapacity === 1
+                  ? <UserIcon className="w-3 h-3" />
+                  : <UsersIcon className="w-3 h-3" />}
+                <span className="font-semibold tracking-wide">
+                  {maxCapacity === 1
+                    ? (language === 'uk' ? 'Індивідуальне' : 'Private')
+                    : `${currentCapacity}/${maxCapacity}`}
+                </span>
+              </div>
+            ) : (
+              // Normal grup: değişmiyor, göze çarpması gereken istisnalar
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-md shadow-sm w-fit bg-white/15">
+                <UserGroupIcon className="w-3 h-3 text-white/70" />
+                <span className="font-medium">{currentCapacity}/{maxCapacity}</span>
+              </div>
+            )}
+
+            {/* Ders konusu — kart dar olduğu için tek satıra kırpılıyor,
+                tamamı title'da duruyor */}
+            {topic && (
+              <div
+                className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm min-w-0 max-w-full"
+                title={topic}
+              >
+                <BookOpenIcon className="w-3 h-3 text-white/70 shrink-0" />
+                <span className="font-medium truncate">{topic}</span>
+              </div>
+            )}
           </div>
 
           {/* Açıklama (Özel etkinlik için) */}
@@ -613,7 +659,8 @@ const Calendar = () => {
         // Kolonun DEFAULT'u auth.uid(); açıkça yazmazsak ders her zaman
         // formu açan kişiye yazılırdı.
         teacher_id: formData.teacherId,
-        max_capacity: 10,
+        max_capacity: formData.maxCapacity,
+        topic: formData.topic?.trim() || null,
         current_capacity: 0 // Başlangıçta 0 olmalı, trigger katılımcılar eklendiğinde bu değeri arttıracak
       };
 
@@ -1047,6 +1094,7 @@ const Calendar = () => {
                 const newEventData = {
                   event_date: newEventDate.toISOString(),
                   age_group: originalEvent.age_group,
+                  topic: originalEvent.topic,
                   event_type: originalEvent.event_type,
                   custom_description: originalEvent.custom_description,
                   max_capacity: originalEvent.max_capacity,
@@ -1190,6 +1238,7 @@ const Calendar = () => {
         const newEventData = {
           event_date: newEventDate.toISOString(),
           age_group: originalEvent.age_group,
+          topic: originalEvent.topic,
           event_type: originalEvent.event_type,
           custom_description: originalEvent.custom_description,
           max_capacity: originalEvent.max_capacity,

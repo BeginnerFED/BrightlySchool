@@ -101,7 +101,7 @@ function App() {
                               <Route path="/" element={<ProtectedRoute requireOwner><Home /></ProtectedRoute>} />
                               <Route path="/calendar" element={<Calendar />} />
                               <Route path="/registration" element={<ProtectedRoute requireOwner><Registration /></ProtectedRoute>} />
-                              <Route path="/remaining-usage" element={<ProtectedRoute requireOwner><RemainingUsage /></ProtectedRoute>} />
+                              <Route path="/remaining-usage" element={<RemainingUsage />} />
                               <Route path="/income-expense" element={<ProtectedRoute requireOwner><IncomeExpense /></ProtectedRoute>} />
                               <Route path="/waitlist" element={<ProtectedRoute requireOwner><Waitlist /></ProtectedRoute>} />
                               <Route path="/notes" element={<ProtectedRoute requireOwner><Notes /></ProtectedRoute>} />

@@ -179,25 +179,34 @@ export default function Registration() {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const { error } = await supabase
-        .from('registrations')
-        .update({ is_active: false })
-        .eq('id', registrationToDelete.id)
+      // Arşivleme ve gelecekteki derslerin iptali TEK işlemde yapılıyor
+      // (bkz. archive_registration migration'ı). İstemciden iki ayrı sorgu
+      // atılsaydı ikincisi başarısız olduğunda öğrenci hem arşivlenmiş hem
+      // derslere kayıtlı kalırdı. Fonksiyon iptal edilen ders sayısını döner.
+      const { data: cancelledCount, error } = await supabase
+        .rpc('archive_registration', { p_registration_id: registrationToDelete.id })
 
       if (error) throw error
 
       // Kayıtları yenile
       fetchRegistrations()
-      
+
       // Modal'ı kapat
       setIsDeleteModalOpen(false)
       setRegistrationToDelete(null)
 
-      // Başarılı mesajı göster
+      // Başarılı mesajı göster — kaç dersin iptal edildiği de söyleniyor,
+      // aksi halde çocuk takvimden sessizce kaybolmuş gibi görünüyor.
+      const base = language === 'uk'
+        ? `Запис ${registrationToDelete.student_name} успішно архівовано.`
+        : `Record for ${registrationToDelete.student_name} has been successfully archived.`
+
       showToast(
-        language === 'uk' 
-          ? `Запис ${registrationToDelete.student_name} успішно архівовано.`
-          : `Record for ${registrationToDelete.student_name} has been successfully archived.`
+        cancelledCount > 0
+          ? (language === 'uk'
+              ? `${base} Скасовано майбутніх занять: ${cancelledCount}.`
+              : `${base} ${cancelledCount} upcoming lesson${cancelledCount !== 1 ? 's' : ''} cancelled.`)
+          : base
       )
     } catch (error) {
       console.error('Kayıt arşivlenirken hata:', error.message)

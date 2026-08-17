@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { useTeachers } from '../hooks/useTeachers'
 import { GRADE_OPTIONS } from '../lib/ageGroups'
+import { CAPACITY_OPTIONS, DEFAULT_CAPACITY, formatCapacity } from '../lib/capacity'
 import { supabase } from '../lib/supabase'
 import { 
   XMarkIcon,
@@ -32,6 +33,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
     },
     ageGroup: '',
     teacherId: '',
+    maxCapacity: DEFAULT_CAPACITY,
+    topic: '',
     students: []
   })
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -243,6 +246,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
         },
         ageGroup: '',
         teacherId: '',
+        maxCapacity: DEFAULT_CAPACITY,
+        topic: '',
         students: []
       })
       setSelectedStudents([]) // Seçili öğrencileri sıfırla
@@ -276,6 +281,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
         },
         ageGroup: formData.ageGroup,
         teacherId: formData.teacherId,
+        maxCapacity: formData.maxCapacity,
+        topic: formData.topic,
         students: selectedStudents
       };
 
@@ -310,6 +317,13 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
       return false
     }
 
+    // Kontenjandan fazla öğrenci seçilemesin: veritabanındaki
+    // valid_capacity kısıtı (current_capacity <= max_capacity) zaten
+    // reddeder ama kullanıcı bunu ancak kaydederken görürdü.
+    if (formData.students.length > formData.maxCapacity) {
+      return false
+    }
+
     // Geçmiş tarih kontrolü
     const eventDateTime = new Date(formData.date)
     eventDateTime.setHours(parseInt(formData.time.hour))
@@ -330,7 +344,7 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
 
       {/* Modal */}
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#121621] shadow-xl transition-all">
+        <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-[#121621] shadow-xl transition-all">
           {/* Close Button */}
           <button
             onClick={onClose}
@@ -340,9 +354,9 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
           </button>
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
             {/* Header */}
-            <div className="px-4 pt-4 pb-2 border-b border-[#d2d2d7] dark:border-[#2a3241]">
+            <div className="px-4 pt-4 pb-2 border-b border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 rounded-full flex items-center justify-center shrink-0">
                   <CalendarDaysIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#0071e3]" />
@@ -358,9 +372,9 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-4 sm:p-6">
-              <div className="max-w-xl mx-auto space-y-6">
+            {/* Content — panele sığmayan kısım burada kayar */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+              <div className="max-w-xl mx-auto space-y-5">
                 {/* Tarih ve Saat */}
                 <div className="space-y-4">
                   {/* Tarih */}
@@ -486,7 +500,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                     <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
                       {language === 'uk' ? 'Клас' : 'Grade'}
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* 5 sütun: 9 sınıf üç satır yerine ikiye iniyor */}
+                    <div className="grid grid-cols-5 gap-2">
                       {GRADE_OPTIONS.map((grade) => (
                         <button
                           key={grade}
@@ -501,6 +516,47 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
                           `}
                         >
                           {grade}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ders konusu. Haftanın konusundan (weekly_themes) ayrı:
+                      o tüm okul için haftada tek değer, bu derse özel. */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
+                      {language === 'uk' ? 'Тема заняття' : 'Lesson Topic'}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.topic}
+                      onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                      maxLength={200}
+                      placeholder={language === 'uk' ? 'Напр.: Present Simple, сімʼя' : 'e.g. Present Simple, family'}
+                      className="w-full h-11 px-4 rounded-xl border border-[#d2d2d7] dark:border-[#2a3241] bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white focus:ring-2 focus:ring-[#0071e3] focus:border-transparent transition-all text-sm"
+                    />
+                  </div>
+
+                  {/* Kapasite — çoğunlukla 4 kişilik grup; talebe göre özel ders de açılıyor */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[#1d1d1f] dark:text-white">
+                      {language === 'uk' ? 'Кількість місць' : 'Capacity'}
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CAPACITY_OPTIONS.map((capacity) => (
+                        <button
+                          key={capacity}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, maxCapacity: capacity }))}
+                          className={`
+                            h-9 rounded-lg text-sm font-medium transition-colors
+                            ${formData.maxCapacity === capacity
+                              ? 'bg-[#1d1d1f] dark:bg-[#0071e3] text-white'
+                              : 'bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3]'
+                            }
+                          `}
+                        >
+                          {formatCapacity(capacity, language)}
                         </button>
                       ))}
                     </div>
@@ -543,8 +599,8 @@ export default function CreateEvent({ isOpen, onClose, onSuccess, selectedDate, 
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="p-4 sm:p-6 border-t border-[#d2d2d7] dark:border-[#2a3241]">
+            {/* Footer — her zaman görünür kalır */}
+            <div className="p-4 sm:p-6 border-t border-[#d2d2d7] dark:border-[#2a3241] shrink-0">
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"

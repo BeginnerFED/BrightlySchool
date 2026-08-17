@@ -24,6 +24,46 @@ export const TEACHER_COLOR_OPTIONS = [
 // bulunamadığında (öğretmen görüşü kendi dışındakileri okuyamaz) kullanılır.
 export const DEFAULT_TEACHER_COLOR = '#6b7280'
 
+// Beyaz zemin üzerinde OKUNUR bir tona indirilmiş kart rengi.
+//
+// Takvim kartındaki "özel ders / ikili ders" rozeti ters çevrilmiş: beyaz
+// zemin, kartın renginde yazı. Rengi doğrudan kullanmak yetmiyor — palet
+// renklerinin çoğu beyaz üzerinde okunmuyor (ölçüldü: turuncu 2.80,
+// yeşil 2.22, turkuaz 2.49; küçük metin eşiği 4.5).
+//
+// Renk yine KARTTAN türetiliyor, yalnızca kontrast yetene kadar
+// siyaha doğru karıştırılıyor. Böylece palete yarın yeni bir renk
+// eklense de rozet kendiliğinden okunur kalır.
+const luminance = ({ r, g, b }) => {
+  const [lr, lg, lb] = [r, g, b]
+    .map(v => v / 255)
+    .map(v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)))
+  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb
+}
+
+const contrastWithWhite = (rgb) => 1.05 / (luminance(rgb) + 0.05)
+
+export const readableOnWhite = (hex, target = 4.5) => {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex || '')
+  if (!match) return '#374151' // biçim beklenmedikse koyu nötr
+
+  const int = parseInt(match[1], 16)
+  const base = { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 }
+
+  // Siyaha doğru adım adım karıştır; ilk yeterli tonda dur.
+  for (let k = 1; k >= 0; k -= 0.05) {
+    const rgb = {
+      r: Math.round(base.r * k),
+      g: Math.round(base.g * k),
+      b: Math.round(base.b * k),
+    }
+    if (contrastWithWhite(rgb) >= target) {
+      return '#' + [rgb.r, rgb.g, rgb.b].map(v => v.toString(16).padStart(2, '0')).join('')
+    }
+  }
+  return '#000000'
+}
+
 // Ders kartlarında ve rozetlerde gösterilecek ad + renk.
 // teacherId çözülemezse renk nötr gri, ad genel "Викладач" olur — böylece
 // kart boş görünmez ve kimin dersi olduğu yanlış gösterilmez.
