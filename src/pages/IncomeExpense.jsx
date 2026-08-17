@@ -1782,7 +1782,7 @@ export default function IncomeExpense() {
                             ) : (
                               <>
                                 <ClockIcon className="w-4 h-4" />
-                                <span>Beklemede</span>
+                                <span>{language === 'uk' ? 'Очікує' : 'Pending'}</span>
                               </>
                             )}
                           </span>
@@ -2133,7 +2133,9 @@ export default function IncomeExpense() {
                   {language === 'uk' ? 'Графік доходів і витрат' : 'Income & Expense Chart'}
                 </h2>
                 <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
-                  {language === 'uk' ? `Son ${chartRange} Ay` : `Last ${chartRange} Months`}
+                  {language === 'uk'
+                    ? `Останні ${chartRange} ${chartRange === 3 ? 'місяці' : 'місяців'}`
+                    : `Last ${chartRange} Months`}
                 </p>
               </div>
               <div className="flex items-center gap-4">

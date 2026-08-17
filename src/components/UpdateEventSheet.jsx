@@ -103,7 +103,13 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         const eventDate = new Date(event.event_date);
         
         // Kopyalama modu için varsayılan tarihi etkinliğin kendi tarihi olarak ayarla
-        setCopyDate(new Date(eventDate));
+        // Kaynak dersin ERTESI gunu. Kaynagin kendi tarihi yazilirsa,
+        // saat de degismedigi icin "Kopyala" bire bir ayni derste ikinci
+        // bir kayit olusturuyor; yukarida bunun icin konan varsayilani
+        // da eziyordu.
+        const suggestedCopyDate = new Date(eventDate);
+        suggestedCopyDate.setDate(suggestedCopyDate.getDate() + 1);
+        setCopyDate(suggestedCopyDate);
         
         // Katılımcı yoksa boş bir dizi ile devam et
         if (!participants || participants.length === 0) {
@@ -546,7 +552,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
     } catch (error) {
       console.error('Etkinlik işlemi sırasında hata:', error.message);
       if (onSuccess) {
-        onSuccess(`Hata: ${error.message}`, 'error');
+        onSuccess(language === 'uk' ? `Помилка: ${error.message}` : `Error: ${error.message}`, 'error');
       }
     } finally {
       setIsLoading(false);
@@ -575,7 +581,7 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
     } catch (error) {
       console.error('Etkinlik silme işlemi sırasında hata:', error.message);
       if (onSuccess) {
-        onSuccess(`Hata: ${error.message}`, 'error');
+        onSuccess(language === 'uk' ? `Помилка: ${error.message}` : `Error: ${error.message}`, 'error');
       }
     } finally {
       setIsDeleting(false);

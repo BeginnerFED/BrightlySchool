@@ -189,7 +189,14 @@ export default function ExtendModal({ isOpen, onClose, onSuccess, registration, 
       // Takvim seçilen günü 00:00 döndürüyor. Uzatma genelde O GÜNKÜ ders
       // yapıldıktan SONRA giriliyor; 00:00 yazılırsa zaten harcanmış ders
       // yeni kotadan ikinci kez sayılır. Bugün seçildiyse "şu an" kullanılır.
-      const newStartDate = resolvePeriodStart(startDate)
+      // Düzenleme modunda tarihe dokunulmadıysa kayıtlı değer korunur
+      // (bkz. UpdateModal'daki aynı koruma).
+      const existingStart = isEditMode && existingExtension?.new_start_date
+        ? new Date(existingExtension.new_start_date)
+        : null
+      const startDayChanged = !existingStart ||
+        startDate.toDateString() !== existingStart.toDateString()
+      const newStartDate = startDayChanged ? resolvePeriodStart(startDate) : existingStart
       const newLessonCount = Number(formData.lessonCount)
 
       const finalPaymentMethod = formData.paymentStatus === 'beklemede' ? 'belirlenmedi' : formData.paymentMethod

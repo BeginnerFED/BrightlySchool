@@ -189,7 +189,16 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
       const paymentAmount = noPaymentDetails ? 0 : (parseFloat(formData.amount) || 0)
       const paymentDate = noPaymentDetails ? null : formData.paymentDate
 
-      const periodStart = resolvePeriodStart(startDate)
+      // Tarihe DOKUNULMADIYSA kayitli değer aynen korunur. resolvePeriodStart
+      // bir takvim seçimi (yerel gece yarısı) bekliyor; kayıtlı timestamp'i
+      // tekrar ondan geçirmek, alakasız bir düzenlemede bile sayım
+      // penceresini kaydırıp kalan ders sayısını değiştiriyordu.
+      const originalStart = registration.package_start_date
+        ? new Date(registration.package_start_date)
+        : null
+      const startDayChanged = !originalStart ||
+        startDate.toDateString() !== originalStart.toDateString()
+      const periodStart = startDayChanged ? resolvePeriodStart(startDate) : originalStart
 
       // Güncellenecek ana kayıt verileri
       const updateData = {
