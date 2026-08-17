@@ -46,6 +46,11 @@ export default function AttendanceList({ eventId }) {
         .from('event_participants')
         .select('id, status, registration_id')
         .eq('event_id', eventId)
+        // İptal edilenler listede DURMAMALI. STATUSES dizisinde 'cancelled'
+        // karşılığı yok; arşivlenen öğrencinin satırı hiçbir rozet seçili
+        // olmadan görünüyordu ve öğretmen "Відвідав" işaretleyince arşiv
+        // iptalini farkında olmadan geri alıyordu.
+        .in('status', ['scheduled', 'makeup', 'attended', 'no_show', 'postponed'])
         .order('created_at')
 
       if (error) throw error

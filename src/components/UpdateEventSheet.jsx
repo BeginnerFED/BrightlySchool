@@ -95,10 +95,14 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
         setEventData(event);
 
         // Etkinliğe kayıtlı katılımcıları getir - ilişkisel sorgu yerine manuel işlem
+        // Yalnızca AKTİF katılımcılar. İptal edilmiş satır (arşivlenen
+        // öğrenci) forma seçili gelirse kaydetmede geri diriliyor,
+        // kopyalamada da yeni derse taşınıyordu.
         const { data: participants, error: participantsError } = await supabase
           .from('event_participants')
           .select('registration_id')
-          .eq('event_id', eventId);
+          .eq('event_id', eventId)
+          .in('status', ['scheduled', 'makeup', 'attended']);
 
         if (participantsError) throw participantsError;
         
@@ -384,8 +388,15 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
   const isFormValid = () => {
     const { ageGroup, teacherId, date, time } = formData;
     const requiredFields = [ageGroup, teacherId, date, time.hour, time.minute];
-    
-    return requiredFields.every(field => field && field !== '');
+
+    if (!requiredFields.every(field => field && field !== '')) return false;
+
+    // Kontenjandan fazla öğrenci seçilemesin. CreateEvent'te bu koruma
+    // vardı, burada yoktu: veritabanındaki valid_capacity kısıtı ham
+    // İngilizce Postgres hatasıyla reddediyor, kullanıcı sebebini anlamıyordu.
+    if (selectedStudents.length > formData.maxCapacity) return false;
+
+    return true;
   };
 
   // Form gönderme
@@ -511,7 +522,27 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
           }
         }
 
-        // 5. Eklenecek katılımcıları ekle
+        // 5. Ders bilgilerini ÖNCE güncelle: kontenjan yükseltiliyorsa
+        // katılımcı eklemeden önce yürürlüğe girmeli, yoksa valid_capacity
+        // kısıtı eski (düşük) kontenjana takılıyor.
+        const updatedEventData = {
+          event_date: eventDateTime.toISOString(),
+          age_group: formData.ageGroup,
+          teacher_id: formData.teacherId,
+          max_capacity: formData.maxCapacity,
+          topic: formData.topic?.trim() || null,
+          updated_at: new Date().toISOString()
+          // Not: current_capacity trigger tarafından otomatik güncelleniyor
+        };
+
+        const { error: updateEventError } = await supabase
+          .from('events')
+          .update(updatedEventData)
+          .eq('id', eventId);
+
+        if (updateEventError) throw updateEventError;
+
+        // 6. Eklenecek katılımcıları ekle
         if (participantsToAdd.length > 0) {
           const inserts = participantsToAdd.map(regId => ({
             event_id: eventId,
@@ -529,24 +560,6 @@ export default function UpdateEventSheet({ isOpen, onClose, onSuccess, eventId }
             throw insertError; 
           }
         }
-
-        // 6. Ana etkinlik bilgilerini güncelle
-        const updatedEventData = {
-          event_date: eventDateTime.toISOString(),
-          age_group: formData.ageGroup,
-          teacher_id: formData.teacherId,
-          max_capacity: formData.maxCapacity,
-          topic: formData.topic?.trim() || null,
-          updated_at: new Date().toISOString()
-          // Not: current_capacity trigger tarafından otomatik güncelleniyor
-        };
-
-        const { error: updateEventError } = await supabase
-          .from('events')
-          .update(updatedEventData)
-          .eq('id', eventId);
-
-        if (updateEventError) throw updateEventError;
 
         // Başarılı mesajı göster
         if (onSuccess) {

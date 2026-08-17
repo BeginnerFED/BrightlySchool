@@ -119,6 +119,11 @@ const Calendar = () => {
   // eski kod aylık etiketlerden ('12-18 міс.') birimi siliyordu.
   const formatAgeGroup = (ageGroup) => ageGroup;
 
+  // Koltuk işgal eden ve kopyalanmaya değer katılımcı statüleri.
+  // İptal ve erteleme burada YOK: o satırlar derste durur ama öğrenci
+  // fiilen o derste değildir.
+  const ACTIVE_PARTICIPANT_STATUSES = ['scheduled', 'makeup', 'attended'];
+
   // Format date with the correct locale
   const formatDate = (date, formatStr) => {
     return format(new Date(date), formatStr || 'dd.MM.yyyy', { locale: language === 'uk' ? uk : enUS });
@@ -186,7 +191,7 @@ const Calendar = () => {
         // İptal edilen ve ertelenen katılımcılar koltuk işgal etmez —
         // herkese açık takvimdeki public_event_capacity görünümüyle aynı küme.
         const activeParticipants = event.event_participants
-          .filter(p => ['scheduled', 'makeup', 'attended'].includes(p.status));
+          .filter(p => ACTIVE_PARTICIPANT_STATUSES.includes(p.status));
         const students = activeParticipants
           .map(participant => studentMap[participant.registration_id])
           .filter(Boolean);
@@ -1103,6 +1108,8 @@ const Calendar = () => {
                 // Katılımcıları kopyala (hariç tutulanlar atlanır)
                 if (originalEvent.event_participants && originalEvent.event_participants.length > 0) {
                   const participantInserts = originalEvent.event_participants
+                    // Yalnızca AKTİF katılımcılar kopyalanır (bkz. ana yol)
+                    .filter(participant => ACTIVE_PARTICIPANT_STATUSES.includes(participant.status))
                     .filter(participant => !excludedRegistrationIds.includes(participant.registration_id))
                     .map(participant => ({
                       event_id: newEvent.id,
@@ -1243,6 +1250,10 @@ const Calendar = () => {
         // Katılımcıları kopyala (hariç tutulanlar atlanır)
         if (originalEvent.event_participants && originalEvent.event_participants.length > 0) {
           const participantInserts = originalEvent.event_participants
+            // Yalnızca AKTİF katılımcılar kopyalanır. İptal/erteleme
+            // satırları da kopyalanınca, arşivlenen öğrenci hedef haftada
+            // 'scheduled' olarak geri diriliyordu — arşivleme boşa gidiyordu.
+            .filter(participant => ACTIVE_PARTICIPANT_STATUSES.includes(participant.status))
             .filter(participant => !excludedRegistrationIds.includes(participant.registration_id))
             .map(participant => ({
               event_id: newEvent.id,

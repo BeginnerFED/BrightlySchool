@@ -17,5 +17,10 @@ export const formatCapacity = (capacity, language) => {
   if (capacity === 1) {
     return language === 'uk' ? 'Індивідуальне' : 'Private'
   }
-  return language === 'uk' ? `${capacity} місця` : `${capacity} seats`
+  // Ukraynacada "місце" sayıya göre çekimleniyor: 2-4 için "місця",
+  // 5 ve üstü için "місць".
+  if (language === 'uk') {
+    return `${capacity} ${capacity >= 2 && capacity <= 4 ? 'місця' : 'місць'}`
+  }
+  return `${capacity} seats`
 }
