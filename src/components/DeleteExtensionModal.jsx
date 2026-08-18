@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
+import { formatMoney } from '../lib/money'
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 const supabase = createClient(
@@ -107,7 +108,7 @@ export default function DeleteExtensionModal({ isOpen, onClose, onSuccess, regis
               <div className="flex items-center justify-between text-sm text-[#6e6e73] dark:text-[#86868b]">
                 <span>{language === 'uk' ? 'Сума:' : 'Amount:'}</span>
                 <span className="font-medium text-[#1d1d1f] dark:text-white">
-                  {extension?.payment_amount ?? 0} ₴
+                  {formatMoney(extension?.payment_amount ?? 0)}
                 </span>
               </div>
             </div>

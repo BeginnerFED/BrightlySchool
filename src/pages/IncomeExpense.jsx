@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
 import { formatLessonCount } from '../lib/lessonCounts'
+import { formatMoney, formatMoneyAxis } from '../lib/money'
 import { EXPENSE_TYPES, getExpenseLabel, getExpenseColor, getExpenseCard } from '../lib/expenseTypes'
 import { getPaymentMethodLabel } from '../lib/paymentMethods'
 import { 
@@ -968,15 +969,10 @@ export default function IncomeExpense() {
     }
   }, [isTableLoading, expenseFilters.paymentMethod, expenseFilters.expenseType, expenseTableData]);
 
-  // Para formatı
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('uk-UA', {
-      style: 'currency',
-      currency: 'UAH',
-      minimumFractionDigits: 2, // Değiştirildi: 0 -> 2
-      maximumFractionDigits: 2  // Değiştirildi: 0 -> 2
-    }).format(amount)
-  }
+  // Para formatı — tek kaynak: src/lib/money.js
+  // Ondalık yalnızca gerçekten varsa basılıyor; tutarlar tam sayı olduğu
+  // için sürekli ",00" yazmak tabloyu okunmaz hale getiriyordu.
+  const formatCurrency = formatMoney
 
   // Tooltip için para formatı
   const formatTooltipValue = (value) => {
@@ -2161,7 +2157,7 @@ export default function IncomeExpense() {
                   margin={{
                     top: 5,
                     right: 10,
-                    left: 10,
+                    left: 0,
                     bottom: 5,
                   }}
                 >
@@ -2183,13 +2179,18 @@ export default function IncomeExpense() {
                     axisLine={false}
                     dy={10}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#86868b"
                     fontSize={12}
-                    tickFormatter={formatTooltipValue}
+                    // Etiket KISALTILMIŞ: tam para biçimi ("18 400,00 грн")
+                    // eksen kutusuna sığmıyor, soldan kırpılıyordu. Sembol de
+                    // yok — grafikteki her değer zaten para, tam hali ipucunda.
+                    tickFormatter={formatMoneyAxis}
                     tickLine={false}
                     axisLine={false}
-                    dx={-10}
+                    // Genişlik açıkça veriliyor; dx kaldırıldı çünkü etiketi
+                    // kutunun dışına itip kırpılmaya sebep oluyordu.
+                    width={56}
                   />
                   <Tooltip 
                     contentStyle={{ 

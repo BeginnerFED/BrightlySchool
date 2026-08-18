@@ -7,6 +7,7 @@ import Masonry from 'react-masonry-css'
 import { useLanguage } from '../context/LanguageContext'
 import { getPaymentMethodLabel } from '../lib/paymentMethods'
 import { LESSON_COUNT_OPTIONS, formatLessonCount } from '../lib/lessonCounts'
+import { formatMoney } from '../lib/money'
 import { 
   UserPlusIcon, 
   CalendarDaysIcon, 
@@ -516,7 +517,7 @@ export default function Registration() {
                         <div className="flex items-center gap-2.5 text-[#424245] dark:text-[#86868b]">
                           <CreditCardIcon className="w-[18px] h-[18px] shrink-0" />
                           <span>
-                            {formatPaymentMethod(registration.payment_method)} - {registration.payment_amount} ₴
+                            {formatPaymentMethod(registration.payment_method)} - {formatMoney(registration.payment_amount)}
                             {registration.payment_status === 'odendi' && registration.payment_date && (
                               <> - {formatDate(registration.payment_date)}</>
                             )}
@@ -916,7 +917,7 @@ export default function Registration() {
                       <div className="flex items-center gap-2 text-sm">
                         <CreditCardIcon className="w-4 h-4 text-[#86868b]" />
                         <span className="text-[#424245] dark:text-[#86868b]">
-                          {formatPaymentMethod(selectedHistoryRegistration.initial_payment_method)} - {selectedHistoryRegistration.initial_payment_amount} ₴
+                          {formatPaymentMethod(selectedHistoryRegistration.initial_payment_method)} - {formatMoney(selectedHistoryRegistration.initial_payment_amount)}
                           {selectedHistoryRegistration.payment_date && (
                             <> - {formatDate(selectedHistoryRegistration.payment_date)}</>
                           )}
@@ -995,7 +996,7 @@ export default function Registration() {
                             <div className="flex items-center gap-2 text-sm">
                               <CreditCardIcon className="w-4 h-4 text-[#86868b]" />
                               <span className="text-[#424245] dark:text-[#86868b]">
-                                {formatPaymentMethod(history.payment_method)} - {history.payment_amount} ₴
+                                {formatPaymentMethod(history.payment_method)} - {formatMoney(history.payment_amount)}
                                 {history.payment_date && (
                                   <> - {formatDate(history.payment_date)}</>
                                 )}
