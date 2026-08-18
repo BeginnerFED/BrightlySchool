@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useLanguage } from '../context/LanguageContext'
-import { XMarkIcon, ExclamationTriangleIcon, ArchiveBoxXMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ExclamationTriangleIcon, ArchiveBoxXMarkIcon, TrashIcon } from '@heroicons/react/24/outline'
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 )
 
-export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry, isLoading }) {
+// canDelete: kayıt hiç para görmemiş ve hiç ders yakmamışsa true.
+// Kural veritabanında (can_delete_registration); buradaki yalnızca butonu
+// göstermek için — silme işlemi de aynı kuralı tekrar kontrol ediyor.
+export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, onDelete, entry, isLoading, isDeleting, canDelete }) {
   const { language } = useLanguage()
 
   if (!isOpen) return null
@@ -88,6 +91,51 @@ export default function DeleteRegisterModal({ isOpen, onClose, onConfirm, entry,
                     : 'After archiving, the record will not appear in the active records list. You can reactivate it from the archive view when needed.'}
                 </p>
               </div>
+
+              {/* Kalıcı silme yalnızca kaybedilecek bir şey yoksa teklif
+                  edilir: ödeme ve ders geçmişi CASCADE ile birlikte silinir,
+                  yani geçmiş bir ayın geliri geriye dönük değişirdi.
+                  Ayraç + gerçek buton: önceki hali açıklama kutusuna
+                  benziyordu ve tıklanabilir olduğu anlaşılmıyordu. */}
+              {canDelete && (
+                <div className="pt-1">
+                  <div className="flex items-center gap-3">
+                    <span className="h-px flex-1 bg-[#d2d2d7] dark:bg-[#2a3241]" />
+                    <span className="text-xs font-medium uppercase tracking-wider text-[#6e6e73] dark:text-[#86868b]">
+                      {language === 'uk' ? 'або' : 'or'}
+                    </span>
+                    <span className="h-px flex-1 bg-[#d2d2d7] dark:bg-[#2a3241]" />
+                  </div>
+
+                  <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-4 mb-3 text-center">
+                    {language === 'uk'
+                      ? 'Цей запис не має ні оплат, ні проведених занять — його можна видалити повністю.'
+                      : 'This record has no payments and no attended lessons, so it can be removed completely.'}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => onDelete(entry)}
+                    disabled={isLoading || isDeleting}
+                    className="w-full h-11 flex items-center justify-center gap-2 rounded-xl border-2 border-red-500/60 text-red-600 dark:text-red-400 font-medium hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none transition-all transform hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-600"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>{language === 'uk' ? 'Видалення' : 'Deleting'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <TrashIcon className="w-5 h-5" />
+                        <span>{language === 'uk' ? 'Видалити назавжди' : 'Delete permanently'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Buttons */}

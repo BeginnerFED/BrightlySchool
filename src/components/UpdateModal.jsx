@@ -28,6 +28,50 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 )
 
+
+// Telefon çakışmasında numaranın SAHİBİNİ bulup mesaja koyar.
+//
+// unique_parent_phone kısıtı ARŞİVLENMİŞ satırları da kapsıyor. Eski mesaj
+// yalnızca "bu numara zaten kayıtlı" diyordu; kullanıcı kişiyi aktif listede
+// bulamıyor (arşiv varsayılan olarak gizli) ve ne yapacağını bilemiyordu.
+// Oysa doğru hamle arşivden "Активувати" demek.
+const phoneConflictError = async (phone, language) => {
+  const err = new Error(await describePhoneConflict(phone, language))
+  // Toast eskiden mesajı SABİT metinle karşılaştırıyordu; mesaj artık
+  // kişiye göre değiştiği için eşleşmez olurdu. Kullanıcıya gösterilecek
+  // hataları böyle işaretliyoruz.
+  err.userFacing = true
+  return err
+}
+
+const describePhoneConflict = async (phone, language) => {
+  const genel = language === 'uk'
+    ? 'Цей номер телефону вже зареєстровано!'
+    : 'This phone number has already been registered!'
+
+  try {
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('student_name, is_active')
+      .eq('parent_phone', phone)
+      .maybeSingle()
+
+    if (error || !data) return genel
+
+    if (!data.is_active) {
+      return language === 'uk'
+        ? `Цей номер уже належить учню «${data.student_name}», який в архіві. Відновіть запис з архіву замість створення нового.`
+        : `This phone already belongs to "${data.student_name}", who is archived. Restore that record from the archive instead of creating a new one.`
+    }
+
+    return language === 'uk'
+      ? `Цей номер уже зареєстровано на учня «${data.student_name}».`
+      : `This phone is already registered to "${data.student_name}".`
+  } catch {
+    return genel
+  }
+}
+
 export default function UpdateModal({ isOpen, onClose, onSuccess, registration }) {
   const { language } = useLanguage()
   const datePickerRef = useRef(null)
@@ -238,10 +282,7 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
 
       if (updateRegError) {
         if (updateRegError.code === '23505' && updateRegError.details?.includes('parent_phone')) {
-          throw new Error(language === 'uk' 
-            ? 'Цей номер телефону вже зареєстровано!'
-            : 'This phone number has already been registered!'
-          )
+          throw await phoneConflictError(formData.phone.trim(), language)
         }
         throw updateRegError
       }
@@ -366,8 +407,8 @@ export default function UpdateModal({ isOpen, onClose, onSuccess, registration }
       console.error('Kayıt güncellenirken hata:', error.message)
       setToast({
         visible: true,
-        message: error.message === 'Цей номер телефону вже зареєстровано!' || error.message === 'This phone number has already been registered!'
-          ? error.message 
+        message: error.userFacing
+          ? error.message
           : language === 'uk' ? 'Помилка при оновленні запису' : 'An error occurred while updating the record',
         type: 'error'
       })

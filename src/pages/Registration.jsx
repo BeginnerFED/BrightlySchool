@@ -59,6 +59,11 @@ export default function Registration() {
     isVisible: false
   })
   const [isDeleting, setIsDeleting] = useState(false)
+  // Hangi kayıtlar kalıcı silinebilir: ödemesi ve harcanmış dersi olmayanlar.
+  // Kural veritabanında (can_delete_registration); burada yalnızca butonu
+  // göstermek için tutuluyor.
+  const [deletableIds, setDeletableIds] = useState({})
+  const [isPermanentDeleting, setIsPermanentDeleting] = useState(false)
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false)
   const [selectedHistoryRegistration, setSelectedHistoryRegistration] = useState(null)
   const [extensionHistory, setExtensionHistory] = useState([])
@@ -83,6 +88,21 @@ export default function Registration() {
 
       if (error) throw error
       setRegistrations(data)
+
+      // Silinebilirlik tek toplu çağrıda; kart başına sorgu atılmıyor.
+      // Hata olursa buton hiç gösterilmez — güvenli taraf.
+      if (data && data.length > 0) {
+        const { data: flags, error: flagError } = await supabase
+          .rpc('get_deletable_registrations', { p_registration_ids: data.map(r => r.id) })
+        if (flagError) {
+          console.error('Silinebilirlik bilgisi alınamadı:', flagError.message)
+          setDeletableIds({})
+        } else {
+          setDeletableIds(Object.fromEntries((flags || []).map(x => [x.registration_id, x.deletable])))
+        }
+      } else {
+        setDeletableIds({})
+      }
     } catch (error) {
       console.error('Kayıtlar getirilirken hata:', error.message)
     } finally {
@@ -219,6 +239,44 @@ export default function Registration() {
       )
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  // Kalıcı silme. Veritabanı kuralı tekrar kontrol ediyor; arayüz butonu
+  // gizlese bile istek doğrudan API'ye atılabilir.
+  const handlePermanentDelete = async () => {
+    setIsPermanentDeleting(true)
+    try {
+      const { error } = await supabase
+        .rpc('delete_registration', { p_registration_id: registrationToDelete.id })
+
+      if (error) throw error
+
+      fetchRegistrations()
+      setIsDeleteModalOpen(false)
+      setRegistrationToDelete(null)
+
+      showToast(
+        language === 'uk'
+          ? `Запис ${registrationToDelete.student_name} видалено назавжди.`
+          : `Record for ${registrationToDelete.student_name} has been permanently deleted.`
+      )
+    } catch (error) {
+      console.error('Kayıt silinirken hata:', error.message)
+      // Kayıt bu arada ödeme aldıysa veritabanı reddeder; sebebini söyle.
+      const gecmisVar = String(error.message || '').includes('REGISTRATION_HAS_HISTORY')
+      showToast(
+        gecmisVar
+          ? (language === 'uk'
+              ? 'Цей запис уже має оплати або проведені заняття — його можна лише архівувати.'
+              : 'This record already has payments or attended lessons — it can only be archived.')
+          : (language === 'uk'
+              ? 'Помилка при видаленні запису.'
+              : 'An error occurred while deleting the record.'),
+        'error'
+      )
+    } finally {
+      setIsPermanentDeleting(false)
     }
   }
 
@@ -794,8 +852,11 @@ export default function Registration() {
           setRegistrationToDelete(null)
         }}
         onConfirm={handleDelete}
+        onDelete={handlePermanentDelete}
         entry={registrationToDelete}
         isLoading={isDeleting}
+        isDeleting={isPermanentDeleting}
+        canDelete={!!(registrationToDelete && deletableIds[registrationToDelete.id])}
       />
 
       {/* Toast */}
