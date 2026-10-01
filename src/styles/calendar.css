@@ -100,7 +100,9 @@
 .calendar-scroll:focus-visible { outline: 3px solid #93b8ff; outline-offset: -3px; }
 .calendar-scroll-hint { margin: 0; padding: 4px 20px; color: var(--calendar-muted); font-size: 12px; line-height: 18px; }
 .calendar-grid { min-width: 0; }
-.calendar-grid.is-week { min-width: 1120px; }
+/* Fit all seven days on desktop, including when browser zoom reduces the
+   available CSS width. Only small screens keep a scrollable week grid. */
+.calendar-grid.is-week { min-width: 0; }
 
 /* FullCalendar owns event positioning. Natural height leaves vertical scrolling
    with the app's main content instead of introducing a second scroll area. */
@@ -211,6 +213,19 @@
   .lesson-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 6px 8px; }
   .lesson-capacity { justify-self: start; }
   .lesson-kind { display: none; }
+}
+
+/* Parallel lessons get narrow at larger browser zoom. Keep the time and
+   capacity readable by reclaiming padding before reducing the text size. */
+@container (max-width: 80px) {
+  .lesson-card { padding-inline: 3px; }
+  .lesson-capacity { padding-inline: 3px; }
+  .lesson-capacity svg { display: none; }
+}
+
+@container (max-width: 55px) {
+  .lesson-card { padding-inline: 1px; }
+  .lesson-time { font-size: 14px; }
 }
 
 /* The day view has room for lesson details beside the three core rows. */
@@ -522,7 +537,7 @@
 
 /* Lesson preview occupies a reserved column; it never covers the schedule. */
 .calendar-page .calendar-content { display: block; min-width: 0; }
-.calendar-page .calendar-content.has-preview { display: grid; grid-template-columns: minmax(0, 1fr) 288px; align-items: start; gap: 12px; padding-right: 12px; }
+.calendar-page .calendar-content.has-preview { display: grid; grid-template-columns: minmax(0, 1fr) clamp(220px, 20%, 288px); align-items: start; gap: 12px; padding-right: 12px; }
 .calendar-page .calendar-schedule { min-width: 0; }
 .calendar-page .calendar-preview {
   position: sticky;
@@ -568,6 +583,12 @@
 .calendar-page .calendar-preview-empty h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; line-height: 22px; }
 .calendar-page .calendar-preview-empty p { margin: 0; color: var(--calendar-muted); font-size: 13px; line-height: 21px; }
 .calendar-page .calendar-lesson.is-previewed .lesson-card { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9); }
+
+/* Below this width, a seven-day grid plus both sidebars would truncate even
+   the lesson times. Retain the readable scrolling week as on mobile. */
+@media (max-width: 1199px) {
+  .calendar-grid.is-week { min-width: 1120px; }
+}
 
 @media (max-width: 1023px) {
   .calendar-page .calendar-content.has-preview { display: block; padding-right: 0; }

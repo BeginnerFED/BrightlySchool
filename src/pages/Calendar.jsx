@@ -1426,7 +1426,7 @@ const Calendar = () => {
               }
             }}
           >
-            {currentViewType === 'timeGridWeek' && width < (showLessonPreview ? 1700 : 1400) && (
+            {currentViewType === 'timeGridWeek' && width < 1200 && (
               <p className="calendar-scroll-hint">
                 {language === 'uk' ? 'Гортайте вбік, щоб переглянути всі дні' : 'Scroll sideways to see all days'}
               </p>
