@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ukLocale from '@fullcalendar/core/locales/uk';
 import enLocale from '@fullcalendar/core/locales/en-gb';
-import { PlusIcon, UserGroupIcon, UsersIcon, UserIcon, ClockIcon, AcademicCapIcon, DocumentDuplicateIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, UserGroupIcon, UsersIcon, UserIcon, DocumentDuplicateIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import CreateEvent from '../components/CreateEvent';
 import UpdateEventSheet from '../components/UpdateEventSheet';
+import CalendarLessonPreview from '../components/CalendarLessonPreview';
 import CopyWeekModal from '../components/CopyWeekModal';
 import WeeklyThemesModal from '../components/WeeklyThemesModal';
 import ExtendModal from '../components/ExtendModal';
@@ -15,7 +16,7 @@ import { supabase } from '../lib/supabase';
 import { fetchLessonUsageMap } from '../lib/lessonUsage';
 import Toast from '../components/ui/Toast';
 import '../styles/calendar.css';
-import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
+import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import uk from 'date-fns/locale/uk';
 import enUS from 'date-fns/locale/en-US';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -62,7 +63,7 @@ const useWindowSize = () => {
 
 const Calendar = () => {
   const { language } = useLanguage();
-  const { isOwner, user } = useAuth();
+  const { isOwner } = useAuth();
   // Herkes icin acik: ogretmen kendi dersinin rengini kendi profilinden
   // cozer. RLS ona yalnizca kendi satirini dondurur.
   const { teachers } = useTeachers();
@@ -87,6 +88,8 @@ const Calendar = () => {
   const [currentWeekRange, setCurrentWeekRange] = useState(null);
   const calendarRef = useRef(null);
   const calendarWrapRef = useRef(null);
+  const [previewEventId, setPreviewEventId] = useState(null);
+  const previewTimerRef = useRef(null);
 
   // States for Copy Week Modal
   const [isCopyWeekModalOpen, setIsCopyWeekModalOpen] = useState(false);
@@ -109,25 +112,18 @@ const Calendar = () => {
   const [isThemesModalOpen, setIsThemesModalOpen] = useState(false);
   const [themesModalFocusWeek, setThemesModalFocusWeek] = useState(null);
   const [weekThemes, setWeekThemes] = useState({}); // { 'yyyy-MM-dd' (Pazartesi) -> konu }
-  const [currentViewType, setCurrentViewType] = useState('timeGridWeek');
+  const [initialView] = useState(() => window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
+  const [currentViewType, setCurrentViewType] = useState(initialView);
+  const [calendarTitle, setCalendarTitle] = useState('');
   const themesRequestIdRef = useRef(0); // Geç gelen yanıtın günceli ezmemesi için
 
-  // Get screen width
   const { width } = useWindowSize();
-
-  // Gruplar artık sınıf ('1 клас'), dar ekranda kısaltmaya gerek yok:
-  // eski kod aylık etiketlerden ('12-18 міс.') birimi siliyordu.
-  const formatAgeGroup = (ageGroup) => ageGroup;
+  const showLessonPreview = width >= 1024 && currentViewType !== 'dayGridMonth';
 
   // Koltuk işgal eden ve kopyalanmaya değer katılımcı statüleri.
   // İptal ve erteleme burada YOK: o satırlar derste durur ama öğrenci
   // fiilen o derste değildir.
   const ACTIVE_PARTICIPANT_STATUSES = ['scheduled', 'makeup', 'attended'];
-
-  // Format date with the correct locale
-  const formatDate = (date, formatStr) => {
-    return format(new Date(date), formatStr || 'dd.MM.yyyy', { locale: language === 'uk' ? uk : enUS });
-  };
 
   // Determine color and icon based on event type
   // Renk ve etiket artık dersi VEREN KİŞİDEN geliyor, ders tipinden değil
@@ -334,6 +330,30 @@ const Calendar = () => {
     [coloredEvents]
   );
 
+  // Resolve from the current events so edited lessons and teacher colors stay fresh.
+  const previewEvent = coloredEvents.find(event => event.id === previewEventId) || null;
+
+  const cancelPreviewTimer = () => window.clearTimeout(previewTimerRef.current);
+  const clearLessonPreview = () => {
+    cancelPreviewTimer();
+    setPreviewEventId(null);
+  };
+
+  useEffect(() => () => window.clearTimeout(previewTimerRef.current), []);
+
+  const previewLesson = (event) => {
+    cancelPreviewTimer();
+    if (showLessonPreview && !event.extendedProps.isGrouped) {
+      // Ignore cards crossed briefly on the way to reading the preview.
+      previewTimerRef.current = window.setTimeout(() => setPreviewEventId(event.id), 120);
+    }
+  };
+
+  const openLessonDetails = (eventId) => {
+    setSelectedEvent(eventId);
+    setIsUpdateSheetOpen(true);
+  };
+
 
   // Load events when component mounts and when new events are added
   // Filtre değişince görünürdeki aralığı yeniden çek. datesSet ilk yüklemeyi
@@ -398,7 +418,7 @@ const Calendar = () => {
       // Etkinlik kartının üzerindeyken vurgu gösterme — kartın arkasında
       // yanıp sönen bir kutu kirli duruyor
       const over = document.elementFromPoint(x, y);
-      if (over && over.closest && over.closest('.fc-event')) return hide();
+      if (!over?.closest('.fc-timegrid-body') || over.closest('.fc-event')) return hide();
 
       // Saat kutusu 30 dk ama tıklama 15 dk ızgarasına oturuyor. Kutunun
       // tamamını vurgulamak, tıklandığında seçilecek yerden farklı bir yeri
@@ -410,11 +430,19 @@ const Calendar = () => {
       );
 
       const rootRect = root.getBoundingClientRect();
+      const viewport = root.querySelector('.calendar-scroll').getBoundingClientRect();
+      const scroller = over.closest('.fc-scroller')?.getBoundingClientRect();
+      const left = Math.max(colRect.left, viewport.left);
+      const right = Math.min(colRect.right, viewport.right);
+      const bandTop = laneRect.top + band * bandHeight;
+      const top = Math.max(bandTop, scroller?.top ?? bandTop);
+      const bottom = Math.min(bandTop + bandHeight, scroller?.bottom ?? bandTop + bandHeight);
+      if (right <= left || bottom <= top) return hide();
       highlight.style.display = 'block';
-      highlight.style.left = `${colRect.left - rootRect.left}px`;
-      highlight.style.width = `${colRect.width}px`;
-      highlight.style.top = `${laneRect.top - rootRect.top + band * bandHeight}px`;
-      highlight.style.height = `${bandHeight}px`;
+      highlight.style.left = `${left - rootRect.left}px`;
+      highlight.style.width = `${right - left}px`;
+      highlight.style.top = `${top - rootRect.top}px`;
+      highlight.style.height = `${bottom - top}px`;
     };
 
     // Dinleyici document üzerinde: sarmalayıcıya ulaşmayan bir olay kalmasın
@@ -427,119 +455,50 @@ const Calendar = () => {
     };
   }, [currentViewType, isOwner]);
 
-  // useEffect removed because datesSet in FullCalendar will handle initial fetch
-
-  // Render event content
-  // Öğretmen adı: sahip başkasının dersine bakarken kimin dersi olduğu görünsün.
-  // Kendi derslerinde etiket çıkmaz — her karta ad basmak gereksiz kalabalık olurdu.
+  // Keep cards within their time slots; hovering updates the separate preview rail.
   const renderEventContent = (eventInfo) => {
-    // Dikey başlık artık öğretmenin adı — kartın rengi de aynı kişiden geldiği
-    // için ayrıca "başka öğretmenin dersi" rozeti gösterilmiyordu, kalktı.
     const { typeDetails, currentCapacity, maxCapacity, ageGroup, students, topic, isGrouped, count } = eventInfo.event.extendedProps;
+    const cardStyle = {
+      '--lesson-color': typeDetails.color,
+      '--lesson-ink': readableOnWhite(typeDetails.color, 5.5)
+    };
 
-    // Ay görünümünde ve gruplandırılmış etkinlik ise
-    if (eventInfo.view.type === 'dayGridMonth' && isGrouped) {
+    if (isGrouped) {
       return (
-        <div className="grouped-event-card w-full h-full flex items-center justify-center text-white font-medium">
-          <span className="text-sm">{count} {typeDetails.label}</span>
+        <div className="grouped-event-card" style={cardStyle} title={`${typeDetails.label}: ${count}`}>
+          <span className="grouped-event-teacher">{typeDetails.label}</span>
+          <span className="grouped-event-count">{count}</span>
         </div>
       );
     }
 
-    // Normal etkinlik görünümü
+    const time = format(eventInfo.event.start, 'HH:mm');
+    const capacityLabel = maxCapacity === 1
+      ? (language === 'uk' ? 'Індивідуальне' : 'Private lesson')
+      : maxCapacity === 2
+        ? (language === 'uk' ? 'Парне заняття' : 'Paired lesson')
+        : (language === 'uk' ? 'Учні' : 'Students');
+    const CapacityIcon = maxCapacity === 1 ? UserIcon : maxCapacity === 2 ? UsersIcon : UserGroupIcon;
+    const summary = [
+      `${time} · ${typeDetails.label}`,
+      ageGroup,
+      `${capacityLabel}: ${currentCapacity}/${maxCapacity}`,
+      topic,
+      students?.join(', ')
+    ].filter(Boolean).join('\n');
+
     return (
-      <div className="event-card w-full h-full flex flex-row text-white overflow-hidden">
-        {/* Dikey Başlık - Sol Üstte */}
-        <div className="event-title">
-          {typeDetails.label}
-        </div>
-
-        {/* İçerik Alanı */}
-        <div className="event-content">
-          {/* Bilgiler */}
-          <div className="flex flex-col gap-1.5 text-xs">
-            {/* Saat */}
-            <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
-              <ClockIcon className="w-3 h-3 text-white/70" />
-              <span className="font-medium">
-                {new Date(eventInfo.event.start).toLocaleTimeString(language === 'uk' ? 'uk-UA' : 'en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
-            </div>
-
-            {/* Yaş Grubu */}
-            <div className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm w-fit">
-              <AcademicCapIcon className="w-3 h-3 text-white/70" />
-              <span className="font-medium">{formatAgeGroup(ageGroup)}</span>
-            </div>
-
-            {/* Kapasite — aynı zamanda DERS TÜRÜNÜ anlatır.
-                Kartın rengi "kimin dersi" demek; türü de renkle anlatsaydık
-                kart iki renkli olur, bakan kişi hangisinin ne olduğunu
-                ezberlemek zorunda kalırdı. Bu yüzden tür renkle değil
-                İKON + PARLAKLIK ile belirtiliyor.
-                4'lü grup normal durum, olduğu gibi bırakılıyor; yalnızca
-                istisnalar (özel ders, ikili) öne çıkıyor.
-                Payda dersin KENDİ max_capacity'si — sabit sayı yazmak
-                "7/6" gibi imkansız değerler üretiyordu. */}
-            {maxCapacity <= 2 ? (
-              // ÖZEL / İKİLİ DERS: rozet ters çevriliyor — beyaz zemin,
-              // kartın kendi rengiyle yazı. Renk SABİT DEĞİL, kartınkinden
-              // türetiliyor: Yulia paletten başka bir renk seçse de rozet
-              // otomatik uyar, hiçbir zaman uyumsuz düşemez.
-              <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md shadow-sm w-fit bg-white"
-                // Ham kart rengi beyaz uzerinde okunmuyordu (turuncu 2.80,
-                // yesil 2.22). Karttan turetilip kontrast yetene kadar
-                // koyulastiriliyor.
-                style={{ color: readableOnWhite(typeDetails.color) }}
-              >
-                {maxCapacity === 1
-                  ? <UserIcon className="w-3 h-3" />
-                  : <UsersIcon className="w-3 h-3" />}
-                <span className="font-semibold tracking-wide">
-                  {maxCapacity === 1
-                    ? (language === 'uk' ? 'Індивідуальне' : 'Private')
-                    : `${currentCapacity}/${maxCapacity}`}
-                </span>
-              </div>
-            ) : (
-              // Normal grup: değişmiyor, göze çarpması gereken istisnalar
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-md shadow-sm w-fit bg-white/15">
-                <UserGroupIcon className="w-3 h-3 text-white/70" />
-                <span className="font-medium">{currentCapacity}/{maxCapacity}</span>
-              </div>
-            )}
-
-            {/* Ders konusu — kart dar olduğu için tek satıra kırpılıyor,
-                tamamı title'da duruyor */}
-            {topic && (
-              <div
-                className="flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-md shadow-sm min-w-0 max-w-full"
-                title={topic}
-              >
-                <BookOpenIcon className="w-3 h-3 text-white/70 shrink-0" />
-                <span className="font-medium truncate">{topic}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Öğrenci Listesi - Hover durumunda görünecek */}
-          {students && students.length > 0 && (
-            <div className="student-list mt-1 pt-1 border-t border-white/20 text-xs">
-              <div className="student-list-items space-y-0.5 max-h-20 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/30">
-                {students.map((student, index) => (
-                  <div key={index} className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
-                    <span className="truncate">{student}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="lesson-card" style={cardStyle} aria-label={summary}>
+        <span className="lesson-time">{time}</span>
+        <span className="lesson-teacher">{typeDetails.label}</span>
+        <span className="lesson-grade">{ageGroup}</span>
+        <span className={`lesson-capacity${maxCapacity <= 2 ? ' is-private' : ''}`} aria-label={`${capacityLabel}: ${currentCapacity}/${maxCapacity}`}>
+          <CapacityIcon aria-hidden="true" />
+          <span>{currentCapacity}/{maxCapacity}</span>
+          {maxCapacity <= 2 && <span className="lesson-kind">{capacityLabel}</span>}
+        </span>
+        {topic && <span className="lesson-topic">{topic}</span>}
+        {students?.length > 0 && <span className="lesson-students">{students.join(', ')}</span>}
       </div>
     );
   };
@@ -1327,115 +1286,28 @@ const Calendar = () => {
     }
   };
 
-  // Hafta görünümündeyken ve takvim yüklendikten sonra "Копіювати цей тиждень" ikonunu ekle
-  useEffect(() => {
-    const addCopyWeekButton = () => {
-      if (!calendarRef.current) return;
-      // Hafta kopyalama ders YARATIR; ogretmen icin hic eklenmemeli.
-      if (!isOwner) return;
-
-      // Takvim başlığını içeren elementi bul
-      const titleElement = document.querySelector('.fc-toolbar-title');
-      if (!titleElement) return;
-
-      // Eğer daha önce eklenmiş bir ikon varsa kaldır
-      const existingIcon = document.getElementById('copy-week-icon');
-      if (existingIcon) existingIcon.remove();
-
-      // Yeni ikon oluştur
-      const iconContainer = document.createElement('div');
-      iconContainer.classList.add('relative', 'inline-flex', 'ml-2', 'items-center');
-      iconContainer.id = 'copy-week-icon';
-
-      // İkon elementi
-      const iconElement = document.createElement('button');
-      iconElement.classList.add(
-        'inline-flex', 'items-center', 'justify-center',
-        'w-7', 'h-7', 'bg-white', 'dark:bg-[#121621]',
-        'border', 'border-[#d2d2d7]', 'dark:border-[#2a3241]',
-        'rounded-full', 'text-[#6e6e73]', 'dark:text-[#86868b]',
-        'hover:text-[#1d1d1f]', 'dark:hover:text-white',
-        'hover:border-[#0071e3]', 'dark:hover:border-[#0071e3]',
-        'transition-all', 'duration-200', 'cursor-pointer',
-        'group'
-      );
-
-      // SVG ikonu
-      iconElement.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z" />
-        </svg>
-      `;
-
-      // Tooltip ekle
-      const tooltip = document.createElement('div');
-      tooltip.classList.add(
-        'absolute', 'bottom-full', 'left-1/2', 'transform', '-translate-x-1/2', 'mb-2',
-        'px-2', 'py-1', 'bg-gray-800', 'dark:bg-gray-700', 'text-white', 'text-xs',
-        'rounded', 'opacity-0', 'group-hover:opacity-100', 'transition-opacity',
-        'duration-200', 'whitespace-nowrap', 'pointer-events-none', 'z-10'
-      );
-      tooltip.textContent = 'Копіювати цей тиждень';
-
-      // İkon tıklama işlevi
-      iconElement.addEventListener('click', handleCopyWeekClick);
-
-      // Elementleri birleştir
-      iconContainer.appendChild(iconElement);
-      iconContainer.appendChild(tooltip);
-
-      // Başlık elementinin yanına ekle
-      titleElement.appendChild(iconContainer);
-    };
-
-    // İlk yükleme ve görünüm değişikliklerinde ikonu ekle
-    addCopyWeekButton();
-
-    // FullCalendar görünümü değiştiğinde de ikonu tekrar ekle
-    const handleViewChange = () => {
-      setTimeout(addCopyWeekButton, 100);
-    };
-
-    window.addEventListener('resize', handleViewChange);
-    document.addEventListener('visibilitychange', handleViewChange);
-
-    // Temizleme
-    return () => {
-      window.removeEventListener('resize', handleViewChange);
-      document.removeEventListener('visibilitychange', handleViewChange);
-      document.getElementById('copy-week-icon')?.remove();
-    };
-  }, [isOwner]);
-
-  // Görünen haftanın konusu (banner sadece hafta ve gün görünümlerinde gösterilir)
+  // Show a saved weekly theme beside the date controls, without an empty banner.
   const activeWeekKey = currentWeekRange
     ? format(startOfWeek(new Date(currentWeekRange), { weekStartsOn: 1 }), 'yyyy-MM-dd')
     : null;
   const activeWeekTheme = activeWeekKey ? weekThemes[activeWeekKey] : null;
-  const showThemeBanner = (currentViewType === 'timeGridWeek' || currentViewType === 'timeGridDay') && activeWeekKey;
+  const showWeekTheme = (currentViewType === 'timeGridWeek' || currentViewType === 'timeGridDay') && activeWeekKey;
 
   return (
-    <div className="min-h-screen text-[#1d1d1f] dark:text-[#f5f5f7]">
-      {/* Header */}
-      <div className="flex flex-wrap sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 px-6 border-b border-[#d2d2d7] dark:border-[#2a3241] py-4 sm:py-0 gap-4 sm:gap-0 bg-white dark:bg-[#1a1f2e] mb-6 rounded-t-xl">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-medium text-[#1d1d1f] dark:text-white">
-            {language === 'uk' ? 'Календар' : 'Calendar'}
-          </h1>
-
-          {/* Kimin takvimine bakıldığı. Yalnızca sahip görür ve yalnızca
-              gerçekten öğretmen varsa — tek kişilik okulda gereksiz kalabalık. */}
+    <div className="calendar-page text-[#1d1d1f] dark:text-[#f5f5f7]">
+      <header className="calendar-page-header">
+        <div className="calendar-heading">
+          <h1>{language === 'uk' ? 'Календар' : 'Calendar'}</h1>
           {isOwner && teachers.length > 0 && (
             <select
               value={teacherFilter}
-              onChange={(e) => setTeacherFilter(e.target.value)}
-              className="h-8 pl-3 pr-8 bg-white dark:bg-[#1a1f2e] text-[#1d1d1f] dark:text-white text-sm font-medium rounded-lg border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#6e6e73] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all duration-200 cursor-pointer"
+              onChange={(e) => {
+                clearLessonPreview();
+                setTeacherFilter(e.target.value);
+              }}
+              aria-label={language === 'uk' ? 'Викладач' : 'Teacher'}
+              className="calendar-teacher-filter"
             >
-              {/* "Мої заняття" seçeneği kalktı: sahip zaten listede kendi
-                  adıyla duruyordu, aynı kişi iki kez görünüyordu. Üstelik
-                  değeri user henüz yüklenmeden '' oluyor ve "Усі викладачі"
-                  ile çakışıyordu — tarayıcı son eşleşeni seçtiği için filtre
-                  boşken bile "Мої заняття" yazıyordu. */}
               <option value="">{language === 'uk' ? 'Усі викладачі' : 'All teachers'}</option>
               {teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
@@ -1445,80 +1317,92 @@ const Calendar = () => {
             </select>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+        <div className="calendar-header-actions">
           <a
             href="/BrightlySchool/#/rozklad"
             target="_blank"
             rel="noopener noreferrer"
-            className="h-10 sm:h-8 px-3 bg-purple-100 dark:bg-purple-800/20 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/30 focus:outline-none transition-all duration-200 flex items-center justify-center gap-1.5 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
+            className="calendar-secondary-button"
           >
-            <CalendarDaysIcon className="w-3.5 h-3.5" />
+            <CalendarDaysIcon aria-hidden="true" />
             <span>{language === 'uk' ? 'Публічний календар' : 'Public Calendar'}</span>
-            <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+            <ArrowTopRightOnSquareIcon aria-hidden="true" />
           </a>
-          {/* Konu düzenleme sahibe ait; öğretmen konuyu aşağıdaki
-              bantta görür ama değiştiremez (DB de reddeder). */}
           {isOwner && <button
             onClick={() => {
               setThemesModalFocusWeek(null);
               setIsThemesModalOpen(true);
             }}
-            className="h-10 sm:h-8 px-3 bg-pink-100 dark:bg-pink-800/20 text-pink-700 dark:text-pink-300 text-sm font-medium rounded-lg hover:bg-pink-200 dark:hover:bg-pink-800/30 focus:outline-none transition-all duration-200 flex items-center justify-center gap-1.5 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
+            className="calendar-secondary-button"
           >
-            <BookOpenIcon className="w-3.5 h-3.5" />
+            <BookOpenIcon aria-hidden="true" />
             <span>{language === 'uk' ? 'Теми тижнів' : 'Weekly Themes'}</span>
           </button>}
-          {/* Ders acma yalnizca sahipte — ogretmene basildiginda akis
-              veritabaninda ham RLS hatasiyla oluyordu */}
           {isOwner && <button
             onClick={() => {
-              setSelectedTime({
-                hour: '',
-                minute: ''
-              });
+              setSelectedDate(null);
+              setSelectedTime({ hour: '', minute: '' });
               setIsModalOpen(true);
             }}
-            className="h-10 sm:h-8 px-4 bg-[#1d1d1f] dark:bg-[#0071e3] text-white text-sm font-medium rounded-lg hover:bg-black dark:hover:bg-[#0077ed] focus:outline-none transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto transform hover:scale-[1.02] active:scale-[0.98]"
+            className="calendar-primary-button"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon aria-hidden="true" />
             <span>{language === 'uk' ? 'Нове заняття' : 'New Event'}</span>
           </button>}
         </div>
-      </div>
+      </header>
 
-      <div ref={calendarWrapRef} className="relative bg-white dark:bg-[#1a1f2e] rounded-xl overflow-hidden">
-        {/* Haftanın Konusu (hafta ve gün görünümleri) */}
-        {showThemeBanner && (
-          <div className="flex items-center justify-between gap-4 px-6 py-2.5 border-b border-[#d2d2d7] dark:border-[#2a3241]">
-            <div className="flex items-center gap-2.5 min-w-0 text-sm">
-              <span className="text-[#6e6e73] dark:text-[#86868b] shrink-0">
-                {language === 'uk' ? 'Тема тижня' : 'Weekly Theme'}
-              </span>
-              <span className="h-3.5 w-px bg-[#d2d2d7] dark:bg-[#2a3241] shrink-0"></span>
-              {activeWeekTheme ? (
-                <span className="text-base font-semibold text-[#1d1d1f] dark:text-white truncate">
-                  {activeWeekTheme}
-                </span>
-              ) : (
-                <span className="text-[#a1a1a6] dark:text-[#6e6e73]">
-                  {language === 'uk' ? 'Не визначено' : 'Not set'}
-                </span>
-              )}
+      <div ref={calendarWrapRef} className="calendar-panel relative">
+        <div className="calendar-toolbar">
+          <div className="calendar-navigation">
+            <div className="flex items-center gap-1">
+              <button className="calendar-icon-button" onClick={() => calendarRef.current?.getApi().prev()} aria-label={language === 'uk' ? 'Попередній період' : 'Previous period'}>
+                <ChevronLeftIcon aria-hidden="true" />
+              </button>
+              <button className="calendar-today-button" onClick={() => calendarRef.current?.getApi().today()}>
+                {language === 'uk' ? 'Сьогодні' : 'Today'}
+              </button>
+              <button className="calendar-icon-button" onClick={() => calendarRef.current?.getApi().next()} aria-label={language === 'uk' ? 'Наступний період' : 'Next period'}>
+                <ChevronRightIcon aria-hidden="true" />
+              </button>
             </div>
-            {isOwner && <button
-              onClick={() => {
-                setThemesModalFocusWeek(activeWeekKey);
-                setIsThemesModalOpen(true);
-              }}
-              className="h-7 px-3.5 rounded-full border border-[#d2d2d7] dark:border-[#2a3241] text-[13px] font-medium text-[#6e6e73] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] hover:border-[#0071e3] dark:hover:border-[#0071e3] hover:bg-[#0071e3]/[0.04] dark:hover:bg-[#0071e3]/10 active:scale-[0.96] transition-all duration-200 shrink-0"
-            >
-              {activeWeekTheme
-                ? (language === 'uk' ? 'Редагувати' : 'Edit')
-                : (language === 'uk' ? 'Додати тему' : 'Add Theme')}
-            </button>}
+            <h2 className="calendar-range-title" aria-live="polite">{calendarTitle}</h2>
           </div>
-        )}
-
+          {showWeekTheme && activeWeekTheme && (
+            <div className="calendar-toolbar-theme" title={`${language === 'uk' ? 'Тема тижня' : 'Weekly Theme'}: ${activeWeekTheme}`}>
+              <BookOpenIcon aria-hidden="true" />
+              <span>{activeWeekTheme}</span>
+              {isOwner && <button
+                onClick={() => {
+                  setThemesModalFocusWeek(activeWeekKey);
+                  setIsThemesModalOpen(true);
+                }}
+                aria-label={language === 'uk' ? 'Редагувати тему тижня' : 'Edit weekly theme'}
+              >
+                {language === 'uk' ? 'Редагувати' : 'Edit'}
+              </button>}
+            </div>
+          )}
+          <div className="calendar-toolbar-tools">
+            {isOwner && currentViewType === 'timeGridWeek' && (
+              <button className="calendar-copy-button" onClick={handleCopyWeekClick} disabled={copyWeekLoading}>
+                <DocumentDuplicateIcon aria-hidden="true" />
+                <span>{language === 'uk' ? 'Копіювати тиждень' : 'Copy week'}</span>
+              </button>
+            )}
+            <div className="calendar-view-switch" role="group" aria-label={language === 'uk' ? 'Вигляд календаря' : 'Calendar view'}>
+              {[
+                ['dayGridMonth', language === 'uk' ? 'Місяць' : 'Month'],
+                ['timeGridWeek', language === 'uk' ? 'Тиждень' : 'Week'],
+                ['timeGridDay', language === 'uk' ? 'День' : 'Day']
+              ].map(([view, label]) => (
+                <button key={view} aria-pressed={currentViewType === view} onClick={() => calendarRef.current?.getApi().changeView(view)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         {/* Loading Overlay */}
         {isLoading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm">
@@ -1531,68 +1415,107 @@ const Calendar = () => {
           </div>
         )}
 
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          }}
-          buttonText={{
-            today: language === 'uk' ? 'Сьогодні' : 'Today',
-            month: language === 'uk' ? 'Місяць' : 'Month',
-            week: language === 'uk' ? 'Тиждень' : 'Week',
-            day: language === 'uk' ? 'День' : 'Day'
-          }}
-          buttonClassNames="h-9 px-4 rounded-lg text-sm font-medium bg-white dark:bg-[#121621] text-[#1d1d1f] dark:text-white border border-[#d2d2d7] dark:border-[#2a3241] hover:border-[#0071e3] dark:hover:border-[#0071e3] transition-colors whitespace-nowrap"
-          locale={language === 'uk' ? ukLocale : enLocale}
-          // Ders açma ve sürükleme yalnızca sahipte; öğretmen kendi takvimini
-          // görür ve yoklama alır. Veritabanı da aynı kuralı uyguluyor
-          // (events_insert_owner / events_update_owner).
-          selectable={isOwner}
-          select={handleDateSelect}
-          // Ay görünümünde gün+öğretmen kırılımında toplanmış kartlar,
-          // diğer görünümlerde tek tek dersler
-          events={currentViewType === 'dayGridMonth' ? groupedEvents : coloredEvents}
-          eventClick={handleEventClick}
-          eventContent={renderEventContent}
-          viewDidMount={handleViewDidMount}
-          editable={isOwner} // sürükle-bırak yalnızca sahipte
-          eventDrop={handleEventDrop} // Drag-and-drop handler
-          dragScroll={true} // Auto-scroll during dragging
-          snapDuration={toDuration(SNAP_MINUTES)} // tıklamanın oturduğu ızgara
-          eventDragStart={(info) => info.el.classList.add('event-dragging')} // Add class when dragging starts
-          eventDragStop={(info) => info.el.classList.remove('event-dragging')} // Remove class when dragging ends
-          droppable={true} // For external dragging (can be used in the future)
-          dropAccept=".fc-event" // Accept only events
-          height="auto"
-          contentHeight="auto"
-          aspectRatio={1.8}
-          firstDay={1}
-          slotMinTime="09:00:00"
-          // 23:00 üst sınır: 22:00'de başlayan ders de takvimde görünsün
-          slotMaxTime="23:00:00"
-          expandRows={true}
-          stickyHeaderDates={true}
-          dayMaxEvents={3}
-          eventTimeFormat={{
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }}
-          allDaySlot={false}
-          slotDuration={toDuration(SLOT_MINUTES)}
-          slotLabelInterval="01:00"
-          datesSet={(dateInfo) => {
-            fetchEvents(dateInfo.start, dateInfo.end);
-            setCurrentWeekRange(dateInfo.start); // Update current week range for copy function
-            fetchWeekThemes(dateInfo.start, dateInfo.end);
-            setCurrentViewType(dateInfo.view.type);
-          }}
-          eventClassNames="overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow"
-        />
+        <div className={`calendar-content${showLessonPreview ? ' has-preview' : ''}`}>
+          <div
+            className="calendar-schedule"
+            onFocusCapture={(event) => {
+              const lessonId = event.target.closest('[data-lesson-id]')?.dataset.lessonId;
+              if (showLessonPreview && lessonId) {
+                cancelPreviewTimer();
+                setPreviewEventId(lessonId);
+              }
+            }}
+          >
+            {currentViewType === 'timeGridWeek' && width < (showLessonPreview ? 1700 : 1400) && (
+              <p className="calendar-scroll-hint">
+                {language === 'uk' ? 'Гортайте вбік, щоб переглянути всі дні' : 'Scroll sideways to see all days'}
+              </p>
+            )}
+            <div className="calendar-scroll" tabIndex={currentViewType === 'timeGridWeek' ? 0 : undefined} role="region" aria-label={language === 'uk' ? 'Розклад занять' : 'Lesson schedule'}>
+              <div className={`calendar-grid${currentViewType === 'timeGridWeek' ? ' is-week' : ''}`}>
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={initialView}
+                  headerToolbar={false}
+                  locale={language === 'uk' ? ukLocale : enLocale}
+                  // Ders açma ve sürükleme yalnızca sahipte; öğretmen kendi takvimini
+                  // görür ve yoklama alır. Veritabanı da aynı kuralı uyguluyor
+                  // (events_insert_owner / events_update_owner).
+                  selectable={isOwner}
+                  select={handleDateSelect}
+                  // Ay görünümünde gün+öğretmen kırılımında toplanmış kartlar,
+                  // diğer görünümlerde tek tek dersler
+                  events={currentViewType === 'dayGridMonth' ? groupedEvents : coloredEvents}
+                  eventClick={handleEventClick}
+                  eventMouseEnter={({ event }) => previewLesson(event)}
+                  eventMouseLeave={cancelPreviewTimer}
+                  eventDidMount={({ event, el }) => {
+                    if (!event.extendedProps.isGrouped) {
+                      el.dataset.lessonId = event.id;
+                    el.setAttribute('role', 'button');
+                    }
+                  }}
+                  eventContent={renderEventContent}
+                  viewDidMount={handleViewDidMount}
+                  editable={isOwner && currentViewType !== 'dayGridMonth'}
+                  eventDurationEditable={false}
+                  slotEventOverlap={false}
+                  eventDrop={handleEventDrop} // Drag-and-drop handler
+                  dragScroll={true} // Auto-scroll during dragging
+                  snapDuration={toDuration(SNAP_MINUTES)} // tıklamanın oturduğu ızgara
+                  eventDragStart={(info) => info.el.classList.add('event-dragging')} // Add class when dragging starts
+                  eventDragStop={(info) => info.el.classList.remove('event-dragging')} // Remove class when dragging ends
+                  droppable={true} // For external dragging (can be used in the future)
+                  dropAccept=".fc-event" // Accept only events
+                  height="auto"
+                  firstDay={1}
+                  slotMinTime="09:00:00"
+                  // 23:00 üst sınır: 22:00'de başlayan ders de takvimde görünsün
+                  slotMaxTime="23:00:00"
+                  expandRows={true}
+                  stickyHeaderDates={true}
+                  dayMaxEvents={3}
+                  eventTimeFormat={{
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }}
+                  allDaySlot={false}
+                  slotDuration={toDuration(SLOT_MINUTES)}
+                  slotLabelInterval="01:00"
+                  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+                  dayHeaderContent={(info) => info.view.type === 'dayGridMonth' ? info.text : (
+                    <div className={`calendar-day-heading${isSameDay(info.date, new Date()) ? ' is-today' : ''}`}>
+                      <span className="calendar-day-name">{format(info.date, 'EEE', { locale: language === 'uk' ? uk : enUS })}</span>
+                      <span className="calendar-day-number">{format(info.date, 'dd')}</span>
+                    </div>
+                  )}
+                  datesSet={(dateInfo) => {
+                    fetchEvents(dateInfo.start, dateInfo.end);
+                    setCurrentWeekRange(dateInfo.start); // Update current week range for copy function
+                    fetchWeekThemes(dateInfo.start, dateInfo.end);
+                    setCurrentViewType(dateInfo.view.type);
+                    setCalendarTitle(dateInfo.view.title);
+                    clearLessonPreview();
+                  }}
+                  eventClassNames={({ event }) => [
+                    'calendar-lesson',
+                    ...(showLessonPreview && event.id === previewEventId ? ['is-previewed'] : [])
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+          {showLessonPreview && (
+            <CalendarLessonPreview
+              event={isLoading ? null : previewEvent}
+              language={language}
+              weekTheme={previewEvent ? weekThemes[format(startOfWeek(new Date(previewEvent.start), { weekStartsOn: 1 }), 'yyyy-MM-dd')] : null}
+              onOpen={openLessonDetails}
+            />
+          )}
+        </div>
       </div>
 
       {/* Create Event Modal */}
@@ -1684,4 +1607,4 @@ const Calendar = () => {
   );
 };
 
-export default Calendar; 
+export default Calendar;

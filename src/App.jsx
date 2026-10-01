@@ -72,7 +72,7 @@ function App() {
 
                         {/* Main Content */}
                         <main className={`
-                          flex-1 h-full overflow-y-auto
+                          flex-1 min-w-0 h-full overflow-y-auto
                           transition-all duration-300
                           ${isMobile ? 'w-full pb-[50px]' : 'w-[calc(100%-256px)] pb-[30px]'}
                           ${isMobile && isSidebarOpen ? 'overflow-hidden' : ''}

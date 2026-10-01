@@ -1,338 +1,264 @@
-/* Modern takvim stilleri */
-.fc {
-  --fc-border-color: transparent;
-  --fc-today-bg-color: rgba(59, 130, 246, 0.1);
-  --fc-neutral-bg-color: #ffffff;
-  --fc-list-event-hover-bg-color: #f3f4f6;
-  --fc-button-text-color: #374151;
-  --fc-button-bg-color: #ffffff;
-  --fc-button-border-color: #e5e7eb;
-  --fc-button-hover-bg-color: #f3f4f6;
-  --fc-button-hover-border-color: #e5e7eb;
-  --fc-button-active-bg-color: #3b82f6;
-  --fc-button-active-border-color: #3b82f6;
+/* Compact calendar controls with the original teacher colors. */
+.calendar-page {
+  --calendar-ink: #17253d;
+  --calendar-muted: #637087;
+  --calendar-line: #e5eaf2;
+  --calendar-surface: #ffffff;
+  --calendar-soft: #f4f6fa;
+  min-width: 0;
+  color: var(--calendar-ink);
 }
 
-/* Dark mode için */
-.dark .fc {
-  --fc-border-color: transparent;
-  --fc-today-bg-color: rgba(59, 130, 246, 0.2);
-  --fc-neutral-bg-color: #161b2c;
-  --fc-list-event-hover-bg-color: #1f2937;
-  --fc-button-text-color: #e2e8f0;
-  --fc-button-bg-color: #1f2937;
-  --fc-button-border-color: #374151;
-  --fc-button-hover-bg-color: #374151;
-  --fc-button-hover-border-color: #4b5563;
-  --fc-button-active-bg-color: #3b82f6;
-  --fc-button-active-border-color: #3b82f6;
-  --fc-button-light-bg-color: #1a1f2e;
+.dark .calendar-page {
+  --calendar-ink: #eef3fb;
+  --calendar-muted: #a7b3c7;
+  --calendar-line: #2b3548;
+  --calendar-surface: #1a1f2e;
+  --calendar-soft: #222b3d;
 }
 
-/* Toolbar stilleri */
-.fc .fc-toolbar {
-  padding: 1.5rem;
-  margin-bottom: 0 !important;
+.calendar-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 10px 16px;
+  padding: 14px 20px;
 }
+.calendar-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.calendar-heading h1 { margin: 0; font-size: 20px; font-weight: 650; line-height: 28px; letter-spacing: -0.3px; }
+.calendar-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 
-.fc .fc-toolbar-title {
-  font-size: 1.5rem !important;
-  font-weight: 600;
-  color: #111827;
-}
-
-.dark .fc .fc-toolbar-title {
-  color: #f3f4f6;
-}
-
-/* Buton stilleri */
-.fc .fc-button-group {
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  gap: 0.5rem;
-}
-
-.dark .fc .fc-button-group {
-  background: transparent;
-}
-
-.fc .fc-button {
-  height: 2.25rem !important;
-  padding: 0 1rem !important;
-  font-weight: 500 !important;
-  border-radius: 0.5rem !important;
-  transition: all 0.2s !important;
-  border: 1px solid #d2d2d7 !important;
-  background: white !important;
-  color: #1d1d1f !important;
-  text-transform: none !important;
-  font-size: 0.875rem !important;
-}
-
-.dark .fc .fc-button {
-  background: #121621 !important;
-  border-color: #2a3241 !important;
-  color: white !important;
-}
-
-.fc .fc-button:hover {
-  border-color: #0071e3 !important;
-}
-
-.dark .fc .fc-button:hover {
-  border-color: #0071e3 !important;
-}
-
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active {
-  background: #1d1d1f !important;
-  border-color: #1d1d1f !important;
-  color: white !important;
-}
-
-.dark .fc .fc-button-primary:not(:disabled).fc-button-active,
-.dark .fc .fc-button-primary:not(:disabled):active {
-  background: #0071e3 !important;
-  border-color: #0071e3 !important;
-  color: white !important;
-}
-
-/* Takvim başlık ve içerik stilleri */
-.fc .fc-col-header {
-  background-color: var(--fc-button-light-bg-color);
-}
-
-.fc .fc-col-header-cell {
-  padding: 1rem 0;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  color: #6b7280;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.7);
-}
-
-.dark .fc .fc-col-header-cell {
-  color: #9ca3af;
-  border-bottom: 1px solid rgba(55, 65, 81, 0.4);
-}
-
-.fc .fc-daygrid-day {
-  transition: background-color 0.2s;
-  border-right: 1px solid rgba(229, 231, 235, 0.5);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-}
-
-.dark .fc .fc-daygrid-day {
-  border-right: 1px solid rgba(55, 65, 81, 0.3);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.3);
-}
-
-.fc .fc-daygrid-day:hover {
-  background-color: rgba(59, 130, 246, 0.05);
-}
-
-.dark .fc .fc-daygrid-day:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-}
-
-.fc .fc-daygrid-day-top {
-  padding: 0.75rem;
-}
-
-.fc .fc-daygrid-day-number {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #111827;
-  width: 1.75rem;
-  height: 1.75rem;
-  display: flex;
+.calendar-secondary-button,
+.calendar-primary-button,
+.calendar-copy-button,
+.calendar-today-button,
+.calendar-icon-button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  transition: all 0.2s;
-}
-
-.dark .fc .fc-daygrid-day-number {
-  color: #e5e7eb;
-}
-
-.fc .fc-day-today .fc-daygrid-day-number {
-  background-color: #3b82f6;
-  color: white;
-}
-
-/* Event stilleri */
-.fc-event {
-  border: none !important;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border-radius: 0.375rem;
-  background-color: #3b82f6;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.fc-event:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.fc-event-time {
-  font-weight: 500;
-}
-
-.fc-event-title {
-  font-weight: 400;
-}
-
-/* TimeLine görünümü için */
-.fc .fc-timegrid-slot {
-  height: 3.5rem;
-  border-color: rgba(229, 231, 235, 0.5);
-}
-
-.dark .fc .fc-timegrid-slot {
-  border-color: rgba(55, 65, 81, 0.5);
-}
-
-/* İmlecin üzerinde olduğu saat kutusu.
-   Salt CSS ile yapılamıyor: saat satırları (.fc-timegrid-slots) ile gün
-   sütunları (.fc-timegrid-cols) ayrı katmanlar ve sütunlar üstte duruyor,
-   yani satırlar hover almıyor — kesişim CSS'te bilinemiyor. Konum
-   Calendar.jsx'teki effect tarafından veriliyor.
-   z-index 1: etkinlik kartları (.fc-timegrid-col-events, z-index 3) üstte kalsın. */
-.fc-slot-hover {
-  position: absolute;
-  z-index: 2;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--calendar-line);
   border-radius: 8px;
-  /* Tıklama seçimiyle (.fc-highlight) aynı renk ve kesikli çerçeve dili:
-     hover, tıklandığında ne seçileceğinin önizlemesi. Daha ince ve soluk,
-     çünkü sürekli görünüyor — seçimdeki gibi nabız atmıyor. */
-  background: rgba(0, 113, 227, 0.10);
-  border: 2px dashed rgba(0, 113, 227, 0.45);
-  pointer-events: none;
-  transition: top 90ms cubic-bezier(0.25, 0.1, 0.25, 1),
-              left 90ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  background: var(--calendar-surface);
+  color: var(--calendar-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+.calendar-secondary-button:hover,
+.calendar-copy-button:hover,
+.calendar-today-button:hover,
+.calendar-icon-button:hover { background: var(--calendar-soft); border-color: #bdc9da; }
+.calendar-primary-button { background: #2865e8; border-color: #2865e8; color: #ffffff; }
+.calendar-primary-button:hover { background: #2057cd; border-color: #2057cd; }
+.calendar-icon-button { width: 34px; padding: 7px; }
+.calendar-page button:disabled { cursor: default; opacity: 0.45; }
+.calendar-page button:disabled:hover { box-shadow: none; }
+.calendar-page button:focus-visible,
+.calendar-page a:focus-visible,
+.calendar-page select:focus-visible { outline: 3px solid #93b8ff; outline-offset: 3px; }
+.calendar-header-actions svg,
+.calendar-copy-button svg,
+.calendar-icon-button svg { width: 16px; height: 16px; flex-shrink: 0; }
+.calendar-heading select,
+.calendar-header-actions select {
+  min-width: 0;
+  max-width: 220px;
+  min-height: 36px;
+  padding: 7px 30px 7px 11px;
+  border: 1px solid var(--calendar-line);
+  border-radius: 8px;
+  background-color: var(--calendar-surface);
+  color: var(--calendar-ink);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
 }
 
-.dark .fc-slot-hover {
-  background: rgba(59, 130, 246, 0.16);
-  border-color: rgba(59, 130, 246, 0.55);
+.calendar-panel { position: relative; min-width: 0; background: var(--calendar-surface); border-radius: 0 0 12px 12px; }
+.calendar-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; padding: 10px 20px; border-top: 1px solid var(--calendar-line); }
+.calendar-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.calendar-range-title { margin: 0 0 0 9px; color: var(--calendar-ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.calendar-toolbar-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.calendar-toolbar-theme { display: flex; align-items: center; gap: 6px; flex: 1 1 150px; min-width: 0; max-width: 340px; overflow: hidden; color: var(--calendar-muted); font-size: 13px; line-height: 20px; }
+.calendar-toolbar-theme svg { width: 15px; height: 15px; flex-shrink: 0; }
+.calendar-toolbar-theme > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-toolbar-theme button { flex-shrink: 0; min-height: 28px; padding: 3px 5px; border-radius: 5px; color: #2865e8; font-size: 13px; font-weight: 600; line-height: 20px; }
+.calendar-toolbar-theme button:hover { background: var(--calendar-soft); }
+.dark .calendar-toolbar-theme button { color: #9abaff; }
+.calendar-view-switch { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; background: var(--calendar-soft); }
+.calendar-view-switch button { min-height: 30px; padding: 4px 12px; border: 1px solid transparent; border-radius: 6px; color: var(--calendar-muted); font-size: 13px; font-weight: 600; line-height: 20px; white-space: nowrap; cursor: pointer; }
+.calendar-view-switch button:hover { color: var(--calendar-ink); }
+.calendar-view-switch button[aria-pressed="true"] { border-color: var(--calendar-line); background: var(--calendar-surface); color: var(--calendar-ink); box-shadow: 0 1px 3px rgba(23, 37, 61, 0.07); }
+.calendar-scroll { max-width: 100%; overflow-x: auto; border-top: 1px solid var(--calendar-line); }
+.calendar-scroll:focus-visible { outline: 3px solid #93b8ff; outline-offset: -3px; }
+.calendar-scroll-hint { margin: 0; padding: 4px 20px; color: var(--calendar-muted); font-size: 12px; line-height: 18px; }
+.calendar-grid { min-width: 0; }
+.calendar-grid.is-week { min-width: 1120px; }
+
+/* FullCalendar owns event positioning. Natural height leaves vertical scrolling
+   with the app's main content instead of introducing a second scroll area. */
+.calendar-page .fc {
+  --fc-border-color: var(--calendar-line);
+  --fc-today-bg-color: #f3f7ff;
+  --fc-neutral-bg-color: var(--calendar-soft);
+  --fc-page-bg-color: var(--calendar-surface);
+  --fc-highlight-color: rgba(72, 126, 237, 0.12);
+  --fc-now-indicator-color: #e96767;
+  color: var(--calendar-ink);
+  font-size: 13px;
+}
+.dark .calendar-page .fc { --fc-today-bg-color: rgba(67, 108, 185, 0.09); }
+.calendar-page .fc .fc-scrollgrid { border: none; }
+.calendar-page .fc th { border-top: 0; }
+.calendar-page .fc .fc-col-header-cell { padding: 4px 0; font-weight: 500; background: var(--calendar-surface); }
+.calendar-page .fc .fc-col-header-cell-cushion { display: inline-block; padding: 1px 4px; }
+.calendar-day-heading { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 30px; }
+.calendar-day-name { color: var(--calendar-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+.calendar-day-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--calendar-ink); font-size: 16px; font-weight: 600; line-height: 1; }
+.calendar-day-heading.is-today .calendar-day-name { color: #326add; }
+.calendar-day-heading.is-today .calendar-day-number { background: #2865e8; color: #ffffff; }
+.dark .calendar-page .calendar-day-heading.is-today .calendar-day-name { color: #8fb4ff; }
+.calendar-page .fc .fc-timegrid-slot { height: 3.5rem; }
+.calendar-page .fc .fc-timegrid-slot-minor { border-top-style: dotted; }
+.calendar-page .fc .fc-timegrid-slot-label { width: 58px; color: var(--calendar-muted); font-size: 12px; vertical-align: top; }
+.calendar-page .fc .fc-timegrid-slot-label-cushion { padding: 0 10px 0 8px; transform: translateY(-7px); }
+.calendar-page .fc .fc-timegrid-slots tr:first-child .fc-timegrid-slot-label-cushion { transform: translateY(4px); }
+.calendar-page .fc .fc-timegrid-axis { width: 58px; }
+.calendar-page .fc .fc-timegrid-col-events { margin: 0 2px; }
+.calendar-page .fc .fc-timegrid-event { margin: 1px 2px 3px; }
+.calendar-page .fc .calendar-lesson { container-type: inline-size; padding: 0; border: none !important; border-radius: 7px; background: transparent !important; box-shadow: none; text-decoration: none; cursor: pointer; }
+.calendar-page .fc .calendar-lesson .fc-event-main { height: 100%; padding: 0; }
+.calendar-page .fc .calendar-lesson.fc-event-draggable { cursor: grab; }
+.calendar-page .fc .calendar-lesson.fc-event-draggable:active { cursor: grabbing; }
+.calendar-page .fc .calendar-lesson:focus-visible { outline: 3px solid #8fb4ff; outline-offset: 1px; }
+
+.lesson-card,
+.grouped-event-card {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--lesson-color, #8b5cf6) 90%, black);
+  border-radius: 7px;
+  background: var(--lesson-color, #8b5cf6);
+  color: #ffffff;
+  transition: box-shadow 150ms ease;
+}
+.lesson-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 22px 22px 22px; align-items: center; align-content: space-between; column-gap: 6px; row-gap: 3px; padding: 7px 9px; }
+.calendar-lesson:hover .lesson-card,
+.calendar-lesson:hover .grouped-event-card { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+.lesson-time,
+.lesson-teacher,
+.lesson-grade,
+.lesson-topic,
+.lesson-students { display: block; width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lesson-time { grid-column: 1; grid-row: 1; flex-shrink: 0; font-size: 15px; font-weight: 700; line-height: 20px; font-variant-numeric: tabular-nums; }
+.lesson-teacher { grid-column: 1 / -1; grid-row: 2; flex-shrink: 0; font-size: 14px; font-weight: 600; line-height: 19px; }
+.lesson-grade { grid-column: 1 / -1; grid-row: 3; flex-shrink: 0; font-size: 13px; font-weight: 500; line-height: 18px; }
+.lesson-capacity {
+  display: inline-flex;
+  grid-column: 2;
+  grid-row: 1;
+  align-items: center;
+  justify-self: end;
+  flex-shrink: 0;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--lesson-ink, #503396);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.lesson-capacity svg { width: 12px; height: 12px; flex-shrink: 0; }
+.lesson-capacity > span { flex-shrink: 0; }
+.lesson-capacity .lesson-kind { min-width: 0; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; }
+.lesson-kind { display: none; }
+.lesson-capacity.is-private { background: #ffffff; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25); }
+.lesson-topic,
+.lesson-students { display: none; font-size: 13px; line-height: 18px; }
+.grouped-event-card { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; font-size: 13px; line-height: 19px; }
+.grouped-event-teacher { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.grouped-event-count { display: grid; place-items: center; flex-shrink: 0; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 5px; background: rgba(255, 255, 255, 0.94); color: var(--lesson-ink, #503396); font-size: 12px; font-weight: 700; }
+.calendar-page .fc .fc-daygrid-event { margin: 3px 5px; white-space: normal; }
+.calendar-page .fc .fc-daygrid-day-top { padding: 5px 7px; }
+.calendar-page .fc .fc-daygrid-day-number { color: var(--calendar-ink); font-size: 13px; }
+.calendar-page .fc .fc-daygrid-more-link { color: var(--calendar-muted); font-size: 12px; font-weight: 500; }
+.calendar-page .fc .fc-popover { border-color: var(--calendar-line); border-radius: 9px; background: var(--calendar-surface); box-shadow: 0 8px 28px rgba(23, 37, 61, 0.15); }
+
+/* Keep the same vivid teacher colors in both themes. */
+.dark .calendar-page .lesson-card,
+.dark .calendar-page .grouped-event-card { background: var(--lesson-color, #8b5cf6); color: #ffffff; }
+
+/* Feedback stays inside each selected slot and never changes card size. */
+.calendar-page .fc-slot-hover { position: absolute; z-index: 2; border: 1px dashed rgba(49, 108, 224, 0.55); border-radius: 5px; background: rgba(67, 126, 238, 0.08); pointer-events: none; }
+.calendar-page .fc .fc-highlight { border: 1px dashed rgba(49, 108, 224, 0.7); border-radius: 5px; }
+.calendar-page .fc .fc-event-mirror { opacity: 0.85; }
+.calendar-page .fc .event-dragging { opacity: 0.6; }
+
+/* Parallel lessons use four readable rows instead of squeezing the time
+   and capacity into a lane that is too narrow for both. */
+@container (max-width: 150px) {
+  .lesson-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 6px 8px; }
+  .lesson-capacity { justify-self: start; }
+  .lesson-kind { display: none; }
 }
 
-/* Haftalık görünüm için padding */
-.fc-timeGridWeek-view.fc-view.fc-timegrid {
-  padding: 0 15px;
+/* The day view has room for lesson details beside the three core rows. */
+@container (min-width: 320px) {
+  .calendar-page .fc-timeGridDay-view .lesson-card { grid-template-columns: minmax(110px, 1fr) minmax(0, 1fr); column-gap: 18px; }
+  .calendar-page .fc-timeGridDay-view .lesson-teacher,
+  .calendar-page .fc-timeGridDay-view .lesson-grade { grid-column: 1; }
+  .calendar-page .fc-timeGridDay-view .lesson-capacity { justify-self: start; }
+  .calendar-page .fc-timeGridDay-view .lesson-kind { display: inline; }
+  .calendar-page .fc-timeGridDay-view .lesson-topic { display: block; grid-column: 2; grid-row: 2; }
+  .calendar-page .fc-timeGridDay-view .lesson-students { display: block; grid-column: 2; grid-row: 3; }
 }
 
-/* Günler arasına soft çizgi ekle */
-.fc .fc-timegrid-col-frame {
-  border-right: 1px solid rgba(229, 231, 235, 0.5);
+@media (max-width: 1100px) {
+  .calendar-page-header { gap: 10px; }
+  .calendar-toolbar { gap: 8px 12px; }
+  .calendar-range-title { font-size: 14px; }
+  .calendar-toolbar-theme { max-width: none; flex-basis: 100%; order: 3; }
 }
 
-.dark .fc .fc-timegrid-col-frame {
-  border-right: 1px solid rgba(55, 65, 81, 0.3);
+@media (max-width: 640px) {
+  .calendar-page-header { gap: 10px; padding: 11px 12px; }
+  .calendar-heading { gap: 8px; }
+  .calendar-heading h1 { font-size: 19px; }
+  .calendar-heading select { max-width: 190px; }
+  .calendar-header-actions { gap: 5px; }
+  .calendar-secondary-button,
+  .calendar-primary-button { min-height: 34px; padding: 6px 8px; font-size: 12px; }
+  .calendar-header-actions svg { width: 14px; height: 14px; }
+  .calendar-toolbar { gap: 8px; padding: 9px 12px; }
+  .calendar-navigation { gap: 4px; width: 100%; }
+  .calendar-range-title { flex: 1; margin-left: 4px; font-size: 13px; }
+  .calendar-today-button { padding-inline: 7px; }
+  .calendar-icon-button { width: 30px; }
+  .calendar-toolbar-tools { width: 100%; justify-content: space-between; gap: 6px; }
+  .calendar-copy-button { padding-inline: 7px; font-size: 12px; }
+  .calendar-view-switch button { padding-inline: 10px; font-size: 12px; }
+  .calendar-scroll-hint { padding-inline: 12px; }
+  .calendar-page .fc .fc-timegrid-slot-label { width: 48px; }
+  .calendar-page .fc .fc-timegrid-slot-label-cushion { padding-inline: 5px; }
+  .calendar-page .fc .fc-daygrid-event { margin-inline: 2px; }
+  .grouped-event-card { padding: 4px; gap: 3px; font-size: 11px; }
 }
 
-.fc .fc-timegrid-slot-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  padding-right: 1rem;
-}
-
-.dark .fc .fc-timegrid-slot-label {
-  color: #9ca3af;
-}
-
-/* Responsive düzenlemeler */
-@media (max-width: 768px) {
-  .fc .fc-toolbar {
-    padding: 1rem;
-  }
-
-  .fc .fc-toolbar-title {
-    font-size: 1.25rem !important;
-  }
-
-  .fc .fc-button {
-    padding: 0.375rem 0.75rem !important;
-    font-size: 0.75rem;
-  }
-
-  .fc .fc-col-header-cell {
-    padding: 0.75rem 0;
-    font-size: 0.7rem;
-  }
-
-  .fc .fc-daygrid-day-top {
-    padding: 0.5rem;
-  }
-  
-  /* Mobil görünümde kartlardaki dikey yazıların görünmesi için padding ayarlaması */
-  .fc-event {
-    padding: 0.375rem 0.5rem !important;
-  }
-}
-
-/* 500px ve altındaki ekranlar için özel düzenlemeler */
-@media (max-width: 500px) {
-  /* Toolbar'ı tam genişlik yap ve ortalı göster */
-  .fc .fc-toolbar {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 0.75rem;
-  }
-  
-  /* Başlık ve butonları ortalı göster */
-  .fc .fc-toolbar-chunk {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-  
-  /* Başlık metnini ortalı göster */
-  .fc .fc-toolbar-title {
-    text-align: center;
-    width: 100%;
-  }
-  
-  /* Buton gruplarını tam genişlik yap ve düzgün aralıklandır */
-  .fc .fc-button-group {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  
-  /* Önceki ve sonraki butonlarını düzgün hizala */
-  .fc .fc-prev-button,
-  .fc .fc-next-button {
-    padding: 0.25rem 0.5rem !important;
-  }
-  
-  /* Bugün butonunu düzgün göster */
-  .fc .fc-today-button {
-    margin: 0 0.5rem !important;
-  }
-  
-  /* Ay, hafta, gün butonlarını düzgün hizala */
-  .fc .fc-dayGridMonth-button,
-  .fc .fc-timeGridWeek-button,
-  .fc .fc-timeGridDay-button {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.7rem !important;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .calendar-page *,
+  .calendar-page *::before,
+  .calendar-page *::after { transition: none !important; animation: none !important; }
 }
 
 /* DatePicker Stilleri */
@@ -594,478 +520,56 @@
   font-weight: 600 !important;
 }
 
-/* FullCalendar özelleştirmeleri */
-
-/* Box shadow'u kaldır */
-.fc-timegrid-event-harness-inset .fc-timegrid-event {
-  box-shadow: none !important;
-}
-
-/* Etkinlik kartları için temel stiller */
-.fc-timegrid-event, .fc-daygrid-event {
-  border-radius: 8px !important;
-  border: none !important;
-  overflow: hidden !important;
-  transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  position: relative !important;
-  z-index: 1;
-  height: 100% !important;
-  max-height: 7rem !important; /* 1 saatlik yükseklik (3.5rem * 2) */
-}
-
-.dark .fc-timegrid-event, .dark .fc-daygrid-event {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Hover durumunda kartın stilini değiştir */
-.fc-timegrid-event:hover, .fc-daygrid-event:hover {
-  transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2) !important;
-  z-index: 9999 !important;
-  overflow: visible !important;
-  height: auto !important;
-  max-height: none !important;
-  min-height: 150px !important;
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-/* Ay görünümündeki kartlar için hover efektini devre dışı bırak */
-.fc-dayGridMonth-view .fc-daygrid-event:hover {
-  transform: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  z-index: 1 !important;
-  overflow: hidden !important;
-  height: 100% !important;
-  max-height: initial !important;
-  min-height: initial !important;
-}
-
-.dark .fc-dayGridMonth-view .fc-daygrid-event:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Hover durumunda diğer kartları blur yap - Yeni yaklaşım */
-.fc-timegrid-body:has(.fc-timegrid-event:hover) .fc-timegrid-event:not(:hover),
-.fc-daygrid-body:not(.fc-dayGridMonth-view):has(.fc-daygrid-event:hover) .fc-daygrid-event:not(:hover) {
-  filter: blur(2px) opacity(0.7) !important;
-  transition: filter 0.5s ease !important;
-}
-
-/* Ay görünümünde öğrenci listesini gizli tut */
-.fc-dayGridMonth-view .fc-event:hover .student-list {
-  opacity: 0 !important;
-  max-height: 0 !important;
-  overflow: hidden !important;
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-  border-top: none !important;
-  display: none !important;
-}
-
-/* Etkinlik kartı içeriği */
-.event-card {
-  position: relative !important;
-  transition: all 0.4s ease !important;
-  height: 100%;
-  display: flex !important;
-  flex-direction: row !important;
-  overflow: hidden !important;
-  padding: 0.25rem !important;
-}
-
-/* Etkinlik başlığı için dikey stil */
-.event-title {
-  writing-mode: vertical-rl !important;
-  transform: rotate(180deg) !important;
-  text-orientation: mixed !important;
-  margin-right: 6px !important;
-  font-weight: 600 !important;
-  font-size: 0.85rem !important;
-  letter-spacing: 0.5px !important;
-  display: flex !important;
-  align-items: center !important;
-  padding-left: 2px !important;
-  min-width: 20px !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: rgba(255, 255, 255, 0.50) !important; /* Daha kırık beyaz renk */
-  height: auto !important; /* Yüksekliği içeriğe göre ayarla */
-  margin-top: 2px !important; /* Üstten biraz boşluk */
-}
-
-/* Etkinlik içeriği için konteyner */
-.event-content {
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  padding: 0.25rem !important;
-}
-
-.fc-event:hover .event-card {
-  overflow: visible !important;
-}
-
-/* Öğrenci listesi bölümü - Yeni yaklaşım */
-.student-list {
-  opacity: 0;
-  max-height: 0;
+/* Lesson preview occupies a reserved column; it never covers the schedule. */
+.calendar-page .calendar-content { display: block; min-width: 0; }
+.calendar-page .calendar-content.has-preview { display: grid; grid-template-columns: minmax(0, 1fr) 288px; align-items: start; gap: 12px; padding-right: 12px; }
+.calendar-page .calendar-schedule { min-width: 0; }
+.calendar-page .calendar-preview {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: calc(100dvh - 32px);
+  margin: 12px 0;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-  margin-top: auto;
-  display: none;
+  border: 1px solid var(--calendar-line);
+  border-radius: 10px;
+  background: var(--calendar-surface);
+  color: var(--calendar-ink);
 }
+.calendar-page .calendar-preview-header { display: flex; align-items: center; flex-shrink: 0; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--calendar-line); }
+.calendar-page .calendar-preview-header svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--calendar-muted); }
+.calendar-page .calendar-preview-header h3 { margin: 0; font-size: 15px; font-weight: 650; line-height: 21px; }
+.calendar-page .calendar-preview-body { min-height: 0; padding: 16px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; }
+.calendar-page .calendar-preview-body:focus-visible { outline: 3px solid #93b8ff; outline-offset: -3px; }
+.calendar-page .calendar-preview-teacher { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; font-size: 16px; font-weight: 650; line-height: 23px; overflow-wrap: anywhere; }
+.calendar-page .calendar-preview-teacher-dot { flex: 0 0 10px; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; }
+.calendar-page .calendar-preview-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 12px; margin: 0; }
+.calendar-page .calendar-preview-facts dt { margin: 0 0 3px; color: var(--calendar-muted); font-size: 12px; font-weight: 500; line-height: 17px; }
+.calendar-page .calendar-preview-facts dd { margin: 0; font-size: 14px; font-weight: 500; line-height: 21px; overflow-wrap: anywhere; }
+.calendar-page .calendar-preview-fact-wide { grid-column: 1 / -1; }
+.calendar-page .calendar-preview-time { font-variant-numeric: tabular-nums; }
+.calendar-page .calendar-preview-full-text { white-space: pre-wrap; }
+.calendar-page .calendar-preview-students { margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--calendar-line); }
+.calendar-page .calendar-preview-students h4 { margin: 0 0 10px; font-size: 14px; font-weight: 650; line-height: 20px; }
+.calendar-page .calendar-preview-students h4 span { color: var(--calendar-muted); font-weight: 500; }
+.calendar-page .calendar-preview-students ul { display: flex; flex-direction: column; gap: 9px; margin: 0; padding-left: 17px; list-style: disc; }
+.calendar-page .calendar-preview-students li { padding-left: 2px; font-size: 14px; line-height: 21px; overflow-wrap: anywhere; }
+.calendar-page .calendar-preview-students li::marker { color: var(--calendar-muted); }
+.calendar-page .calendar-preview-empty-list { margin: 0; color: var(--calendar-muted); font-size: 13px; line-height: 20px; }
+.calendar-page .calendar-preview-footer { flex-shrink: 0; padding: 12px 16px; border-top: 1px solid var(--calendar-line); }
+.calendar-page .calendar-preview-footer button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 38px; padding: 8px 12px; border: 1px solid var(--calendar-line); border-radius: 7px; background: var(--calendar-soft); color: var(--calendar-ink); font-size: 13px; font-weight: 600; line-height: 20px; cursor: pointer; }
+.calendar-page .calendar-preview-footer button:hover { border-color: #85a9e8; }
+.calendar-page .calendar-preview-footer button:focus-visible { outline: 3px solid #93b8ff; outline-offset: 2px; }
+.calendar-page .calendar-preview-footer svg { width: 15px; height: 15px; flex-shrink: 0; }
+.calendar-page .calendar-preview-empty { padding: 30px 19px; text-align: center; }
+.calendar-page .calendar-preview-empty > svg { width: 32px; height: 32px; margin: 0 auto 12px; color: var(--calendar-muted); }
+.calendar-page .calendar-preview-empty h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; line-height: 22px; }
+.calendar-page .calendar-preview-empty p { margin: 0; color: var(--calendar-muted); font-size: 13px; line-height: 21px; }
+.calendar-page .calendar-lesson.is-previewed .lesson-card { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9); }
 
-/* Hover durumunda öğrenci listesini göster */
-.fc-event:hover .student-list {
-  opacity: 1 !important;
-  max-height: 120px !important;
-  overflow-y: auto !important;
-  margin-top: 8px !important;
-  padding-top: 8px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-  display: block !important;
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+@media (max-width: 1023px) {
+  .calendar-page .calendar-content.has-preview { display: block; padding-right: 0; }
+  .calendar-page .calendar-preview { display: none; }
 }
-
-/* Öğrenci listesi başlığı */
-.student-list-header {
-  display: none !important; /* Varsayılan olarak gizli */
-}
-
-/* Gün görünümünde öğrenci listesi başlığını göster */
-.fc-timeGridDay-view .student-list-header {
-  display: flex !important;
-  margin-bottom: 0.5rem !important;
-}
-
-/* Hafta görünümünde hover durumunda bile başlığı gizli tut */
-.fc-timeGridWeek-view .student-list-header {
-  display: none !important;
-}
-
-/* Öğrenci listesi içeriği */
-.student-list-items {
-  max-height: 100px !important;
-  overflow-y: auto !important;
-  padding-right: 4px !important;
-}
-
-/* Etkinlik türlerine göre özel stiller */
-.fc-event[style*="#8b5cf6"] {
-  background-image: linear-gradient(to right, #8b5cf6, #9333ea) !important;
-}
-
-.fc-event[style*="#f97316"] {
-  background-image: linear-gradient(to right, #f97316, #fb923c) !important;
-}
-
-.fc-event[style*="#059669"] {
-  background-image: linear-gradient(to right, #059669, #10b981) !important;
-}
-
-/* FullCalendar'ın kendi sınırlamalarını geçersiz kıl */
-.fc-timegrid-event-harness {
-  height: 7rem !important; /* 1 saatlik yükseklik (3.5rem * 2) */
-  max-height: 7rem !important;
-  overflow: visible !important;
-}
-
-.fc-timegrid-event-harness:hover {
-  height: auto !important;
-  max-height: none !important;
-  z-index: 9999 !important;
-}
-
-.fc-timegrid-events-container,
-.fc-timegrid-col-events {
-  z-index: auto !important;
-}
-
-/* Hover durumunda arka planı karartma efekti - Kaldırıldı */
-/* .fc-event:hover::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.15);
-  z-index: -1;
-  pointer-events: none;
-  animation: fadeIn 0.3s ease-out forwards;
-} */
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Gruplandırılmış etkinlik kartları için stiller */
-.grouped-event-card {
-  border-radius: 8px !important;
-  padding: 0.5rem !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  transition: all 0.3s ease !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  font-weight: 600 !important;
-}
-
-.dark .grouped-event-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-.grouped-event-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
-}
-
-/* Ay görünümünde gruplandırılmış etkinlikler için özel stiller */
-.fc-daygrid-day-events .fc-event {
-  margin-bottom: 2px !important;
-}
-
-/* Gruplandırılmış etkinlik türlerine göre özel stiller */
-.fc-event[style*="#8b5cf6"] .grouped-event-card {
-  background-image: linear-gradient(to right, #8b5cf6, #9333ea) !important;
-}
-
-.fc-event[style*="#f97316"] .grouped-event-card {
-  background-image: linear-gradient(to right, #f97316, #fb923c) !important;
-}
-
-.fc-event[style*="#059669"] .grouped-event-card {
-  background-image: linear-gradient(to right, #059669, #10b981) !important;
-}
-
-/* Gün görünümü için özel stiller */
-.fc-timeGridDay-view .fc-timegrid-event {
-  height: auto !important;
-  max-height: none !important;
-  min-height: -webkit-fill-available !important;
-  transform: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  transition: none !important;
-}
-
-.dark .fc-timeGridDay-view .fc-timegrid-event {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Gün görünümünde hover efektini devre dışı bırak */
-.fc-timeGridDay-view .fc-timegrid-event:hover {
-  transform: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  z-index: 1 !important;
-}
-
-.dark .fc-timeGridDay-view .fc-timegrid-event:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Gün görünümünde öğrenci listesini her zaman göster */
-.fc-timeGridDay-view .fc-event .student-list {
-  opacity: 1 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  margin-top: 8px !important;
-  padding-top: 8px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-  display: block !important;
-}
-
-/* Hover efektlerini sadece hafta görünümü için uygula */
-.fc-timeGridWeek-view .fc-timegrid-event:hover {
-  transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2) !important;
-  z-index: 9999 !important;
-  overflow: visible !important;
-  height: auto !important;
-  max-height: none !important;
-  min-height: 150px !important;
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-/* Hover durumunda diğer kartları blur yapma efektini sadece hafta görünümüne uygula */
-.fc-timeGridWeek-view .fc-timegrid-body:has(.fc-timegrid-event:hover) .fc-timegrid-event:not(:hover) {
-  filter: blur(2px) opacity(0.7) !important;
-  transition: filter 0.5s ease !important;
-}
-
-/* Sürükleme animasyonları ve stilleri */
-.event-dragging {
-  opacity: 0.9 !important;
-  transform: scale(1.08) !important;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3) !important;
-  z-index: 10000 !important;
-  transition: all 0.15s ease !important;
-  cursor: grabbing !important;
-  border: 3px dashed #0071e3 !important;
-  background-color: rgba(0, 113, 227, 0.2) !important;
-  backdrop-filter: blur(2px) !important;
-  color: #1d1d1f !important; /* Koyu metin rengi */
-}
-
-.event-dragging .event-title,
-.event-dragging .event-content {
-  color: #1d1d1f !important;
-}
-
-.event-dragging .event-title {
-  color: #1d1d1f !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.2) !important;
-}
-
-.event-dragging .student-list-items,
-.event-dragging .flex.items-center.gap-1 {
-  color: #1d1d1f !important;
-}
-
-.dark .event-dragging {
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5) !important;
-  border: 3px dashed #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.3) !important;
-  color: #ffffff !important; /* Koyu modda beyaz metin rengi */
-}
-
-.dark .event-dragging .event-title,
-.dark .event-dragging .event-content {
-  color: #ffffff !important;
-}
-
-.dark .event-dragging .event-title {
-  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Sürükleme hedef göstergesi */
-.fc-event.fc-event-dragging::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 113, 227, 0.15);
-  border-radius: 8px;
-  animation: fc-drag-pulse 1s infinite;
-}
-
-.dark .fc-event.fc-event-dragging::after {
-  background: rgba(59, 130, 246, 0.25);
-}
-
-/* İSİM ÖNEMLİ: "pulse" demek Tailwind'in animate-pulse yardımcısıyla
-   çakışıyordu ve uygulamadaki bütün iskelet yüklemelere mavi bir halka
-   basıyordu. Bu dosya global olarak yükleniyor, isimler ayrık olmalı. */
-@keyframes fc-drag-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(0, 113, 227, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0);
-  }
-}
-
-/* Sürükleme sırasında hedef hücre vurgusu */
-.fc-highlight {
-  background: rgba(0, 113, 227, 0.25) !important;
-  border: 3px dashed #0071e3 !important;
-  border-radius: 8px !important;
-  animation: targetPulse 0.8s infinite !important;
-}
-
-.dark .fc-highlight {
-  background: rgba(59, 130, 246, 0.35) !important;
-  border: 3px dashed #3b82f6 !important;
-}
-
-@keyframes targetPulse {
-  0% {
-    background: rgba(0, 113, 227, 0.15);
-  }
-  50% {
-    background: rgba(0, 113, 227, 0.3);
-  }
-  100% {
-    background: rgba(0, 113, 227, 0.15);
-  }
-}
-
-/* Sürükleme sırasında diğer etkinlikleri hafifçe soluklaştır */
-.fc-event-dragging ~ .fc-event:not(.fc-event-dragging) {
-  opacity: 0.5 !important;
-  filter: blur(2px) !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Sürükleme sırasında imleç stilini değiştir */
-.fc-event {
-  cursor: grab !important;
-}
-
-.fc-event:active {
-  cursor: grabbing !important;
-}
-
-/* Sürükleme sırasında geçiş animasyonu */
-.fc-event-mirror {
-  opacity: 0.9 !important;
-  background: linear-gradient(to right, rgba(0, 113, 227, 0.2), rgba(0, 113, 227, 0.3)) !important;
-  backdrop-filter: blur(4px) !important;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
-  border: 3px dashed #0071e3 !important;
-  animation: float 1.5s infinite ease-in-out !important;
-  cursor: grabbing !important;
-  color: #1d1d1f !important; /* Koyu metin rengi */
-}
-
-.fc-event-mirror .event-title,
-.fc-event-mirror .event-content {
-  color: #1d1d1f !important;
-}
-
-.fc-event-mirror .event-title {
-  color: #1d1d1f !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.2) !important;
-}
-
-.dark .fc-event-mirror {
-  background: linear-gradient(to right, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.4)) !important;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
-  border: 3px dashed #3b82f6 !important;
-  color: #ffffff !important; /* Koyu modda beyaz metin rengi */
-}
-
-.dark .fc-event-mirror .event-title,
-.dark .fc-event-mirror .event-content {
-  color: #ffffff !important;
-}
-
-.dark .fc-event-mirror .event-title {
-  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Ay görünümündeki kartlara hover yapıldığında cursor-pointer olsun */
-.fc-dayGridMonth-view .fc-daygrid-event:hover {
-  cursor: pointer !important;
-}
-
-/* Diğer takvim özelleştirmeleri buraya eklenebilir */ 
